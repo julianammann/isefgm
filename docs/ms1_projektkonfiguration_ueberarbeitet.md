@@ -13,6 +13,7 @@ Automatische Benachrichtigungen weisen auf bevorstehende Anlässe und noch nicht
 | **Yin Yin Wu-Hanke** | *Foto ergänzen* | Detection Engineer | Frontendentwicklung, Security |
 | **Julian Ammann** | *Foto ergänzen* | Senior Full Stack Developer | Frontend- & Backendentwicklung, DevOps, Systemarchitektur |
 | **Anton Hirsch** | *Foto ergänzen* | Informatikstudent (B.Sc) | Grundlagen in Python, Java, C++, SQL und ChatGPT |
+| **Kevin Jordan Taghu** | *Foto ergänzen* | Data Analyst | Frontendentwicklung, Datenmodellierung, Reporting, Datenvisualisierung, Datenbereinigung |
 
 # Anforderungen (auf grober Ebene)
 
