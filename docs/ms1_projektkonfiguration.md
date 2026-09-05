@@ -10,10 +10,10 @@ Automatische Benachrichtigungen weisen auf bevorstehende Anlässe und noch nicht
 
 | Teammitglied | Foto | Kurzprofil | Skills |
 | --- | --- | --- | --- |
-| **Yin Yin Wu-Hanke** | *Foto ergänzen* | Detection Engineer | Frontendentwicklung, Security |
-| **Julian Ammann** | *Foto ergänzen* | Senior Full Stack Developer | Frontend- & Backendentwicklung, DevOps, Systemarchitektur |
+| **Yin Yin Wu-Hanke** | ![Yin](./images/team/yin.jpg) | Detection Engineer | Frontendentwicklung, Security |
+| **Julian Ammann** | ![Julian](./images/team/julian.jpg) | Senior Full Stack Developer | Frontend- & Backendentwicklung, DevOps, Systemarchitektur |
 | **Anton Hirsch** | *Foto ergänzen* | Informatikstudent (B.Sc) | Grundlagen in Python, Java, C++, SQL und ChatGPT |
-| **Kevin Jordan Taghu** | *Foto ergänzen* | Data Analyst | Frontendentwicklung, Datenmodellierung, Reporting, Datenvisualisierung, Datenbereinigung |
+| **Kevin Jordan Taghu** | ![Jordan](./images/team/jordan.PNG) | Data Analyst | Frontendentwicklung, Datenmodellierung, Reporting, Datenvisualisierung, Datenbereinigung |
 
 # Anforderungen (auf grober Ebene)
 
@@ -188,6 +188,14 @@ Für jeden Liefergegenstand werden verantwortliche Person, Reviewer:in, Speicher
 
 # Aufbau technische Infrastruktur
 
+- Infrastruktur sollte via CI/CD deployed werden. Auf Cloud Provider oder eigene Hosting umgebung sprich vorhandener Server.
+- Internetfacing Traefik Container der das Routing, TLS, Middlewares, via Docker-Providers (Labels) übernimmt. Dieser stellt zugleich auch das SSL-Zertifikat via Let's Encrypt aus.
+- Frontend aus JavaScript Framework das seinen eigenen Docker Container bekommt, Node Server oder nginx beinhaltet.
+- Backend geplant mit Python eigener Container da Scheduler und Backend logik getrennt laufen müssen.
+- Backend greift auf DB zu Postgresql / MySQL.
+
+![InfraStruktur](./images/infra-visualisierung.png)
+
 # Personalmanagement
 
 ## Ressourcenplanung
@@ -222,3 +230,6 @@ Die Seitenverantwortung für MS 6 wird spätestens mit MS 3 festgelegt. Jedes Mi
 - Die Signal-Gruppe dient kurzfristigen Absprachen.
 
 # Risikomanagement
+
+Risikomanagement umfasst hier tatsächlich Projekt-, Personal- und Softwaresicht.
+Vielleicht sollten wir uns da gedanken machen ob wir eine Matrix aufstellen
