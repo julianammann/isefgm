@@ -12,7 +12,7 @@ Automatische Benachrichtigungen weisen auf bevorstehende Anlässe und noch nicht
 | --- | --- | --- | --- |
 | **Yin Yin Wu-Hanke** | ![Yin](./images/team/yin.jpg) | Detection Engineer | Frontendentwicklung, Security |
 | **Julian Ammann** | ![Julian](./images/team/julian.jpg) | Senior Full Stack Developer | Frontend- & Backendentwicklung, DevOps, Systemarchitektur |
-| **Anton Hirsch** | *Foto ergänzen* | Informatikstudent (B.Sc) | Grundlagen in Python, Java, C++, SQL und ChatGPT |
+| **Anton Hirsch** | ![Anton](./images/team/Anton.jpg) | im Bachelorstudiengang Informatik | Grundlagen in Python, Java, C++, SQL sowie KI-gestützter Recherche und Problemlösung |
 | **Kevin Jordan Taghu** | ![Jordan](./images/team/jordan.PNG) | Data Analyst | Frontendentwicklung, Datenmodellierung, Reporting, Datenvisualisierung, Datenbereinigung |
 
 # Anforderungen (auf grober Ebene)
@@ -70,10 +70,13 @@ Die Anforderungen werden in MS 1 bewusst auf grober Ebene beschrieben. Detaillie
 ### Organisatorische Randbedingungen
 
 - Projektzeitraum: 20.08.2026 bis spätestens Ende Oktober 2026.
-- Redmine ist das führende System für Aufgaben, Meilensteine, Abgaben und Tutorfeedback.
+- Redmine wird zur formalen Bereitstellung der Meilensteine und zur Entgegennahme des Tutorfeedbacks verwendet. Bei einer Abgabe wird das zugehörige Ticket auf **Feedback** gesetzt und dem Tutor zugewiesen.
+- Interne Besprechungen und ausführlichere Abstimmungen erfolgen über Microsoft Teams.
+- Die Signal-Gruppe dient kurzfristigen Abstimmungen und wichtigen projektbezogenen Mitteilungen.
 - Quellcode und technische Dokumentation werden in einem privaten Git-Repository versioniert.
+- Spätestens vor Beginn der Implementierung wird der Hauptbranch geschützt. Änderungen sollen anschließend in eigenen Branches bearbeitet, durch ein weiteres Teammitglied geprüft und über Pull Requests zusammengeführt werden.
 - Features und Fehlerkorrekturen werden in eigenen Branches bearbeitet und über Pull Requests in den geschützten Hauptbranch übernommen.
-- Architektur-, Datenschutz-, Umfangs- und Terminentscheidungen werden schriftlich festgehalten.
+- Architektur-, Datenschutz-, Umfangs- und Terminentscheidungen werden schriftlich in der Projektdokumentation festgehalten.
 
 ### Konventionen
 
@@ -146,6 +149,23 @@ Vorschläge verwenden nur minimierte Merkmale wie allgemeine Geschenkekategorie,
 
 # Meilensteinplan (aktualisierte Version auf Basis von MS 0)
 
+Der in MS 0 erstellte Meilensteinplan wurde anhand des aktuellen Projektstands überprüft und um interne Entwicklungs-, Review- und Reservezeiten konkretisiert. Die Meilensteine MS 0 bis MS 6 bilden weiterhin die verbindlichen Übergabepunkte. Zwischen den Meilensteinen werden die bekannten Arbeitspakete des Projektstrukturplans bearbeitet.
+
+| Termin | Ergebnis |
+| --- | --- |
+| 20.08.2026 | MS 0: Meilensteinplan |
+| 03.09.2026 | MS 1: Projektkonfiguration |
+| 10.09.2026 | MS 2: Projektvideo |
+| 17.09.2026 | MS 3: Konfiguration der Softwareentwicklung und Qualitätsplanung |
+| 01.10.2026 | Abschluss der ersten Entwicklungsiteration |
+| 08.10.2026 | Abschluss der zweiten Entwicklungsiteration |
+| 15.10.2026 | MS 4: Softwaresystem und Dokumentation |
+| 22.10.2026 | MS 5: Ergebnispräsentation |
+| 29.10.2026 | MS 6: Projektbericht |
+| 30.–31.10.2026 | Notfallreserve für unvorhergesehene Korrekturen |
+
+Die letzten zwei Tage vor jedem Meilenstein werden grundsätzlich für Review, Korrektur, Export und Bereitstellung reserviert. Absehbare Terminabweichungen werden unmittelbar in der Signal-Gruppe mitgeteilt und im nächsten Teams-Termin gemeinsam bewertet.
+
 # Liste von Liefergegenständen inkl. Zuordnung zu Meilenstein
 
 | Meilenstein | Liefergegenstand | Bereitstellung und Vorgabe |
@@ -169,22 +189,77 @@ Für jeden Liefergegenstand werden verantwortliche Person, Reviewer:in, Speicher
 
 # Projektstrukturplan
 
+Der Projektstrukturplan gliedert das Projekt in Arbeitspakete, die jeweils einem Meilenstein oder Liefergegenstand zugeordnet werden. Die technische Untergliederung wird im Rahmen von MS 3 durch die zuständigen Teammitglieder weiter konkretisiert.
+
+| PSP-ID | Arbeitspaket | Bekannte Teilaufgaben und Ergebnisse |
+| --- | --- | --- |
+| 1.0 | Projektplanung und -steuerung | Terminplanung, Projektkonfiguration, Abstimmungen, Fortschrittskontrolle, Änderungs- und Risikomanagement |
+| 1.1 | MS 0 – Meilensteinplan | Projektzeitraum festlegen, Meilensteine anordnen, Plan visualisieren und in Redmine bereitstellen |
+| 1.2 | MS 1 – Projektkonfiguration | Vision, Team, Anforderungen, Lösungsansatz, Projektstruktur, Aufwand, Rollen, Infrastruktur und Risiken dokumentieren |
+| 2.0 | MS 2 – Projektvideo | Inhalte auswählen, Ablauf planen, Sprecher:innen festlegen, Video aufnehmen, prüfen und bereitstellen |
+| 3.0 | MS 3 – Entwicklungs- und Qualitätskonfiguration | Vorgehensmodell, Entwicklungsumgebung, Artefakte, technische Rollen, Qualitätsziele, Prüfverfahren und Liefergegenstände festlegen |
+| 4.0 | Softwaresystem | Browserbasierte Anwendung implementieren, integrieren und bereitstellen |
+| 4.1 | Entwicklungsumgebung und Infrastruktur | Repository-Struktur, Entwicklungsumgebung, Container, Datenbank, CI/CD und Hosting vorbereiten |
+| 4.2 | Nutzer- und Zugriffsverwaltung | Registrierung, Anmeldung, Sitzungen, Mandantentrennung und Kontolöschung umsetzen |
+| 4.3 | Personen und Anlässe | Personenverwaltung, Geburtstage, feste und benutzerdefinierte Anlässe sowie Zuordnungen umsetzen |
+| 4.4 | Geschenke und Aufgaben | Geschenkideen, Statusübergänge, Historie, Anhänge, Notizen und Aufgaben umsetzen |
+| 4.5 | Benachrichtigungen | Geburtstags- und Weihnachtsbenachrichtigungen, Scheduler, Versandstatus und Deduplizierung umsetzen |
+| 4.6 | Teilen und Export | Widerrufbare Nur-Lese-Links sowie HTML-Darstellung beziehungsweise HTML-Export umsetzen |
+| 4.7 | Geschenkideen-Vorschläge | Datenmerkmale, Vorschlagserzeugung, Ausschlussregeln sowie Übernahme und Verwerfung umsetzen |
+| 5.0 | Qualitätssicherung | Anforderungen prüfen, Reviews durchführen sowie Unit-, Integrations-, Berechtigungs- und E2E-Tests erstellen und ausführen |
+| 6.0 | MS 4 – Dokumentation und Bereitstellung | Benutzerhandbuch, fachliche, technische und betriebliche Dokumentation, Testabschlussbericht, Testkonten und erreichbares System bereitstellen |
+| 7.0 | MS 5 – Ergebnispräsentation | Projektverlauf, Systemüberblick, Testergebnisse, Demo und Lessons Learned aufbereiten und als Video bereitstellen |
+| 8.0 | MS 6 – Projektbericht | Individuelle Textbereiche erstellen, gemeinsame Redaktion durchführen, Titelblatt prüfen und Bericht in Turnitin einreichen |
+
 # Aufwandsschätzung (grobe Schätzung auf Basis des Projektstrukturplans)
+
+Die Aufwandsschätzung basiert auf den zum Zeitpunkt von MS 1 bekannten Arbeitspaketen. Technische Unsicherheiten, insbesondere bei Benachrichtigungen, Freigabelinks, Vorschlagserzeugung und Bereitstellung, werden durch eine zusätzliche Reserve berücksichtigt.
+
+| PSP-ID | Arbeitspaket | Geschätzter Aufwand |
+| --- | --- | ---: |
+| 1.0–1.2 | Projektplanung und -steuerung einschließlich MS 0 und MS 1 | 40 h |
+| 2.0 | Projektvideo MS 2 | 16 h |
+| 3.0 | Entwicklungs- und Qualitätskonfiguration MS 3 | 32 h |
+| 4.0–4.7 | Implementierung und technische Bereitstellung | 140 h |
+| 5.0 | Qualitätssicherung und Tests | 35 h |
+| 6.0 | Dokumentation und Bereitstellung MS 4 | 35 h |
+| 7.0 | Ergebnispräsentation MS 5 | 20 h |
+| 8.0 | Gemeinsamer Projektbericht MS 6 | 50 h |
+|  | **Basisaufwand** | **368 h** |
+|  | **Projektreserve: 15 %** | **55 h** |
+|  | **Gesamtaufwand gerundet** | **423 h** |
+
+Bei vier Teammitgliedern entspricht dies durchschnittlich rund 106 Stunden pro Person über den gesamten Projektzeitraum. Die tatsächliche Verteilung richtet sich nach Rolle, Vorerfahrung, Verfügbarkeit und Umfang der übernommenen Arbeitspakete. Die Reserve wird nicht von Beginn an einzelnen Aufgaben zugeordnet, sondern nur bei eingetretenen Risiken oder unerwartetem Mehraufwand verwendet.
+
+Im wöchentlichen Teams-Termin werden geschätzter Restaufwand und verfügbare Kapazität verglichen. Zeichnet sich eine Überschreitung ab, werden Aufgaben neu verteilt oder nachrangige SOLL-Anforderungen reduziert.
 
 # eingesetzte Systeme zu Erstellung der Lieferergebnisse und zum Management der einzelnen Aufgaben
 
 | Zweck | System und verbindliche Nutzung |
 | --- | --- |
-| Meilensteine, Aufgaben, Tutorfeedback und Abgaben | **IU Redmine** als führendes Projektmanagementsystem |
-| Quellcode und technische Versionierung | **privates GitHub-Repository** mit Branches und Pull Requests |
-| Regelmeetings und Videoaufnahmen | **Microsoft Teams** |
-| kurzfristige Abstimmung | **Signal-Gruppe**, jedoch keine Passwörter oder personenbezogenen Testdaten |
-| Dokumentation | **Markdown im Repository**, finale Lieferfassung als PDF |
-| Entwicklung | individuelle IDE sowie eine gemeinsam dokumentierte, reproduzierbare Projektumgebung |
-| automatisierte Prüfungen | CI-Funktion des Git-Repositorys für Linting, Tests und Build |
-| Bereitstellung | Hostingdienst mit HTTPS, relationaler Datenbank und Hintergrundprozess; verbindliche Auswahl bis MS 3 |
+| Übermittlung der Meilensteine und Tutorfeedback | **IU Redmine**; bei einer Abgabe wird das jeweilige Ticket auf **Feedback** gesetzt und dem Tutor zugewiesen |
+| Regelmeetings, ausführliche Abstimmungen und Videoaufnahmen | **Microsoft Teams** |
+| Kurzfristige Abstimmungen und wichtige Projektmeldungen | gemeinsame **Signal-Gruppe**; keine Passwörter, Zugangsdaten oder personenbezogenen Testdaten |
+| Aufgaben und Zuständigkeiten | gemeinsame Festlegung in Teams; Dokumentation der Verantwortungen und wichtigen Entscheidungen in der versionierten Projektdokumentation |
+| Quellcode und technische Dokumentation | **privates GitHub-Repository** mit Branches, Reviews und Pull Requests |
+| Dokumentenerstellung | **Markdown im Repository**; finale Lieferfassungen werden als PDF exportiert |
+| Daten- und Architekturmodellierung | **yEd/GraphML** beziehungsweise abgestimmtes Diagrammwerkzeug; relevante Modelle werden zusätzlich als Bild exportiert |
+| Entwicklung | individuelle IDEs auf Grundlage einer gemeinsam dokumentierten und reproduzierbaren Projektumgebung |
+| Automatisierte Prüfungen | vorgesehene CI-Funktion des GitHub-Repositorys für Linting, Tests und Build |
+| Bereitstellung | containerisierte Hostingumgebung mit HTTPS, relationaler Datenbank und getrenntem Hintergrundprozess; endgültige Bestätigung in MS 3 |
 
 # Rollen und Verantwortungen
+
+Die operative Bearbeitung der Arbeitspakete erfolgt dezentral durch die jeweils verantwortlichen Teammitglieder. Wichtige Entscheidungen werden gemeinsam abgestimmt. Für kritische Ergebnisse wird zusätzlich eine prüfende Person festgelegt, damit kein Liefergegenstand ausschließlich durch seine erstellende Person kontrolliert wird.
+
+| Teammitglied | Vorgesehene Rolle | Wesentliche Verantwortungen |
+| --- | --- | --- |
+| **Kevin Jordan Taghu** | Projektleitung und Datenanalyse | Überblick über Termine und Liefergegenstände, formale Bereitstellung in Redmine, Kommunikation mit dem Tutor sowie Unterstützung bei Datenmodellierung und Auswertung |
+| **Julian Ammann** | Technische Leitung und Full-Stack-Entwicklung | Bestätigung der Systemarchitektur, Backend- und Frontendentwicklung, DevOps, CI/CD, Hosting und technische Integration |
+| **Yin Yin Wu-Hanke** | Security und Frontendentwicklung | Sicherheits- und Datenschutzkonzept, Prüfung der Angriffsflächen und Berechtigungen sowie Unterstützung bei Frontend und Security-Tests |
+| **Anton Hirsch** | Anforderungen, Dokumentation und Testunterstützung | Pflege der fachlichen Anforderungen, Mitwirkung am Datenmodell, Bearbeitung der Projekt- und Personalrisiken, Dokumentation, Nachvollziehbarkeit sowie Erstellung und Durchführung fachlicher Testfälle |
+
+Die Projektleitung koordiniert den Gesamtüberblick, die formalen Abgaben und die Kommunikation mit dem Tutor. Operative Entscheidungen und Probleme werden zunächst durch die betroffenen Teammitglieder bearbeitet und bei projektweiter Bedeutung mit dem gesamten Team abgestimmt.
 
 # Aufbau technische Infrastruktur
 
@@ -221,15 +296,49 @@ Die Seitenverantwortung für MS 6 wird spätestens mit MS 3 festgelegt. Jedes Mi
 
 ## Bisherige Meetings
 
-- **20.08.2026:** Vorstellungsrunde, Wahl von Kevin zum Teamleiter und gemeinsame Erarbeitung von MS 0.
-- **26.08.2026:** vorgezogenes zweites Meeting mit strukturellen Überlegungen und erstem ER-Modell.
+- **20.08.2026:** Vorstellungsrunde, Wahl von Kevin zur Projektleitung und gemeinsame Erarbeitung von MS 0.
+- **26.08.2026:** Vorgezogenes zweites Meeting mit strukturellen Überlegungen und Erstellung eines ersten ER-Modells.
+- **03.09.2026:** Prüfung des MS-1-Arbeitsstands und Beschluss, das Risikomanagement nach Projekt-/Personalrisiken, technischen Risiken sowie Informationssicherheits- und Datenschutzrisiken zu strukturieren.
 
 ## Regelkommunikation
 
-- Das Team trifft sich jeden Donnerstagabend grundsätzlich für 60 Minuten in Microsoft Teams.
-- Die Signal-Gruppe dient kurzfristigen Absprachen.
+- Das Team trifft sich grundsätzlich jeden Donnerstagabend für etwa 60 Minuten in Microsoft Teams.
+- In den Regelmeetings werden Bearbeitungsstände, Blocker, nächste Aufgaben, Kapazitäten und bevorstehende Meilensteine besprochen.
+- Die Signal-Gruppe dient kurzfristigen Abstimmungen, wichtigen Projektmeldungen und zeitkritischen Entscheidungen.
+- Informationen mit Bedeutung für das gesamte Projekt werden an die gemeinsame Signal-Gruppe und nicht ausschließlich an die Projektleitung gesendet.
+- Wesentliche Architektur-, Umfangs-, Termin- und Datenschutzentscheidungen werden anschließend kurz in der gemeinsamen Projektdokumentation festgehalten.
+- Passwörter, Zugangsdaten und personenbezogene Testdaten werden weder über Signal noch im Repository geteilt.
+- Die Projektleitung übernimmt die formale Bereitstellung der Liefergegenstände und die Kommunikation mit dem Tutor. Operative Abstimmungen erfolgen direkt zwischen den beteiligten Teammitgliedern.
 
 # Risikomanagement
 
-Risikomanagement umfasst hier tatsächlich Projekt-, Personal- und Softwaresicht.
-Vielleicht sollten wir uns da gedanken machen ob wir eine Matrix aufstellen
+Das Risikomanagement wird während des gesamten Projekts fortgeführt. Risiken werden anhand ihrer **Eintrittswahrscheinlichkeit** und ihrer **Auswirkung** jeweils als niedrig, mittel oder hoch bewertet.
+
+| Eintrittswahrscheinlichkeit / Auswirkung | niedrig | mittel | hoch |
+| --- | --- | --- | --- |
+| **niedrig** | niedrig | niedrig | mittel |
+| **mittel** | niedrig | mittel | hoch |
+| **hoch** | mittel | hoch | hoch |
+
+Risiken mit hoher Priorität werden unmittelbar behandelt. Risiken mit mittlerer Priorität werden spätestens im nächsten Regelmeeting überprüft. Risiken mit niedriger Priorität werden dokumentiert und bei wesentlichen Änderungen erneut bewertet.
+
+Die Risikoliste wird als Bestandteil der Projektdokumentation im Repository versioniert. Wichtige oder zeitkritische Risiken werden unmittelbar in der gemeinsamen Signal-Gruppe mitgeteilt. Die operative Behandlung übernimmt die für das betroffene Arbeitspaket zuständige Person gemeinsam mit den unmittelbar beteiligten Mitgliedern.
+
+Die Projektleitung wird insbesondere dann einbezogen, wenn ein Meilenstein gefährdet ist oder eine Abstimmung mit dem Tutor erforderlich wird. Redmine wird nicht zur internen Risikoverwaltung, sondern ausschließlich zur formalen Übermittlung der Meilensteine verwendet.
+
+## Projekt- und Personalrisiken
+
+| ID | Risiko | Bewertung | Vorbeugung und Frühindikator | Reaktion |
+| --- | --- | --- | --- | --- |
+| PM-01 | Ein Artefakt oder Liefergegenstand wird verspätet oder nicht prüffähig fertiggestellt. | Eintritt: mittel; Auswirkung: hoch | Verantwortliche Person, Reviewperson und interne Frist werden festgelegt. Die Fertigstellung soll mindestens zwei Tage vor dem Meilenstein erfolgen. | Das Team wird über Signal informiert, priorisiert die offenen Aufgaben neu und stellt zunächst den Pflichtumfang sicher. |
+| PM-02 | Ein Teammitglied fällt kurzfristig oder längerfristig aus. | Eintritt: mittel; Auswirkung: hoch | Bearbeitungsstände und offene Schritte werden dokumentiert. Kritische Bereiche erhalten eine eingewiesene Vertretung. | Die Aufgaben werden gemeinsam neu verteilt. Reicht die Kapazität nicht aus, werden zunächst SOLL-Anforderungen reduziert. |
+| PM-03 | Der Aufwand wurde unterschätzt oder die Teamkapazität reicht nicht aus. | Eintritt: hoch; Auswirkung: hoch | Restaufwand und Kapazität werden wöchentlich verglichen. Die Projektreserve wird nicht vorab verplant. | Arbeitspakete werden weiter zerlegt, neu verteilt oder im Umfang reduziert. |
+| PM-04 | Unklare Zuständigkeiten oder Entscheidungen führen zu Doppelarbeit. | Eintritt: mittel; Auswirkung: mittel | Für jedes Arbeitspaket werden verantwortliche und prüfende Personen festgelegt. Wesentliche Entscheidungen werden dokumentiert. | Offene Fragen werden in Signal gestellt und bei Bedarf in einem kurzfristigen Teams-Termin entschieden. |
+| PM-05 | Zeitdruck führt zu fehlenden Reviews oder unzureichenden Tests. | Eintritt: mittel; Auswirkung: hoch | Review, Test und Korrektur werden als eigenständige Arbeitsschritte eingeplant. | Neue Funktionen werden gegebenenfalls gestoppt. Die verbleibende Zeit wird auf Fehler, Sicherheitsprobleme und MUSS-Anforderungen konzentriert. |
+| PM-06 | Wichtige Informationen erreichen nicht alle Teammitglieder. | Eintritt: mittel; Auswirkung: mittel | Projektweit relevante Nachrichten werden in der gemeinsamen Signal-Gruppe veröffentlicht. | Unterschiedliche Annahmen werden vor der weiteren Bearbeitung gemeinsam geklärt. |
+| PM-07 | Das Projekt übernimmt mehr MUSS-Anforderungen, als im vorgesehenen Zeitraum zuverlässig umgesetzt werden können. | Eintritt: hoch; Auswirkung: hoch | Aufwand und technisches Risiko jeder Anforderung werden spätestens in MS 3 bewertet. | Erweiterungen werden als SOLL eingeordnet oder vereinfacht. Die Anforderungen des Themenblatts bleiben vorrangig. |
+| PM-08 | Quellcode, Dokumentation oder andere Arbeitsergebnisse gehen verloren oder können keinem eindeutigen Stand zugeordnet werden. | Eintritt: niedrig; Auswirkung: hoch | Arbeitsergebnisse werden regelmäßig in das GitHub-Repository übertragen. Abgabestände erhalten eindeutige Versionsbezeichnungen beziehungsweise Tags. | Der letzte nachvollziehbare Stand wird wiederhergestellt und vor der weiteren Bearbeitung gemeinsam geprüft. |
+
+## Technische Risiken
+
+## Informationssicherheit und Datenschutz
