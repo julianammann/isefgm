@@ -340,5 +340,15 @@ Die Projektleitung wird insbesondere dann einbezogen, wenn ein Meilenstein gefä
 | PM-08 | Quellcode, Dokumentation oder andere Arbeitsergebnisse gehen verloren oder können keinem eindeutigen Stand zugeordnet werden. | Eintritt: niedrig; Auswirkung: hoch | Arbeitsergebnisse werden regelmäßig in das GitHub-Repository übertragen. Abgabestände erhalten eindeutige Versionsbezeichnungen beziehungsweise Tags. | Der letzte nachvollziehbare Stand wird wiederhergestellt und vor der weiteren Bearbeitung gemeinsam geprüft. |
 
 ## Technische Risiken
+| ID | Risiko | Bewertung | Vorbeugung und Frühindikator | Reaktion |
+| --- | --- | --- | --- | --- |
+| TR-01 | Merge-Konflikte durch parallele Arbeit mehrerer Teammitglieder im gleichen Codebereich. | Eintritt: hoch; Auswirkung: mittel | Feature-Branches werden klein gehalten und regelmäßig gemerged, um Divergenzen frühzeitig sichtbar zu machen. Klare Absprache im Team, wer an welchen Komponenten arbeitet. | Der Merge-Konflikt wird von den betroffenen Personen gemeinsam aufgelöst, bevor der Pull Request freigegeben wird. |
+| TR-02 | Fehlerhafter oder ungeprüfter Code gelangt ohne vorheriges Review in den main-Branch | Eintritt: mittel; Auswirkung: hoch | Github Branch Protection Rule für main: kein direkter Push möglich, Pull Request mit mindestens einer Review-Freigabe durch ein anderes Teammitglied als dem Ersteller des Pull Request erforderlich. | Der Pull Request wird zurückgewiesen oder mit Änderungswünschen versehen, bis Review erfolgreich erfolgt ist. |
+| TR-03 | Die Authentifizierung (Login/Session-Handling) schlägt fehl oder lässt sich nicht wie geplant umsetzen | Eintritt: mittel; Auswirkung: hoch | Frühzeitiger Proof-of-Concept für die Authentifizierung. | Bei anhaltenden Problemen wird auf eine einfachere, gut dokumentierte Alternativlösung umgestiegen. |
+| TR-04 | Selbst gehosteter Server fällt aus z. B. durch Stromausfall, Hardwaredefekt, Internetausfall oder ungeplanter Neustart | Eintritt: mittel; Auswirkung: hoch | Regelmäßige Backups von Datenbank und Docker-Volumes, Deployment-Schritte werden vollständig dokumentiert. | Bei kurzfristigem Ausfall wird der Server vom hostenden Teammitglied neu gestartet bzw. das Deployment anhand der Dokumentation wiederhergestellt, bei längerem Ausfall wird auf eine alternative Hosting-Option ausgewichen. |
+
 
 ## Informationssicherheit und Datenschutz
+| ID | Risiko | Bewertung | Vorbeugung und Frühindikator | Reaktion |
+| --- | --- | --- | --- | --- |
+| ISD-01 | Es werden personenbezogene Daten Dritter (Name, Geburtstag der beschenkten Personen) gespeichert, die diesen Personen nicht bekannt ist und der sie nicht zugestimmt haben | Eintritt: mittel; Auswirkung: hoch | Im Projektbericht wird dokumentiert, dass es sich um einen MVP handelt und ausschließlich mit Testdaten statt echten Personendaten gearbeitet wird. | Werden im Projektverlauf doch reale Personendaten eingegeben, werden diese vor der Abgabe durch anonymisierte Testdaten ersetzt. |
