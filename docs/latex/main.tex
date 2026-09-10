@@ -118,9 +118,9 @@ Datum: 10.\,September 2026 % <- auf den realen Abgabetag anpassen
 % =====================================================================
 \section{Projektvision}
 
-Der \textbf{Geschenke-Manager} wird als datenschutzorientierte, browserbasierte Webanwendung konzipiert und prototypisch umgesetzt. Die Anwendung bündelt Informationen zu Personen, Anlässe, Geschenkideen, vergangene Geschenke und offene Aufgaben. Sie unterstützt eine rechtzeitige Planung und hilft, unbeabsichtigte Wiederholungen und kurzfristigen Beschaffungsstress zu vermeiden.
+Der \textbf{Geschenke-Manager} wird als datenschutzorientierte, browserbasierte Webanwendung konzipiert und prototypisch umgesetzt. Die Anwendung bündelt Informationen zu Personen, Anlässen, Geschenk\-ideen, vergangene Geschenken und offenen Aufgaben. Sie unterstützt eine rechtzeitige Planung und hilft, unbeabsichtigte Wiederholungen und kurzfristigen Beschaffungsstress zu vermeiden.
 
-Personen, Anlässe und Geschenkideen können unabhängig voneinander erfasst und flexibel verknüpft werden. Eine Idee lässt sich dadurch sofort festhalten, auch wenn Empfänger:innen oder Anlass noch nicht feststehen. Sie kann für ein gemeinsames Geschenk an mehrere Personen oder für mehrere unabhängige Beschenkungen verwendet werden. Der jeweilige Planungs- und Beschaffungsstand bleibt dabei eindeutig zugeordnet.
+Personen, Anlässe und Geschenkideen können unabhängig voneinander erfasst und flexibel verknüpft werden. Eine Idee lässt sich dadurch sofort festhalten, auch wenn die Empfänger:innen oder der Anlass noch nicht feststehen. Sie kann für ein gemeinsames Geschenk an mehrere Personen oder für mehrere unabhängige Beschenkungen verwendet werden. Der jeweilige Planungs- und Beschaffungsstand bleibt dabei eindeutig zugeordnet.
 
 Automatische Benachrichtigungen erinnern an bevorstehende Anlässe und unterstützen die Beschaffung. Widerrufbare Freigabelinks ermöglichen das kontrollierte Teilen von Ideen zu ausgewählten Personen. Weitere Vorschläge werden aus anonymisierten und aggregierten Merkmalen vergangener Geschenke und vorhandener Geschenkideen abgeleitet. Personenbezogene Inhalte anderer Konten werden dabei nicht offengelegt.
 
@@ -134,7 +134,7 @@ Automatische Benachrichtigungen erinnern an bevorstehende Anlässe und unterstü
 \midrule
 \textbf{Yin Yin Wu-Hanke} & \includegraphics[height=2.4cm]{team_yin.jpg} & Detection Engineer & Frontendentwicklung, Security \\*
 \addlinespace
-\textbf{Julian Ammann} & \includegraphics[height=2.4cm]{team_julian.jpg} & Senior Full Stack Developer & Frontend- \& Backendentwicklung, DevOps, Systemarchitektur \\*
+\textbf{Julian Ammann} & \includegraphics[height=2.4cm]{team_julian.jpg} & Senior Full Stack Developer & Frontend- \& Backendentwicklung, \mbox{DevOps}, Systemarchitektur \\*
 \addlinespace
 \textbf{Anton Hirsch} & \includegraphics[height=2.4cm]{team_anton.jpg} & Studium der Informatik (Bachelor) & Grundlagen in Python, Java, C++, SQL sowie KI-gestützter Recherche und Problemlösung \\*
 \addlinespace
@@ -158,7 +158,7 @@ MS 3 konkretisiert das Anforderungsmanagement, die technische Konfiguration und 
 \midrule
 \endhead
 F-01 & MUSS & Nutzer:innen können sich registrieren, anmelden und abmelden. Kontogebundene fachliche Daten gehören genau einem Konto. Feste Anlasstypen stehen systemweit zur Verfügung. \\
-F-02 & MUSS & Personen können mit Name, Geburtstag, Beziehung und Notizen angelegt, angezeigt, geändert und gelöscht werden. Der Erstellzeitpunkt wird automatisch gespeichert. \\
+F-02 & MUSS & Personen können mit Namen, Geburtstag, Beziehung und Notizen angelegt, angezeigt, geändert und gelöscht werden. Der Erstellzeitpunkt wird automatisch gespeichert. \\
 F-03 & MUSS & Geburtstag und Weihnachten stehen als feste Anlasstypen zur Verfügung. Eigene einmalige und wiederkehrende Anlässe können angelegt werden. \\
 F-04 & MUSS & Personen, Anlässe und Geschenkideen können unabhängig angelegt und flexibel in n:m-Beziehungen verknüpft oder wieder getrennt werden. Eine Idee kann sowohl für gemeinsame Geschenke als auch für unabhängige Beschenkungen verwendet werden. \\
 F-05 & MUSS & Eine Geschenkidee lässt sich schnell mit einem Titel erfassen und um Beschreibung und Preisrahmen ergänzen. Der Erstellzeitpunkt wird automatisch gespeichert. \\
@@ -170,7 +170,7 @@ F-10 & MUSS & Das System versendet automatische Benachrichtigungen über Geburts
 F-11 & MUSS & Sechs Wochen vor Weihnachten beginnt der regelmäßige Versand einer Statusübersicht über die vorgesehenen Empfänger:innen und den jeweiligen Beschaffungsstand. \\
 F-12 & MUSS & Etwa zwei Wochen vor einem konkreten Anlasstermin prüft das System die Beschenkungen der vorgesehenen Empfänger:innen. Es erinnert die Nutzer:innen an Personen ohne zugeordnete Beschenkung und an Beschenkungen mit dem Status \textbf{Idee} oder \textbf{Geplant}. Bereits besorgte oder verschenkte Geschenke für dieselbe Person und denselben Termin verhindern diese Erinnerung nicht. \\
 F-13 & MUSS & Planung, Versandversuch und Ergebnis einer Benachrichtigung werden gespeichert. Wiederholte oder parallele Scheduler-Läufe dürfen keinen zusätzlichen Versandauftrag für dieselbe geplante Nachricht erzeugen. \\
-F-14 & MUSS & Ideen ausgewählter Personen können über einen nicht erratbaren, optional ablaufenden und jederzeit deaktivierbaren Nur-Lese-Link geteilt werden. \\
+F-14 & MUSS & Geschenkideen für ausgewählte Personen können über einen nicht erratbaren, optional ablaufenden und jederzeit deaktivierbaren Nur-Lese-Link geteilt werden. \\
 F-15 & MUSS & Die vollständige eigene Liste mit Personen, Geschenkideen und vergangenen Geschenken kann als HTML dargestellt werden. \\
 F-16 & MUSS & Das System erzeugt aus anonymisierten und aggregierten Merkmalen vergangener Geschenke und vorhandener Geschenkideen weitere Vorschläge. Bereits vorhandene oder verschenkte Ideen der Zielperson werden ausgeschlossen. Vorschläge können einfach übernommen oder verworfen werden. \\
 F-17 & MUSS & Nutzer:innen können das eigene Konto einschließlich aller zugehörigen kontogebundenen Daten löschen. \\
@@ -207,7 +207,7 @@ Q-09 & Nachvollziehbarkeit & Anforderungen und wesentliche Entscheidungen werden
 \item Spätestens zu MS 4 ist das System für den Tutor über einen Browser erreichbar und mit Testkonten ohne lokale Installation prüfbar.
 \item JavaScript für das Frontend, Python für das Backend und der containerisierte Betrieb sind vorgesehen. Die technische Konfiguration wird in MS 3 anhand kurzer Probeläufe konkretisiert. Dabei werden insbesondere das Datenbankprodukt, das Hosting und der E-Mail-Dienst festgelegt.
 \item Bilddateien werden geschützt gespeichert. Die Datenbank enthält ihre Metadaten und Speicherreferenzen.
-\item Geheimnisse, Passwörter und personenbezogene fachliche Testdaten werden nicht im Repository gespeichert.
+\item Geheimnisse, Passwörter und personenbezogene fachliche Testdaten werden nicht im \mbox{Repository} gespeichert.
 \end{itemize}
 
 \subsubsection{Organisatorische Randbedingungen}
@@ -264,7 +264,7 @@ Geschenk/Idee & ID, Besitzer-Nutzer-ID, Titel, Beschreibung, Preis von/bis, Wäh
 Person–Anlass & Flexible Zuordnung von Personen und vorgesehenen Anlässen \\
 Geschenk–Person & Flexible Zuordnung von Ideen und möglichen Empfänger:innen \\
 Geschenk–Anlass & Flexible Zuordnung von Ideen und möglichen Anlässen \\
-Beschenkung & ID, Geschenk-ID, Status, Anlass-ID, konkreter Anlasstermin, verschenkt am. Anlass und Termine sind abhängig vom Bearbeitungsstand. \\
+Beschenkung & ID, Geschenk-ID, Status, Anlass-ID, konkreter Anlasstermin, verschenkt am. Ob Anlass und Termine bereits angegeben werden müssen, hängt vom Bearbeitungsstand ab. \\
 Beschenkung–Person & Zuordnung einer Beschenkung zu einer oder mehreren gemeinsamen Empfänger:innen \\
 Notiz & ID, Geschenk-ID, Beschriftung, Text \\
 Anhang & ID, Geschenk-ID, Art: Link oder Bild, URL beziehungsweise Speicherreferenz, Beschriftung \\
@@ -349,24 +349,24 @@ Absehbare Abweichungen werden unmittelbar über Signal mitgeteilt und im nächst
 \textbf{Meilenstein} & \textbf{Liefergegenstand} & \textbf{Bereitstellung und Vorgabe} \\
 \midrule
 \endhead
-MS 0 & Meilensteinplan & PDF oder Bild in Redmine \\
-MS 1 & Projektkonfiguration & PDF in Redmine \\
+MS 0 & Meilensteinplan & PDF oder Bild in Redmine. \\
+MS 1 & Projektkonfiguration & PDF in Redmine. \\
 MS 2 & Projektvideo & Video oder Link in Redmine. Maximale Länge: fünf Minuten. \\
-MS 3 & Konfiguration der Softwareentwicklung und Qualitätsplanung & PDF in Redmine \\
-MS 4 & Benutzerhandbuch & Über das Redmine-Ticket erreichbar \\
-MS 4 & Fachliche Dokumentation: Prozesse, Konzepte und Geschäftsregeln & Über das Redmine-Ticket erreichbar \\
-MS 4 & Technische Dokumentation: Architektur, Komponenten, Schnittstellen und Datenbank & Über das Redmine-Ticket erreichbar \\
-MS 4 & Betriebsdokumentation: Installation, Konfiguration und Admin-Account & Über das Redmine-Ticket erreichbar \\
-MS 4 & Testabschlussbericht einschließlich Testfällen und Testprotokollen & Über das Redmine-Ticket erreichbar \\
-MS 4 & Programmcode beziehungsweise Link zum Repository & Über das Redmine-Ticket erreichbar \\
-MS 4 & Link zum erstellten System & Über das Redmine-Ticket erreichbar und im Browser ohne lokale Installation prüfbar \\
+MS 3 & Konfiguration der Softwareentwicklung und Qualitätsplanung & PDF in Redmine. \\
+MS 4 & Benutzerhandbuch & Über das Redmine-Ticket erreichbar. \\
+MS 4 & Fachliche Dokumentation: Prozesse, Konzepte und Geschäftsregeln & Über das Redmine-Ticket erreichbar. \\
+MS 4 & Technische Dokumentation: Architektur, Komponenten, Schnittstellen und Datenbank & Über das Redmine-Ticket erreichbar. \\
+MS 4 & Betriebsdokumentation: Installation, Konfiguration und Admin-Account & Über das Redmine-Ticket erreichbar. \\
+MS 4 & Testabschlussbericht einschließlich Testfällen und Testprotokollen & Über das Redmine-Ticket erreichbar. \\
+MS 4 & Programmcode beziehungsweise Link zum Repository & Über das Redmine-Ticket erreichbar. \\
+MS 4 & Link zum erstellten System & Über das Redmine-Ticket erreichbar und im Browser ohne lokale Installation prüfbar. \\
 MS 4 & Liste mit Testkonten und Zugangsdaten & Bereitstellung in Redmine. Keine Zugangsdaten im öffentlichen Repository. \\
 MS 5 & Ergebnispräsentation & Video oder Link in Redmine. Maximale Gesamtlänge: 20 Minuten. Die Demo umfasst höchstens sieben Minuten. \\
 MS 6 & Gemeinsamer Projektbericht & Gesonderte Abgabe durch jedes Mitglied in Turnitin. Die Ticketkommunikation erfolgt über Redmine. \\
 \bottomrule
 \end{tabularx}
 
-Das Team benennt für jeden Liefergegenstand eine verantwortliche und eine prüfende Person. Prüfergebnisse und erforderliche Korrekturen werden in den vorhandenen Projektunterlagen oder am zugehörigen Ticket festgehalten. Versionen und Speicherorte ergeben sich aus dem Repository und den Abgabefassungen. Tutorfeedback und Abnahmestatus werden über Redmine nachvollzogen.
+Das Team benennt für jeden Liefergegenstand eine verantwortliche und eine prüfende Person. Prüf\-ergebnisse und erforderliche Korrekturen werden in den vorhandenen Projektunterlagen oder am zugehörigen Ticket festgehalten. Versionen und Speicherorte ergeben sich aus dem Repository und den Abgabefassungen. Tutorfeedback und Abnahmestatus werden über Redmine nachvollzogen.
 
 % =====================================================================
 \section{Projektstrukturplan}
@@ -378,23 +378,23 @@ Der Projektstrukturplan umfasst die aktuell bekannten Arbeitspakete. Planung, St
 \textbf{PSP-ID} & \textbf{Arbeitspaket} & \textbf{Bekannte Teilaufgaben und Ergebnisse} \\
 \midrule
 \endhead
-1.0 & Projektplanung und -steuerung & Termine, Abstimmungen, Fortschritt, Änderungen und Risiken koordinieren \\
-1.1 & MS 0 – Meilensteinplan & Projektzeitraum und Meilensteine festlegen, Plan visualisieren und bereitstellen \\
-1.2 & MS 1 – Projektkonfiguration & Vision, Team, Anforderungen, Lösungsansatz, Projektstruktur, Aufwand, Rollen, Infrastruktur und Risiken dokumentieren \\
-2.0 & MS 2 – Projektvideo & Inhalte und Ablauf planen, Sprecher:innen festlegen, aufnehmen, prüfen und bereitstellen \\
-3.0 & MS 3 – Entwicklungs- und Qualitätskonfiguration & Vorgehensmodell, Entwicklungsumgebung, Artefakte, technische Rollen, Qualitätsziele, Prüfverfahren und Liefergegenstände festlegen \\
-4.0 & Softwaresystem & Anwendung implementieren, integrieren und technisch bereitstellen \\
-4.1 & Entwicklungsumgebung und Infrastruktur & Repository-Struktur, Entwicklungsumgebung, Container, Datenbank, CI/CD und Hosting vorbereiten \\
-4.2 & Nutzer- und Zugriffsverwaltung & Registrierung, Anmeldung, Sitzungen, Mandantentrennung und Kontolöschung umsetzen. Nutzerprofil als SOLL-Erweiterung berücksichtigen \\
-4.3 & Personen und Anlässe & Personenverwaltung, feste und benutzerdefinierte Anlässe sowie Zuordnungen umsetzen \\
-4.4 & Geschenke und Aufgaben & Ideen, gemeinsame und unabhängige Beschenkungen, Status, Historie, Notizen, Links, Bilder und Aufgaben umsetzen \\
-4.5 & Benachrichtigungen & Geburtstags-, Weihnachts- und zusätzliche Anlass-Erinnerungen, Scheduler, Versandstatus und Deduplizierung umsetzen. Einstellbare Intervalle als SOLL-Erweiterung berücksichtigen \\
-4.6 & Teilen und HTML-Darstellung & Widerrufbare Nur-Lese-Links und die vollständige HTML-Darstellung umsetzen \\
-4.7 & Geschenkideen-Vorschläge & Merkmale, Vorschlagserzeugung, Ausschlussregeln sowie Übernahme und Verwerfung umsetzen \\
-5.0 & Qualitätssicherung & Anforderungen und Liefergegenstände prüfen, Reviews durchführen sowie Unit-, Integrations-, Berechtigungs- und E2E-Tests erstellen und ausführen \\
-6.0 & MS 4 – Dokumentation und Bereitstellung & Benutzerhandbuch, fachliche, technische und betriebliche Dokumentation sowie Testabschlussbericht erstellen. Code, Systemlink und Testkonten bereitstellen \\
-7.0 & MS 5 – Ergebnispräsentation & Projektverlauf, Systemüberblick, Testergebnisse, Demo und Lessons Learned als Video aufbereiten \\
-8.0 & MS 6 – Projektbericht & Individuelle Textbereiche erstellen, gemeinsam redigieren, Titelblatt und Form prüfen, Bericht in Turnitin einreichen \\
+1.0 & Projektplanung und -steuerung & Termine, Abstimmungen, Fortschritt, Änderungen und Risiken koordinieren. \\
+1.1 & MS 0 – Meilensteinplan & Projektzeitraum und Meilensteine festlegen, Plan visualisieren und bereitstellen. \\
+1.2 & MS 1 – Projektkonfiguration & Vision, Team, Anforderungen, Lösungsansatz, Projektstruktur, Aufwand, Rollen, Infrastruktur und Risiken dokumentieren. \\
+2.0 & MS 2 – Projektvideo & Inhalte und Ablauf planen, Sprecher:innen festlegen, aufnehmen, prüfen und bereitstellen. \\
+3.0 & MS 3 – Entwicklungs- und Qualitätskonfiguration & Vorgehensmodell, Entwicklungsumgebung, Artefakte, technische Rollen, Qualitätsziele, Prüfverfahren und Liefergegenstände festlegen. \\
+4.0 & Softwaresystem & Anwendung implementieren, integrieren und technisch bereitstellen. \\
+4.1 & Entwicklungsumgebung und Infrastruktur & Repository-Struktur, Entwicklungsumgebung, Container, Datenbank, CI/CD und Hosting vorbereiten. \\
+4.2 & Nutzer- und Zugriffsverwaltung & Registrierung, Anmeldung, Sitzungen, Mandantentrennung und Kontolöschung umsetzen. Nutzerprofil als SOLL-Erweiterung berücksichtigen. \\
+4.3 & Personen und Anlässe & Personenverwaltung, feste und benutzerdefinierte Anlässe sowie Zuordnungen umsetzen. \\
+4.4 & Geschenke und Aufgaben & Ideen, gemeinsame und unabhängige Beschenkungen, Status, Historie, Notizen, Links, Bilder und Aufgaben umsetzen. \\
+4.5 & Benachrichtigungen & Geburtstags-, Weihnachts- und zusätzliche Anlass-Erinnerungen, Scheduler, Versandstatus und Deduplizierung umsetzen. Einstellbare Intervalle als SOLL-Erweiterung berücksichtigen. \\
+4.6 & Teilen und HTML-Darstellung & Widerrufbare Nur-Lese-Links und die vollständige HTML-Darstellung umsetzen. \\
+4.7 & Geschenkideen-Vorschläge & Merkmale, Vorschlagserzeugung, Ausschlussregeln sowie Übernahme und Verwerfung umsetzen. \\
+5.0 & Qualitätssicherung & Anforderungen und Liefergegenstände prüfen, Reviews durchführen sowie Unit-, Integrations-, Berechtigungs- und E2E-Tests erstellen und ausführen. \\
+6.0 & MS 4 – Dokumentation und Bereitstellung & Benutzerhandbuch, fachliche, technische und betriebliche Dokumentation sowie Testabschlussbericht erstellen. Code, Systemlink und Testkonten bereitstellen. \\
+7.0 & MS 5 – Ergebnispräsentation & Projektverlauf, Systemüberblick, Testergebnisse, Demo und Lessons Learned als Video aufbereiten. \\
+8.0 & MS 6 – Projektbericht & Individuelle Textbereiche erstellen, gemeinsam redigieren, Titelblatt und Form prüfen, Bericht in Turnitin einreichen. \\
 \bottomrule
 \end{tabularx}
 
@@ -439,15 +439,15 @@ Die Reserve wird nicht vorab auf einzelne Aufgaben verteilt. Bei absehbaren Übe
 \toprule
 \textbf{Zweck} & \textbf{System und Nutzung} \\
 \midrule
-Formale Abgaben, Tutorfeedback und Abnahme & \textbf{IU Redmine} mit den jeweiligen Meilensteintickets \\
-Regelmeetings, ausführliche Abstimmungen und Videoaufnahmen & \textbf{Microsoft Teams} \\
-Kurzfristige Abstimmungen und wichtige Projektmeldungen & Gemeinsame \textbf{Signal-Gruppe} \\
+Formale Abgaben, Tutorfeedback und Abnahme & \textbf{IU Redmine} mit den jeweiligen Meilensteintickets. \\
+Regelmeetings, ausführliche Abstimmungen und Videoaufnahmen & \textbf{Microsoft Teams}. \\
+Kurzfristige Abstimmungen und wichtige Projektmeldungen & Gemeinsame \textbf{Signal-Gruppe}. \\
 Aufgaben und Zuständigkeiten & Aufgaben werden gemeinsam in Teams abgestimmt. Aufgabe, verantwortliche Person, Zieltermin und Bearbeitungsstand werden in der vorhandenen Projektdokumentation festgehalten. \\
-Quellcode und technische Dokumentation & \textbf{Öffentliches GitHub-Repository} mit geschütztem Hauptbranch, Reviews und Pull Requests \\
+Quellcode und technische Dokumentation & \textbf{Öffentliches GitHub-Repository} mit geschütztem Hauptbranch, Reviews und Pull Requests. \\
 Dokumentenerstellung & Die Dokumentation wird in \textbf{Markdown im Repository} erstellt. MS 1 und MS 3 werden als PDF exportiert. Für die übrigen Liefergegenstände gelten die vorgesehenen Abgabeformate. \\
 Daten- und Architekturmodellierung & \textbf{yEd/GraphML} beziehungsweise ein abgestimmtes Diagrammwerkzeug. Relevante Modelle werden zusätzlich als Bild eingebunden. \\
-Entwicklung & Individuelle IDEs auf Grundlage einer gemeinsam dokumentierten, reproduzierbaren Projektumgebung \\
-Automatisierte Prüfungen & Vorgesehene CI-Funktion des GitHub-Repositorys für Linting, Tests und Build \\
+Entwicklung & Individuelle IDEs auf Grundlage einer gemeinsam dokumentierten, reproduzierbaren Projektumgebung. \\
+Automatisierte Prüfungen & Vorgesehene CI-Funktion des GitHub-Repositorys für Linting, Tests und Build. \\
 Bereitstellung & Containerisierte Hostingumgebung mit HTTPS, relationaler Datenbank und getrenntem Hintergrundprozess. Die konkrete Konfiguration wird in MS 3 festgelegt. \\
 \bottomrule
 \end{tabularx}
@@ -462,9 +462,9 @@ Arbeitspakete werden dezentral durch die jeweils verantwortlichen Teammitglieder
 \textbf{Teammitglied} & \textbf{Rolle} & \textbf{Wesentliche Verantwortungen} \\
 \midrule
 \textbf{Kevin Jordan Taghu} & Projektleitung und Datenanalyse & Interne Koordination, Überblick über Termine und Liefergegenstände, formale Abgaben, Kommunikation mit dem Tutor sowie Unterstützung bei Datenmodellierung und Auswertung \\
-\textbf{Julian Ammann} & Technische Leitung und Full-Stack-Entwicklung & Systemarchitektur, Backend- und Frontendentwicklung, DevOps, CI/CD, Hosting und technische Integration \\
-\textbf{Yin Yin Wu-Hanke} & Security und Frontendentwicklung & Planung und Prüfung der Sicherheits- und Datenschutzmaßnahmen innerhalb der vorgesehenen Projektunterlagen. Durchführung von Berechtigungs- und Sicherheitstests sowie Unterstützung bei der Frontendentwicklung \\
-\textbf{Anton Hirsch} & Anforderungen, Dokumentation und Testunterstützung & Fachliche Anforderungen, Mitwirkung am Datenmodell, Projekt- und Personalrisiken, Dokumentation sowie Erstellung und Durchführung fachlicher Testfälle \\
+\textbf{Julian Ammann} & Technische Leitung und Full-Stack-Entwicklung & Systemarchitektur, Backend- und Frontend\-entwicklung, DevOps, CI/CD, Hosting und technische Integration \\
+\textbf{Yin Yin Wu-Hanke} & Security und Frontend\-entwicklung & Planung und Prüfung der Sicherheits- und Datenschutzmaßnahmen innerhalb der vorgesehenen Projekt\-unterlagen. Durchführung von Berechtigungs- und Sicherheitstests sowie Unterstützung bei der Frontendentwicklung \\
+\textbf{Anton Hirsch} & Anforderungen, Dokumentation und Testunterstützung & Fachliche Anforderungen, Mitwirkung am Daten\-modell, Projekt- und Personalrisiken, Dokumentation sowie Erstellung und Durchführung fachlicher \mbox{Testfälle} \\
 \bottomrule
 \end{tabularx}
 
@@ -484,7 +484,7 @@ Die Anwendung wird in getrennten Containern für Frontend, Backend, Scheduler un
 \end{itemize}
 
 \begin{figure}[H]\centering
-\includegraphics[width=0.7\linewidth]{infra.png}
+\includegraphics[width=0.5\linewidth]{infra.png}
 \caption{Technische Infrastruktur des Geschenke-Managers.}
 \label{fig:infra}
 \end{figure}
@@ -524,7 +524,7 @@ Die Seitenverantwortung für MS 6 wird spätestens mit MS 3 festgelegt. Jedes Mi
 \begin{itemize}
 \item \textbf{20.08.2026:} Vorstellungsrunde, Wahl von Kevin zur Projektleitung und gemeinsame Erarbeitung von MS 0.
 \item \textbf{26.08.2026:} Vorgezogenes zweites Meeting mit strukturellen Überlegungen und Erstellung eines ersten ER-Modells.
-\item \textbf{03.09.2026:} Prüfung des MS-1-Arbeitsstands. Das Team beschließt, das Risikomanagement in drei Bereiche zu gliedern: Projekt- und Personalrisiken, technische Risiken sowie Informationssicherheit und Datenschutz.
+\item \textbf{03.09.2026:} Prüfung des MS-1-Arbeitsstands. Das Team beschloss, das Risikomanagement in drei Bereiche zu gliedern: Projekt- und Personalrisiken, technische Risiken sowie Informationssicherheit und Datenschutz.
 \end{itemize}
 
 \subsection{Regelkommunikation}
@@ -563,7 +563,7 @@ Die für das betroffene Arbeitspaket zuständige Person übernimmt gemeinsam mit
 
 \subsection{Projekt- und Personalrisiken}
 
-\begin{tabularx}{\linewidth}{@{}l Y p{2cm} Y Y@{}}
+\begin{tabularx}{\linewidth}{@{}l Y Y Y Y@{}}
 \toprule
 \textbf{ID} & \textbf{Risiko} & \textbf{Bewertung} & \textbf{Vorbeugung und Frühindikator} & \textbf{Reaktion} \\
 \midrule
@@ -593,7 +593,6 @@ TR-04 & Der bevorzugte Homeserver fällt aus. & Eintritt: mittel, Auswirkung: ho
 \bottomrule
 \end{tabularx}
 
-\subsection{Informationssicherheit und Datenschutz}
 
 \begin{tabularx}{\linewidth}{@{}l Y p{2cm} Y Y@{}}
 \toprule
