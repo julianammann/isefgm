@@ -1,0 +1,23 @@
+[tasks.install]
+run = "pnpm install --frozen-lockfile"
+
+[tasks.dev]
+run = "pnpm run dev"
+
+[tasks.lint]
+run = "pnpm run lint"
+
+[tasks.typecheck]
+run = "pnpm run typecheck"
+
+[tasks.test]
+run = "pnpm run test"
+
+[tasks.build]
+run = "pnpm run build"
+
+[tasks.check]
+depends = ["lint", "typecheck", "test"]
+
+[tasks.generate]
+run = "pnpm run generate"

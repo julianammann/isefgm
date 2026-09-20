@@ -1,0 +1,28 @@
+[tools]
+lefthook = "2.1.14"
+node = "26.9.0"
+pnpm = "12.5.1"
+python = "3.14"
+uv = "0.12.9"
+
+[env]
+_.file = ".env"
+
+[tasks.setup]
+description = "setup complete project"
+run = """
+mise -C backend run install
+mise -C frontend run install
+lefthook install
+"""
+
+[tasks.db]
+run = "docker compose up -d db"
+
+[tasks.check]
+description = "full project lint, typecheck"
+run = ["mise -C backend run check", "mise -C frontend run check"]
+
+[tasks.openapi]
+description = "export schema and generate types"
+run = ["mise -C backend run openai", "mise -C frontend run generate"]
