@@ -1,0 +1,56 @@
+min_version: 2.0.0
+
+pre-commit:
+  parallel: false
+  commands:
+    ruff-lint:
+      priority: 1
+      root: backend/
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+    ruff-format:
+      priority: 2
+      root: backend/
+      glob: "*.py"
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+    eslint:
+      priority: 3
+      root: frontend/
+      glob: "*.{ts,js,svelte}"
+      exclude: "src/lib/api/schema.d.ts"
+      run: pnpm exec eslint --fix {staged_files}
+      stage_fixed: true
+    prettier:
+      priority: 4
+      root: frontend/
+      glob: "*.{ts,js,svelte,css,json,md}"
+      exclude: "src/lib/api/schema.d.ts"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+    openapi-types:
+      priority: 5
+      glob: "backend/src/giftmanager/{api,schemas}/**/*.py"
+      run: |
+        set -e
+        (cd backend && uv run python -m giftmanager.export_openapi > ../frontend/openapi.json)
+        (cd frontend && pnpm run --silent generate)
+        git add frontend/openapi.json frontend/src/lib/api/schema.d.ts
+    gitleaks:
+      priority: 6
+      run: gitleaks protect --staged --redact
+
+pre-push:
+  parallel: true
+  commands:
+    pyright:
+      root: backend/
+      run: uv run pyright
+    alembic-check:
+      root: backend/
+      #needs a running DB
+      run: uv run alembic check
+    svelte-check:
+      root: frontend/
+      run: pnpm run check

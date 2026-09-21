@@ -1,0 +1,33 @@
+[tools]
+gitleaks = "8.30.1"
+lefthook = "2.1.14"
+node = "26.9.0"
+pnpm = "12.5.1"
+python = "3.14"
+uv = "0.12.9"
+
+[env]
+_.file = ".env"
+
+[tasks.setup]
+description = "setup complete project"
+run = """
+mise -C backend run install
+mise -C frontend run install
+lefthook install
+"""
+
+[tasks.db]
+run = "docker compose up -d db"
+
+[tasks.check]
+description = "full project lint, typecheck"
+run = ["mise -C backend run check", "mise -C frontend run check"]
+
+[tasks.openapi]
+description = "export schema and generate types"
+run = ["mise -C backend run openapi", "mise -C frontend run generate"]
+
+[tasks.docker]
+description = "build image with pinned uv version"
+run = "UV_VERSION=$(mise current uv) docker compose build"

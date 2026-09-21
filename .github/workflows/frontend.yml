@@ -1,0 +1,56 @@
+name: frontend
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "mise.toml"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "mise.toml"
+      - ".github/workflows/frontend.yml"
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: lint, check, test, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install_args: node pnpm
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generated API types are up to date
+        run: |
+          pnpm run generate
+          git diff --exit-code -- src/lib/api/schema.d.ts
+
+      - run: pnpm run lint
+      - run: pnpm run check
+
+      - name: Browser for component tests
+        run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test
+
+      - run: pnpm run build
+      - run: pnpm audit --audit-level=high
+        continue-on-error: true

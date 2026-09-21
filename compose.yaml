@@ -1,0 +1,66 @@
+x-backend: &backend
+  build:
+    context: ./backend
+    args:
+      UV_VERSION: ${UV_VERSION:-0.12.9}
+  image: giftmanager-backend
+  environment: &backend-env
+    DATABASE_URL: postgresql+asyncpg://app:app@db:5432/app
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      APP_ENV: production
+      CORS_ORIGINS: "http://localhost:3000"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/v1/health/live')"]
+      interval: 15s
+      timeout: 3s
+      start_period: 10s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context:
+        ./frontend
+    environment:
+      API_URL: http://api:8000
+      ORIGIN: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
