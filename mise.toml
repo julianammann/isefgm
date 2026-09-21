@@ -1,4 +1,5 @@
 [tools]
+gitleaks = "8.30.1"
 lefthook = "2.1.14"
 node = "26.9.0"
 pnpm = "12.5.1"
@@ -25,4 +26,8 @@ run = ["mise -C backend run check", "mise -C frontend run check"]
 
 [tasks.openapi]
 description = "export schema and generate types"
-run = ["mise -C backend run openai", "mise -C frontend run generate"]
+run = ["mise -C backend run openapi", "mise -C frontend run generate"]
+
+[tasks.docker]
+description = "build image with pinned uv version"
+run = "UV_VERSION=$(mise current uv) docker compose build"

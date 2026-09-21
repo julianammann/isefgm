@@ -1,0 +1,21 @@
+name: skip-ci
+on:
+  pull_request:
+    paths-ignore:
+      - "backend/**"
+      - "frontend/**"
+      - "mise.toml"
+      - "compose.yaml"
+      - ".github/workflows/**"
+
+jobs:
+  backend-check:
+    name: lint, types, migrations, tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "backend unchanged"
+  frontend-check:
+    name: lint, types, migrations, tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "frontend unchanged"

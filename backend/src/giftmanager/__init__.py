@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from backend!")
+from importlib.metadata import version
+
+__version__ = version("giftmanager")

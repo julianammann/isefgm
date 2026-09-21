@@ -8,19 +8,19 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
+    uv sync --no-install-project --frozen --no-dev
 
 COPY src ./src
 COPY alembic ./alembic
 COPY alembic.ini ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
+    uv sync --frozen --no-dev
 
 FROM python:3.14-slim AS runtime
 RUN groupadd --system app && useradd --system --gid app --home /app app
 WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
-ENV PATH="/app/.venv/bin:$PATH" PYTHONBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 USER app
 EXPOSE 8000
 CMD ["fastapi", "run", "src/giftmanager/main.py", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
