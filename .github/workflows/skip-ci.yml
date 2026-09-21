@@ -15,7 +15,7 @@ jobs:
     steps:
       - run: echo "backend unchanged"
   frontend-check:
-    name: lint, types, migrations, tests
+    name: lint, check, test, build
     runs-on: ubuntu-latest
     steps:
       - run: echo "frontend unchanged"

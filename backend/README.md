@@ -60,7 +60,7 @@ Import-Pfade sind immer absolut: `from giftmanager.core.config import get_settin
 | `DATABASE_URL` | `postgresql+asyncpg://app:app@localhost:5432/app` | asyncpg-Treiber erforderlich |
 | `APP_ENV` | `development` | `development` aktiviert `/docs` und Console-Logs; `production`/`test` → JSON-Logs |
 | `LOG_LEVEL` | `INFO` | `DEBUG` zeigt auch SQL, wenn `echo` am Engine aktiv ist |
-| `CORS_ORIGINS` | `["http://localhost:3000"]` | JSON-Liste |
+| `CORS_ORIGINS` | `"http://localhost:3000"` | JSON-Liste |
 
 ## Datenbank und Migrationen
 
@@ -85,6 +85,7 @@ uv run pytest -v -k health
 ## Logging
 ```python
 import structlog
+
 log = structlog.get_logger()
 log.info("gift created", gift_id=gift.id)
 ```

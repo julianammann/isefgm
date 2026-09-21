@@ -8,7 +8,7 @@ run = "pnpm run dev"
 run = "pnpm run lint"
 
 [tasks.typecheck]
-run = "pnpm run typecheck"
+run = "pnpm run check"
 
 [tasks.test]
 run = "pnpm run test"

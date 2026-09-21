@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.test
 lefthook-local.yml
 mise.local.toml
 .mise.local.toml
