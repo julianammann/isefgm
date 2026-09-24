@@ -2,52 +2,49 @@
 
 ## Konfiguration der Softwareentwicklung
 
-### Ausgangslage
+### Ausgangslage und Ziel
 
-Zu MS 3 stehen die technischen Grundlagen. Monorepo, Toolchain, Git-Hooks, CI-Pipeline, Container und das Grundgerüst von Backend und Frontend sind eingerichtet. Ein Health-Endpunkt prüft die Datenbankverbindung. Die Authentifizierung ist implementiert und wird mit MS 3 in `main` übernommen. Rate-Limit und Origin-Prüfung fehlen noch.
+Dieses Kapitel legt fest, wie das Team den Geschenke-Manager bis MS 4 entwickelt, prüft und bereitstellt. Es beschreibt den geplanten Zielzustand. Alle Festlegungen gelten ab MS 3 verbindlich für alle Teammitglieder.
 
-Das Datenmodell ist vollständig attributiert und für alle Entwickler verbindlich. Auf dieser Basis setzt das Team ab KW 40 die Fachdomänen parallel um.
+Zu MS 3 besteht ein technisches Grundgerüst: ein gemeinsames Repository für Backend und Frontend, gepinnte Werkzeugversionen, Git-Hooks, CI-Workflows, Dockerfiles und ein Health-Endpunkt, der die Datenbankverbindung prüft. Alles Weitere in diesem Kapitel ist geplant und entsteht in den Sprints bis MS 4.
 
 ### Vorgehensmodell
 
-Das Team arbeitet iterativ in drei Abschnitten. Jeder endet mit einem lauffähigen, auf `main` zusammengeführten Stand:
+Das Team arbeitet iterativ in vier Abschnitten. Jeder Abschnitt endet mit einem lauffähigen Stand auf `main`.
 
-| Abschnitt      | Zeitraum              | Ziel                                                                                                                                                       |
-| -------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sprint 0       | bis 27.09.2026 (MS 3) | Entwicklungskonfiguration, Datenmodell, Authentifizierung übernehmen, Walking Skeleton unter HTTPS erreichbar                                              |
-| Sprint 1       | 28.09. bis 03.10.2026 | Mandantentrennung als Pattern, erste Fachdomäne „Personen und Anlässe“ vollständig durch alle Schichten (Modell, Migration, Service, API, Tests, Frontend) |
-| Sprint 2       | 04.10. bis 08.10.2026 | Geschenke, Beschenkungen, Aufgaben, Notizen, Anhänge, Benachrichtigungen, Teilen, HTML-Ansicht und Vorschläge parallel                                     |
-| Stabilisierung | 09.10. bis 11.10.2026 | Feature-Freeze seit 08.10. Nur noch Fehlerbehebung, Tests, Dokumentation und Bereitstellung für MS 4                                                       |
+| Abschnitt      | Zeitraum              | Ziel                                                                                                                                     |
+| -------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint 0       | bis 27.09.2026 (MS 3) | Entwicklungskonfiguration, verbindliches Datenmodell, Authentifizierung, leere Anwendung (Walking Skeleton) unter HTTPS erreichbar       |
+| Sprint 1       | 28.09. bis 03.10.2026 | Mandantentrennung als wiederverwendbares Muster, erste Fachdomäne „Personen und Anlässe“ durch alle Schichten bis ins Frontend           |
+| Sprint 2       | 04.10. bis 08.10.2026 | Geschenke, Beschenkungen, Aufgaben, Notizen, Anhänge, Benachrichtigungen, Teilen-Links, HTML-Ansicht und Geschenkvorschläge parallel     |
+| Stabilisierung | 09.10. bis 11.10.2026 | Feature-Freeze ab 08.10.2026. Nur noch Fehlerbehebung, Tests, Dokumentation und Bereitstellung für MS 4                                  |
 
-Die erste Fachdomäne in Sprint 1 dient als Vorlage für alle weiteren. Die Stränge laufen erst parallel, wenn sie mit Tests und Frontend-Anbindung steht. Vier Personen schreiben dann gleichzeitig Modelle und Migrationen nach demselben Muster (Risiko TR-01).
+Die erste Fachdomäne dient als Vorlage für alle weiteren. Erst wenn sie mit Tests und Frontend-Anbindung fertig ist, beginnen die übrigen Domänen parallel, und alle vier Entwickler schreiben ihre Modelle und Migrationen nach diesem erprobten Muster.
 
-Jeder Abschnitt beginnt mit dem Regelmeeting in Microsoft Teams. Dort werden Aufgaben verteilt und der Fortschritt gegen den Projektstrukturplan geprüft. Kurzfristige Blocker laufen über Signal. Die Qualitätsziele QZ-01 bis QZ-08 und die Definition of Done (siehe unten) sind die Abnahmekriterien jedes Abschnitts.
+Jeder Abschnitt beginnt mit einem Regelmeeting in Microsoft Teams. Dort verteilt das Team die Aufgaben und prüft den Fortschritt gegen den Projektstrukturplan. Kurzfristige Blocker klärt das Team über Signal. Abnahmekriterien jedes Abschnitts sind die Qualitätsziele QZ-01 bis QZ-08 und die Definition of Done am Ende dieses Kapitels.
 
 ### Rollen und Zuständigkeiten in der Entwicklung
 
-Die Rollen aus MS 1 gelten weiter. In der Entwicklung verteilen sich die Aufgaben so:
+| Teammitglied       | Entwicklung                                                                                                                                  | Review und Prüfung                                                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Julian Ammann      | Einrichtung von Repository, Werkzeugen, CI/CD, Containern und Hosting (PSP 4.1). Authentifizierung und Sitzungen (PSP 4.2). Frontend         | Reviewt alle Backend-Pull-Requests. Pflicht-Reviewer für Container-, Workflow- und Deploy-Konfiguration. Führt die Deploys aus      |
+| Kevin Jordan Taghu | Backend: Personen und Anlässe (PSP 4.3), Benachrichtigungen mit Scheduler und E-Mail-Versand (PSP 4.5), Teilen-Links und HTML-Ansicht (PSP 4.6) | Reviewt die Backend-Pull-Requests von Anton Hirsch. Koordiniert als Projektleitung die Abschnitte                                   |
+| Anton Hirsch       | Backend: Geschenke, Beschenkungen, Aufgaben, Notizen und Anhänge (PSP 4.4), Geschenkvorschläge (PSP 4.7). Fachliche Testfälle                  | Reviewt die Backend-Pull-Requests von Kevin Jordan Taghu. Prüft die fachliche Korrektheit gegen die Anforderungen                   |
+| Yin Yin Wu-Hanke   | Unterstützung im Frontend, Berechtigungs- und Sicherheitstests, Auswertung der Secret- und Abhängigkeitsscans                                | Reviewt alle Frontend-Pull-Requests. Prüft sicherheitsrelevante Änderungen (Anmeldung, Teilen-Links, Uploads)                       |
 
-| Teammitglied       | Entwicklung                                                                                                                                                                                  | Review und Prüfung                                                                                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Julian Ammann      | Frontend (SvelteKit) vollständig. Im Backend nur Authentifizierung und Sitzungsverwaltung (PSP 4.2). Initiale Einrichtung von Repository, Toolchain, CI/CD, Containern und Hosting (PSP 4.1) | Reviewt alle Backend-Pull-Requests. Pflicht-Reviewer (Code Owner) für Compose-Dateien, Dockerfiles, Workflows und Deploy-Konfiguration. Führt die Deploys aus |
-| Kevin Jordan Taghu | Backend: Personen und Anlässe (PSP 4.3), Benachrichtigungen mit Scheduler und E-Mail-Versand (PSP 4.5), Teilen-Links und HTML-Darstellung (PSP 4.6)                                          | Reviewt Backend-Pull-Requests von Anton Hirsch. Koordiniert als Projektleitung die Abschnitte                                                                 |
-| Anton Hirsch       | Backend: Geschenke, Beschenkungen, Aufgaben, Notizen und Anhänge (PSP 4.4), Geschenkideen-Vorschläge (PSP 4.7). Fachliche Testfälle und Rückverfolgbarkeit                                   | Reviewt Backend-Pull-Requests von Kevin Jordan Taghu. Prüft fachliche Korrektheit gegen die Anforderungen                                                     |
-| Yin Yin Wu-Hanke   | Unterstützung im Frontend, Berechtigungs- und Sicherheitstests, Auswertung von Secret- und Abhängigkeitsscans                                                                                | Reviewt alle Frontend-Pull-Requests. Prüft sicherheitsrelevante Änderungen (Auth, Teilen-Links, Uploads)                                                      |
+Jeder Pull Request braucht die Freigabe einer anderen Person. Backend-Code prüfen Julian Ammann und der jeweils andere Backend-Entwickler, Frontend-Code prüft Yin Yin Wu-Hanke. Die Authentifizierung prüfen Yin Yin Wu-Hanke unter Sicherheitsaspekten und ein Backend-Entwickler.
 
-Für Reviews gilt: Backend-Code prüfen Julian Ammann und der jeweils andere Backend-Entwickler. Frontend-Code prüft Yin Yin Wu-Hanke. Die Auth-Änderungen von Julian Ammann im Backend prüfen Yin Yin Wu-Hanke (Sicherheit) und ein Backend-Entwickler. Niemand führt eigenen Code ohne fremde Freigabe zusammen.
+Die Backend-Stränge sind nach Fachdomänen getrennt. Jede Domäne erhält in jeder Schicht eine eigene Datei, etwa für Personen je ein Modul für Modell, Schema, Service und Router. Gemeinsam bearbeitet werden nur die beiden Dateien, in denen Modelle und Router registriert werden. Nur dort können Merge-Konflikte entstehen.
 
-Die Aufteilung nach Fachdomänen trennt die Backend-Stränge von Kevin Jordan Taghu und Anton Hirsch. Jede Domäne hat je eine Datei in jeder Schicht (`models/person.py`, `schemas/person.py`, `services/person.py`, `api/v1/persons.py`). Gemeinsam bearbeitet werden nur `models/__init__.py` und `api/v1/router.py`. Merge-Konflikte können so nur in diesen zwei Registrierungsdateien entstehen.
-
-Backend und Frontend verbindet die OpenAPI-Spezifikation. Ein Backend-Endpunkt gilt erst als übergeben, wenn er mit `summary`, `description` und Beispielen im Schema erscheint. Das Frontend baut ausschließlich gegen die daraus generierten Typen.
+Backend und Frontend verbindet die OpenAPI-Spezifikation, die das Backend aus dem Code erzeugt. Ein Endpunkt gilt als übergeben, sobald er mit Zusammenfassung, Beschreibung und Beispielen in der Spezifikation steht. Das Frontend verwendet ausschließlich die daraus generierten Typen.
 
 ### Architektur
 
 ```text
 Browser ──HTTPS──▶ Traefik ──▶ Frontend (SvelteKit, Node, :3000)
                                     │
-                                    │ load / Form Actions (serverseitig)
-                                    │
-                                    │ /api/* Proxy (Browser-Aufrufe)
+                                    │ serverseitige Datenabfragen und Formulare
+                                    │ Proxy für Browser-Aufrufe auf /api/*
                                     ▼
                                 Backend (FastAPI, :8000) ──▶ PostgreSQL 17
                                     ▲                          ▲
@@ -58,10 +55,10 @@ Browser ──HTTPS──▶ Traefik ──▶ Frontend (SvelteKit, Node, :3000)
                                 SMTP-Dienst
 ```
 
-* Nur das Frontend ist öffentlich erreichbar. Backend, Scheduler und Datenbank hängen nur am internen Netz `app-net`.
-* Aus Sicht des Browsers gibt es nur eine Origin. Session-Cookies sind First-Party-Cookies, CORS entfällt.
-* Der Scheduler läuft als eigener Prozess aus demselben Backend-Image, mit genau einer Instanz. Im API-Prozess läuft kein Scheduler.
-* Bilddateien liegen auf einem eigenen Volume. Sie werden nur über einen authentifizierten API-Endpunkt ausgeliefert.
+* Öffentlich erreichbar ist nur das Frontend. Backend, Scheduler und Datenbank liegen in einem internen Container-Netz.
+* Der Browser sieht nur eine Adresse. Das Session-Cookie ist deshalb ein First-Party-Cookie, und eine CORS-Freigabe entfällt.
+* Der Scheduler läuft als eigener Prozess aus dem Backend-Image, immer mit genau einer Instanz. Im API-Prozess läuft kein Scheduler.
+* Bilddateien liegen auf einem eigenen Volume und werden nur über einen angemeldeten API-Endpunkt ausgeliefert.
 
 ### Technologie-Stack
 
@@ -71,190 +68,173 @@ Browser ──HTTPS──▶ Traefik ──▶ Frontend (SvelteKit, Node, :3000)
 | Web-Framework                 | FastAPI mit Uvicorn, vollständig asynchron                                    | ≥ 0.141         |
 | Datenzugriff                  | SQLAlchemy 2.0 (async) mit asyncpg                                            | 2.x             |
 | Datenbank                     | PostgreSQL                                                                    | 17              |
-| Schemamigrationen             | Alembic mit asynchroner Umgebung                                              | ≥ 1.20          |
+| Schemamigrationen             | Alembic                                                                       | ≥ 1.20          |
 | Validierung und Konfiguration | Pydantic, pydantic-settings                                                   | 2.x             |
-| Passwort-Hashing              | Argon2id über `pwdlib[argon2]`                                                | -               |
-| Logging                       | structlog, Konsole lokal, JSON in Produktion, Request-ID pro Anfrage          | ≥ 26.1          |
-| Scheduler (geplant)           | APScheduler in eigenem Prozess                                                | -               |
-| E-Mail (geplant)              | aiosmtplib hinter `Mailer`-Protokoll, Mailpit lokal                           | -               |
-| Bildverarbeitung (geplant)    | Pillow für Formatprüfung und EXIF-Entfernung                                  | -               |
+| Passwort-Hashing              | Argon2id                                                                      | -               |
+| Logging                       | structlog, lesbar in der Entwicklung, JSON in Produktion                      | ≥ 26.1          |
+| Scheduler                     | APScheduler in eigenem Prozess                                                | -               |
+| E-Mail                        | aiosmtplib, lokal Mailpit als Test-Postfach                                   | -               |
+| Bildverarbeitung              | Pillow für Formatprüfung und Entfernung von EXIF-Daten                        | -               |
 | Frontend-Sprache              | TypeScript                                                                    | 6.x             |
-| Frontend-Framework            | SvelteKit 2 mit Svelte 5 (Runes) und `adapter-node`, serverseitiges Rendering | 2.x / 5.x       |
+| Frontend-Framework            | SvelteKit 2 mit Svelte 5, serverseitiges Rendering auf Node                   | 2.x / 5.x       |
 | Styling                       | Tailwind CSS                                                                  | 4.x             |
-| API-Client                    | `openapi-fetch` mit generierten Typen aus `openapi-typescript`                | 0.17 / 7.x      |
+| API-Client                    | `openapi-fetch` mit aus der Spezifikation generierten Typen                   | 0.17 / 7.x      |
 | Laufzeit Frontend             | Node.js                                                                       | 26              |
 | Paketverwaltung               | uv (Backend), pnpm (Frontend)                                                 | 0.12.9 / 12.5.1 |
-| Tests                         | pytest, pytest-asyncio, pytest-cov, httpx, testcontainers, Vitest, Playwright | -               |
+| Tests                         | pytest, httpx, testcontainers, Vitest, Playwright                             | -               |
 
-Python 3.14, Node 26, TypeScript 6, Vite 8, ESLint 10 und Vitest 4 sind sehr neue Versionen. Lockfiles und gepinnte Werkzeuge begrenzen das Risiko. Tritt ein blockierender Fehler auf, geht das Team eine Major-Version zurück. Das Risiko ist als TR-05 in der Risikoliste zu ergänzen.
+Python 3.14, Node 26 und TypeScript 6 sind sehr neue Versionen. Lockfiles und gepinnte Werkzeuge begrenzen das Risiko. Tritt ein blockierender Fehler auf, wechselt das Team für das betroffene Werkzeug auf die vorige Major-Version.
 
 ### Repository-Struktur
 
 ```text
 isefgm/
 ├── backend
-│   ├── alembic
-│   │   └── versions
-│   ├── src
-│   │   └── giftmanager
-│   │       ├── api
-│   │       │   └── v1
-│   │       ├── core
-│   │       ├── models
-│   │       ├── schemas
-│   │       └── services
+│   ├── alembic/versions      Migrationen
+│   ├── src/giftmanager
+│   │   ├── api/v1            Router und Endpunkte
+│   │   ├── core              Konfiguration, Datenbank, Anmeldung, Logging
+│   │   ├── models            Datenbankmodelle
+│   │   ├── schemas           Request- und Response-Schemas
+│   │   └── services          Geschäftslogik
 │   └── tests
-├── docs
-│   ├── ER-Modell
-│   ├── images
-│   │   └── team
-│   ├── latex
-│   ├── ms2
-│   └── pdf
-└── frontend
-    ├── src
-    │   ├── lib
-    │   │   ├── api
-    │   │   ├── assets
-    │   └── routes
-    │       └── api
-    │           └── [...path]
-    └── static
+├── frontend
+│   ├── src/lib/api           API-Client und generierte Typen
+│   └── src/routes            Seiten und Proxy für /api/*
+├── deploy                    Produktionskonfiguration und Betriebsanleitung
+└── docs                      Meilenstein-Dokumente, Datenmodell, generierte Dokumentation
 ```
 
 ### Konfiguration des Backends
 
 #### Schichten
 
-| Schicht  | Verzeichnis | Verantwortung                                                             | Darf nicht                                                              |
-| -------- | ----------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| API      | `api/v1/`   | HTTP-Routing, Auth-Dependency, Request- und Response-Schemas, Statuscodes | Geschäftslogik enthalten, direkt SQL formulieren                        |
-| Schemas  | `schemas/`  | Validierung und Serialisierung mit Beschreibungen und Beispielen          | auf die Datenbank zugreifen                                             |
-| Services | `services/` | Geschäftsregeln, Besitzerprüfung, Queries                                 | `HTTPException` werfen, `commit()` aufrufen, `datetime.now()` verwenden |
-| Modelle  | `models/`   | Tabellen, Beziehungen, Constraints, Kommentare                            | Logik enthalten                                                         |
-
-Imports sind durchgängig absolut (`from giftmanager.core.config import get_settings`). Relative Imports sind per Ruff verboten.
+| Schicht  | Verantwortung                                                              | Darf nicht                                                         |
+| -------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| API      | HTTP-Routing, Anmeldeprüfung, Request- und Response-Schemas, Statuscodes   | Geschäftslogik enthalten oder SQL formulieren                      |
+| Schemas  | Validierung und Serialisierung, mit Beschreibungen und Beispielen          | auf die Datenbank zugreifen                                        |
+| Services | Geschäftsregeln, Besitzerprüfung, Datenbankabfragen                        | HTTP-Fehler werfen, Transaktionen abschließen, die Uhrzeit abfragen |
+| Modelle  | Tabellen, Beziehungen, Constraints, Kommentare                             | Logik enthalten                                                    |
 
 #### Verbindliche Regeln
 
-Diese Regeln stehen im Backend-README. Sie werden in jedem Backend-Review geprüft.
+Diese Regeln prüft das Team in jedem Backend-Review.
 
-1. **Transaktion.** `get_session` öffnet eine Transaktion pro Request. Rückkehr des Endpunkts führt zum Commit, eine Exception zum Rollback. Services rufen nur `flush()`. Ausnahme ist der Scheduler mit einer eigenen Transaktion pro Nachricht.
+1. **Transaktion.** Jeder Request läuft in genau einer Datenbanktransaktion. Endet der Endpunkt normal, wird sie bestätigt, bei einem Fehler zurückgerollt. Services schließen keine Transaktionen selbst ab. Der Scheduler verwendet eine eigene Transaktion je Nachricht.
 
 2. **Mandantentrennung (QZ-06).**
+    * Jede Tabelle mit Nutzerdaten erhält eine Spalte `owner_id` mit Fremdschlüssel auf das Konto. Wird das Konto gelöscht, werden die Daten mitgelöscht.
+    * Services erhalten `owner_id` als ersten Parameter und filtern jede Abfrage danach. Ein Zugriff nur über die ID ohne Besitzerfilter ist verboten.
+    * Fremde IDs beantwortet die API mit `404`, nie mit `403`, weil ein `403` verraten würde, dass der Datensatz existiert.
+    * Beim Verknüpfen zweier Datensätze prüft der Service, dass beide demselben Konto gehören. Ausgenommen sind die systemweiten Anlasstypen.
+    * Zu jeder Ressource gehört ein Test „Nutzer B greift auf Daten von Nutzer A zu → 404“.
 
-    * Jede kontogebundene Tabelle hat `owner_id` mit Fremdschlüssel auf `user_account.id`, `ON DELETE CASCADE` und Index.
-    * Services erhalten `owner_id` als ersten Parameter und filtern jede Query damit. `session.get(Model, id)` ohne Besitzerfilter ist verboten.
-    * Fremde IDs liefern `404`, nie `403`. Die Antwort verrät nicht, ob die Ressource existiert.
-    * Beim Verknüpfen zweier Datensätze prüft der Service, dass beide demselben Konto gehören. Systemweite Anlasstypen (`owner_id IS NULL`) sind ausgenommen.
-    * Zu jeder Ressource gehört ein Test „Nutzer B greift auf Ressource von Nutzer A zu → 404“.
+3. **Fehler.** Fachliche Fehler haben eine gemeinsame Basisklasse. Ein zentraler Handler übersetzt sie, Validierungsfehler und HTTP-Fehler in ein einheitliches Format nach RFC 9457 (Problem Details) mit Typ, Titel, Status, Beschreibung und optional einer Liste von Feldfehlern.
 
-3. **Fehler.** Fachfehler werden als Unterklasse von `DomainError` geworfen. Ein zentraler Handler übersetzt sie, Validierungsfehler und HTTP-Fehler in das einheitliche Problem-Details-Format (`type`, `title`, `status`, `detail`, optional `errors[]`).
+4. **Listen (QZ-02).** Jede Liste ist paginiert, standardmäßig 50 und höchstens 200 Einträge pro Seite. Die Antwort enthält die Einträge, die Gesamtzahl und die Seitenparameter. Beziehungen werden gebündelt geladen, nicht einzeln in Schleifen.
 
-4. **Listen (QZ-02).** Jeder Listen-Endpunkt nimmt `limit` (Standard 50, maximal 200) und `offset` und liefert `Page[T]` mit `items`, `total`, `limit`, `offset`. Beziehungen werden mit `selectinload` geladen, nicht in Schleifen.
+5. **Zeit.** Zeitpunkte werden in UTC gespeichert, Kalenderdaten als reines Datum. Die aktuelle Zeit liefert eine austauschbare Uhr, in Tests etwa ein festes Datum für Weihnachtsbenachrichtigungen. Kalenderauswertungen laufen in der Zeitzone Europe/Berlin.
 
-5. **Zeit.** Zeitpunkte werden als `timestamptz` in UTC gespeichert, Kalenderdaten als `date`. Die aktuelle Zeit kommt immer über `ClockDep`. Tests können damit ein festes Datum setzen, zum Beispiel für Weihnachtsbenachrichtigungen. Kalenderauswertungen laufen in `DEFAULT_TIMEZONE=Europe/Berlin`.
-
-6. **Dokumentation.** Jede Tabelle und Spalte hat `comment=`. Jeder Endpunkt hat `summary` und `description`, jedes Schema-Feld `description` und `examples`. Jeder Test trägt `@pytest.mark.requirement(...)` mit den Anforderungs-IDs aus MS 1. Diese Texte sind Deutsch, Code und Kommentare Englisch.
+6. **Dokumentation im Code.** Jede Tabelle und Spalte erhält einen Datenbankkommentar. Jeder Endpunkt erhält Zusammenfassung und Beschreibung, jedes Schema-Feld Beschreibung und Beispiel. Jeder Test nennt die Anforderungs-IDs, die er prüft. Diese Texte sind Deutsch, Code und Code-Kommentare Englisch.
 
 #### API-Konventionen
 
-* Präfix `/api/v1`, Ressourcen im Plural (`/persons`, `/gifts`, `/giftings`, `/tasks`).
-* Jeder Endpunkt hat eine `operation_id` in camelCase (`listPersons`, `createGift`). Sie wird zum Methodennamen im generierten Client.
-* Schreibende Endpunkte geben die vollständige Ressource zurück. Nur `DELETE` antwortet mit `204`.
-* Statuswerte sind englische Enums (`idea`, `planned`, `acquired`, `given`). Die Übersetzung erfolgt im Frontend.
-* Kalenderdaten im Format `YYYY-MM-DD`, Zeitpunkte als ISO 8601 mit Zeitzone.
+* Alle Endpunkte liegen unter `/api/v1`. Ressourcen heißen im Plural, zum Beispiel `/persons`, `/gifts`, `/giftings`, `/tasks`.
+* Jeder Endpunkt hat eine eindeutige Operation-ID in camelCase, etwa `listPersons` oder `createGift`. Daraus entstehen die Methodennamen im Frontend-Client.
+* Schreibende Endpunkte geben die vollständige Ressource zurück. Nur Löschungen antworten mit `204` ohne Inhalt.
+* Statuswerte sind englische Schlüssel wie `idea`, `planned`, `acquired`, `given`. Die deutsche Anzeige übernimmt das Frontend.
+* Kalenderdaten haben das Format `YYYY-MM-DD`, Zeitpunkte ISO 8601 mit Zeitzone.
 
 #### Authentifizierung und Sitzungen
 
-Alle fachlichen Endpunkte setzen eine Anmeldung voraus. Julian Ammann setzt die Authentifizierung im Backend und im Frontend um.
+Alle fachlichen Endpunkte setzen eine Anmeldung voraus. Julian Ammann setzt die Authentifizierung in Sprint 0 um.
 
-| Aspekt                  | Festlegung                                                                                                                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Passwörter              | Argon2id über `pwdlib`, Länge 8 bis 128 Zeichen                                                                                                                                                      |
-| Anmeldename             | E-Mail-Adresse, in Kleinbuchstaben gespeichert, eindeutig                                                                                                                                            |
-| Sitzung                 | Tabelle `user_session` mit `token_hash`, `created_at`, `expires_at`, `last_seen_at`. In der Datenbank steht nur der SHA-256-Hash des Tokens, das Klartext-Token nur im Cookie                        |
-| Cookie                  | `session`, `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` außerhalb der Entwicklung. Laufzeit 14 Tage, Verlängerung bei Nutzung                                                                      |
-| Zeitkonstante Anmeldung | Bei unbekannter E-Mail wird gegen einen Dummy-Hash geprüft. Die Antwortzeit verrät nicht, ob ein Konto existiert                                                                                     |
-| Dependency              | `CurrentUser` in `core/auth.py`, auf Router-Ebene eingehängt. Fehlendes oder ungültiges Cookie führt zu `401`                                                                                        |
-| Endpunkte               | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `DELETE /auth/account` (F-17)                                                                                        |
-| Kontolöschung           | Löscht das Konto. Sitzungen und alle kontogebundenen Daten kaskadieren über `owner_id`                                                                                                               |
-| Offen                   | Rate-Limit auf Login und Registrierung (10 Versuche je E-Mail in 15 Minuten, Tabelle `login_attempt`). Prüfung des `Origin`-Headers im Backend bei zustandsändernden Browser-Aufrufen über den Proxy |
+| Aspekt              | Festlegung                                                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Passwörter          | gehasht mit Argon2id, Länge 8 bis 128 Zeichen                                                                                       |
+| Anmeldename         | E-Mail-Adresse, in Kleinbuchstaben gespeichert, eindeutig                                                                           |
+| Sitzung             | eigene Tabelle mit Erstellungs-, Ablauf- und letztem Nutzungszeitpunkt. Die Datenbank speichert nur einen Hash des Sitzungstokens   |
+| Cookie              | `HttpOnly`, `SameSite=Lax`, außerhalb der Entwicklung `Secure`. Laufzeit 14 Tage, Verlängerung bei Nutzung                          |
+| Schutz vor Ausspähen | Auch bei unbekannter E-Mail wird ein Passwort-Hash geprüft. Die Antwortzeit verrät nicht, ob ein Konto existiert                   |
+| Rate-Limit          | höchstens 10 Anmelde- oder Registrierungsversuche je E-Mail-Adresse in 15 Minuten                                                   |
+| CSRF-Schutz         | Zusätzlich zu `SameSite` prüft das Backend bei schreibenden Aufrufen, ob die Anfrage von der eigenen Adresse stammt                 |
+| Endpunkte           | Registrieren, Anmelden, Abmelden, eigenes Konto abrufen, Konto löschen (F-17)                                                       |
+| Kontolöschung       | löscht das Konto samt Sitzungen, allen zugehörigen Daten und hochgeladenen Bildern                                                  |
 
-Neun automatisierte Tests decken Registrierung, doppelte E-Mail, Passwortlänge, falsches Passwort, unbekanntes Konto, Anmeldung, Abmeldung mit Widerruf, abgelaufene Sitzung, Kontolöschung und Zugriff ohne Cookie ab.
+Automatisierte Tests decken mindestens ab: Registrierung, doppelte E-Mail, zu kurzes Passwort, falsches Passwort, unbekanntes Konto, Anmeldung, Abmeldung, abgelaufene Sitzung, Rate-Limit, Kontolöschung und Zugriff ohne Anmeldung.
 
 #### Datenmodell und Migrationen
 
-Das verbindliche Datenmodell steht in `docs/datenmodell.md` als Mermaid-ER-Diagramm. Es ersetzt das unvollständige yEd-Modell und ist mit dem Zielmodell aus MS 1 abgeglichen. Es enthält die zentrale Entität `gifting` (Beschenkung), die Zuordnungstabellen, `note`, `user_profile` und das Attribut `gift.category` für das Vorschlagsverfahren (F-16).
+Das Team legt in Sprint 0 ein vollständig attributiertes Datenmodell als ER-Diagramm fest. Es baut auf dem Zielmodell aus MS 1 auf und ergänzt die zentrale Entität Beschenkung (`gifting`), die Zuordnungstabellen, Notizen, das Nutzerprofil und eine Kategorie für Geschenke als Grundlage der Vorschläge (F-16). Ab MS 3 ist dieses Modell für alle Entwickler verbindlich.
 
 Konventionen:
 
 * Primärschlüssel `id` als UUIDv7.
-* Tabellen `user_account` und `user_session`, weil `user` in PostgreSQL reserviert ist.
-* Statuswerte als String-Enums mit `CHECK`-Constraint: Beschenkung `idea | planned | acquired | given`, Aufgabe `open | in_progress | done | discarded`, Benachrichtigung `planned | sending | sent | failed`.
-* Constraint-Namen nach fester Konvention (`pk_`, `fk_`, `uq_`, `ix_`, `ck_`). Migrationen bleiben damit deterministisch.
-* Wiederkehrende Anlässe speichern die Regel. Die Beschenkung speichert den konkreten Termin (`gifting.occasion_date`).
-* Systemweite Anlasstypen „Geburtstag“ und „Weihnachten“ werden per Daten-Migration angelegt.
+* Die Kontotabelle heißt `user_account`, weil `user` in PostgreSQL reserviert ist.
+* Statuswerte werden als Text gespeichert und per `CHECK`-Constraint auf erlaubte Werte begrenzt: Beschenkung `idea | planned | acquired | given`, Aufgabe `open | in_progress | done | discarded`, Benachrichtigung `planned | sending | sent | failed`.
+* Constraint-Namen folgen einer festen Konvention (`pk_`, `fk_`, `uq_`, `ix_`, `ck_`), damit Migrationen reproduzierbar bleiben.
+* Wiederkehrende Anlässe speichern die Regel, die Beschenkung speichert den konkreten Termin.
+* Die systemweiten Anlasstypen „Geburtstag“ und „Weihnachten“ legt eine Migration an.
 
 Ablauf einer Schemaänderung:
 
-1. Modell unter `models/<domäne>.py` anlegen und in `models/__init__.py` registrieren.
-2. Migration mit `mise run migration -- "<beschreibung>"` erzeugen.
-3. Migration gegenlesen. Autogenerate erkennt keine Umbenennungen und keine Datenänderungen.
-4. `mise run migrate` und `mise run migrate:check`. Erwartet wird „No new upgrade operations detected“.
-5. Im Review prüft Julian Ammann Migration und Modell gegen `docs/datenmodell.md`.
+1. Modell in der Datei der eigenen Domäne anlegen und registrieren.
+2. Migration automatisch aus dem Modell erzeugen.
+3. Migration von Hand gegenlesen, weil die automatische Erzeugung keine Umbenennungen und keine Datenänderungen erkennt.
+4. Migration einspielen und prüfen, dass Modell und Datenbank übereinstimmen.
+5. Im Review gleicht Julian Ammann Modell und Migration mit dem ER-Diagramm ab.
 
-`alembic/env.py` vergleicht auch Server-Defaults. In Produktion führt der `migrate`-Container die Migrationen vor dem Start der API aus.
+In Produktion spielt ein eigener Container die Migrationen ein, bevor die API startet.
 
-#### Scheduler, E-Mail und Bilder (Kevin Jordan Taghu und Anton Hirsch)
+#### Scheduler, E-Mail und Bilder
 
-Diese Teile entstehen in Sprint 2. Das Team bestätigt die folgenden Festlegungen bis zum 27.09.2026:
+Diese Teile entstehen in Sprint 2.
 
-* **Scheduler (PSP 4.5).** Einstiegspunkt `python -m giftmanager.scheduler`. Zwei Schritte: *Planen* legt Zeilen per `INSERT … ON CONFLICT DO NOTHING` an, *Versenden* holt fällige Zeilen mit `FOR UPDATE SKIP LOCKED` ab. Die Deduplizierung sichert der `UNIQUE`-Constraint auf `dedup_key` (Konto, Bezug, Ereignistermin, Typ, Intervall). Ein doppelt gestarteter Scheduler verschickt damit nichts doppelt (QZ-05). Zeilen, die länger als 15 Minuten im Status `sending` stehen, werden nicht automatisch wiederholt und als Warnung protokolliert.
-* **E-Mail (PSP 4.5).** Protokoll `Mailer` mit `SmtpMailer` für Produktion, Mailpit für Entwicklung und E2E-Tests, `RecordingMailer` für Unit-Tests. Tests und Demos schreiben keine echten Adressen an. Der Anbieter für Produktion ist noch offen. Zur Auswahl stehen Brevo, Resend und Mailgun, als Rückfallebene der SMTP-Zugang eines Teammitglieds.
-* **Bilder (PSP 4.4).** Speicherung unter `/data/uploads/<owner_id>/<uuid>.<ext>`, Metadaten in `attachment`. Erlaubt sind JPEG, PNG und WebP bis 5 MB. Die Prüfung erfolgt über den Dateiinhalt, nicht über die Endung. Ein Re-Encode entfernt EXIF-Daten. Ausgeliefert wird nur über `GET /api/v1/attachments/{id}/file` mit Sitzung oder gültigem Teilen-Token. Nach einer Kontolöschung werden die Dateien entfernt.
+Der Scheduler (PSP 4.5, Kevin Jordan Taghu) arbeitet in zwei Schritten. Zuerst legt er fällige Benachrichtigungen als Zeilen an, danach versendet er sie. Ein eindeutiger Schlüssel aus Konto, Bezug, Termin, Typ und Intervall verhindert doppelte Zeilen. Beim Versand sperrt jede Instanz nur die Zeilen, die sie gerade bearbeitet. Auch wenn versehentlich zwei Scheduler laufen, geht keine Nachricht doppelt hinaus (QZ-05). Bleibt eine Nachricht länger als 15 Minuten im Versand hängen, protokolliert der Scheduler eine Warnung, statt sie erneut zu senden.
 
-### Konfiguration des Frontends (Julian Ammann)
+Der E-Mail-Versand (PSP 4.5, Kevin Jordan Taghu) liegt hinter einer Schnittstelle mit drei Umsetzungen: SMTP für Produktion, Mailpit als lokales Test-Postfach für Entwicklung und End-to-End-Tests und ein Aufzeichner für Unit-Tests. Tests und Demos schreiben nie echte Adressen an. Für Produktion stehen Brevo, Resend und Mailgun zur Wahl, als Rückfallebene der SMTP-Zugang eines Teammitglieds. Die Wahl fällt zu Beginn von Sprint 2.
+
+Für Bilder (PSP 4.4, Anton Hirsch) sind JPEG, PNG und WebP bis 5 MB erlaubt. Das Format prüft das Backend am Dateiinhalt, nicht an der Endung. Jedes Bild wird neu kodiert, dabei fallen EXIF-Daten wie Aufnahmeort weg. Dateien liegen je Konto getrennt unter einem zufälligen Namen und sind nur mit gültiger Sitzung oder gültigem Teilen-Link abrufbar.
+
+### Konfiguration des Frontends
+
+Das Frontend setzt Yin Yin Wu-Hanke mit Unterstützung von Julian Ammann um.
 
 #### Datenfluss
 
 ```text
 Browser ──▶ SvelteKit (Node, :3000) ──▶ FastAPI (:8000)
               │
-              ├─ load / Form Actions: locals.api → event.fetch → handleFetch → API_URL
+              ├─ Seitenaufbau und Formulare: serverseitiger Aufruf des Backends
               │
-              └─ Browser-Aufrufe auf /api/* → routes/api/[...path] (Proxy) → API_URL
+              └─ Aufrufe des Browsers auf /api/*: Weiterleitung an das Backend
 ```
 
 #### Verbindliche Regeln
 
-1. Daten werden nur serverseitig geladen, in `+page.server.ts` oder `+layout.server.ts` über `load`, mit `locals.api`. Der Client ist an das request-gebundene `fetch` gebunden. Ein globaler API-Client ist verboten, weil er beim serverseitigen Rendern bricht.
-
-2. Schreibende Aktionen sind Form Actions mit `use:enhance`. Sie funktionieren ohne JavaScript und per Tastatur. Das unterstützt QZ-04 (Benutzbarkeit, Accessibility).
-
-3. Fehler kommen vom Backend im Problem-Details-Format. `problemMessage()` übersetzt sie, `fail()` gibt sie an das Formular zurück. Fehlermeldungen erscheinen mit `role="alert"`. Eine Root-Fehlerseite `+error.svelte` fängt unerwartete Fehler.
-
-4. Typen stammen nur aus der generierten `schema.d.ts`. Die Datei wird nie von Hand bearbeitet.
-
-5. Statuswerte aus der API werden im Frontend ins Deutsche übersetzt.
+1. Seiten laden ihre Daten serverseitig. Der API-Client wird pro Anfrage erzeugt und nicht global geteilt, weil sich sonst beim serverseitigen Rendern die Sitzungen verschiedener Nutzer vermischen könnten.
+2. Schreibende Aktionen sind HTML-Formulare, die SvelteKit serverseitig verarbeitet. JavaScript verbessert sie nur, nötig ist es nicht, und alles lässt sich per Tastatur bedienen (QZ-04).
+3. Fehlermeldungen des Backends zeigt das Frontend in verständlichem Deutsch am betroffenen Formular. Screenreader kündigen sie an. Eine zentrale Fehlerseite fängt unerwartete Fehler ab.
+4. Typen stammen ausschließlich aus der generierten Typdatei. Sie wird nie von Hand bearbeitet.
+5. Statuswerte der API übersetzt das Frontend ins Deutsche.
 
 #### Routen und Sitzung
 
-| Route                             | Zweck                                             | Schutz                                                                             |
-| --------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `(auth)/login`, `(auth)/register` | Anmeldung und Registrierung als Form Actions      | öffentlich, angemeldete Nutzer werden auf `/` geleitet                             |
-| `(app)/`                          | Übersicht und alle fachlichen Seiten              | Guard in `(app)/+layout.server.ts`, ohne Sitzung Weiterleitung auf `/login?next=…` |
-| `(app)/account`                   | Konto anzeigen und löschen (F-17)                 | geschützt                                                                          |
-| `logout`                          | Sitzung widerrufen, Cookie löschen                | nur Action                                                                         |
-| `api/[...path]`                   | Weiterleitung von Browser-Aufrufen an das Backend | Cookie wird durchgereicht                                                          |
+| Bereich                    | Zweck                                             | Schutz                                                                  |
+| -------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
+| Anmeldung, Registrierung   | Konto anlegen und anmelden                        | öffentlich. Angemeldete Nutzer werden zur Übersicht weitergeleitet      |
+| Übersicht, fachliche Seiten | alle Funktionen des Geschenke-Managers           | nur mit Sitzung, sonst Weiterleitung zur Anmeldung mit Rücksprungziel   |
+| Konto                      | Konto anzeigen und löschen (F-17)                 | nur mit Sitzung                                                         |
+| Abmeldung                  | Sitzung beenden, Cookie löschen                   | nur als Formularaktion                                                  |
+| `/api/*`                   | Weiterleitung von Browser-Aufrufen an das Backend | Cookie wird durchgereicht                                               |
 
-`hooks.server.ts` löst das Session-Cookie pro Request über `/api/v1/auth/me` in `locals.user` auf. Form Actions rufen das Backend serverseitig auf. `forwardSessionCookie()` überträgt das vom Backend gesetzte Cookie auf die SvelteKit-Antwort. `safeNext()` erlaubt nach dem Login nur Weiterleitungen auf eigene Pfade und verhindert Open Redirects. Security-Header (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`) setzt ebenfalls `hooks.server.ts`.
+Bei jeder Anfrage prüft das Frontend serverseitig das Session-Cookie beim Backend und stellt den angemeldeten Nutzer allen Seiten bereit. Nach der Anmeldung leitet es nur auf eigene Pfade weiter, damit kein Link auf fremde Seiten umlenken kann (Open Redirect). Außerdem setzt es Sicherheits-Header gegen Einbettung in fremde Seiten und gegen falsch erkannte Dateitypen.
 
-Fachliche Seiten entstehen in derselben Reihenfolge wie die Backend-Domänen. Das Frontend beginnt mit einer Domäne, sobald ihre Endpunkte in `openapi.json` stehen. Bis dahin baut es gegen den dokumentierten Schema-Entwurf.
+Die fachlichen Seiten entstehen in derselben Reihenfolge wie die Backend-Domänen. Das Frontend beginnt mit einer Domäne, sobald deren Endpunkte in der OpenAPI-Spezifikation stehen.
 
 ### Entwicklungsumgebung
 
-Jedes Teammitglied nutzt die eigene IDE. Reproduzierbar bleibt die Umgebung, weil mise alle Werkzeugversionen in `mise.toml` pinnt:
+Jedes Teammitglied nutzt die eigene IDE. Damit alle mit denselben Werkzeugen arbeiten, pinnt das Werkzeug mise alle Versionen zentral im Repository:
 
 | Werkzeug | Version |
 | -------- | ------- |
@@ -265,254 +245,240 @@ Jedes Teammitglied nutzt die eigene IDE. Reproduzierbar bleibt die Umgebung, wei
 | Lefthook | 2.1.14  |
 | gitleaks | 8.30.1  |
 
-Zusätzlich braucht es Docker mit Compose. Eingerichtet wird die Umgebung so:
+Zusätzlich braucht jedes Teammitglied Docker mit Compose. Die Einrichtung eines neuen Rechners umfasst vier Schritte: Repository klonen, Werkzeuge über mise installieren, Abhängigkeiten und Git-Hooks mit einem gemeinsamen Setup-Befehl einrichten, lokale Datenbank als Container starten. Danach laufen Backend und Frontend mit automatischem Neuladen lokal.
 
-```sh
-git clone https://github.com/julianammann/isefgm.git && cd isefgm
+Für wiederkehrende Aufgaben gibt es gemeinsame Befehle:
 
-mise trust && mise install      # Toolchain
-mise run setup                  # uv sync, pnpm install, lefthook install
-cp .env.example .env
-mise run db                     # PostgreSQL-Container
-mise -C backend run migrate
-mise -C backend run dev         # http://localhost:8000/docs
-mise -C frontend run dev        # http://localhost:3000
-```
+| Befehl            | Zweck                                                         |
+| ----------------- | ------------------------------------------------------------- |
+| `mise run check`  | Lint, Typprüfung und Tests für Backend und Frontend           |
+| `mise run openapi` | OpenAPI-Spezifikation exportieren und Frontend-Typen erzeugen |
+| `mise run docs`   | Dokumentation aus dem Code erzeugen                           |
+| `mise run docker` | Container-Images bauen                                        |
 
-| Task                                   | Zweck                                                    |
-| -------------------------------------- | -------------------------------------------------------- |
-| `mise run check`                       | Lint, Typprüfung und Tests für Backend und Frontend      |
-| `mise run openapi`                     | OpenAPI-Schema exportieren und TypeScript-Typen erzeugen |
-| `mise run docs`                        | Dokumentation nach `docs/generated/` erzeugen            |
-| `mise run docker`                      | Images mit gepinnter uv-Version bauen                    |
-| `mise -C backend run migration -- "…"` | neue Migration erzeugen                                  |
-
-Lokal ergänzt `compose.override.yaml` die Basisdatei um Build-Kontexte, Ports (5432, 8000, 3000) und `APP_ENV=development`. Compose lädt die Datei automatisch, das Deploy ignoriert sie. Für VS Code liegen gemeinsame Einstellungen und Erweiterungsempfehlungen unter `.vscode/`.
+Eine lokale Compose-Ergänzung öffnet die Ports für Datenbank, Backend und Frontend und startet im Entwicklungsmodus. Die Produktion verwendet sie nicht.
 
 ### Versionsverwaltung, Branching und Review
 
-* `main` ist durch das Regelwerk Main-Branch-Protection geschützt. Änderungen erfolgen nur per Pull Request mit mindestens einer Freigabe. Force-Pushes und das Löschen des Branches sind gesperrt.
-* Zusätzlich ist „Require review from Code Owners“ aktiv. `.github/CODEOWNERS` macht Julian Ammann zum Pflicht-Reviewer für `compose*.yaml`, beide Dockerfiles, `.github/` und `deploy/`. Diese Dateien bestimmen, was auf dem Produktionsserver läuft.
-* Branches sind kurzlebig und folgen dem Schema `feature/<domäne>-<thema>`, `fix/<thema>`, `docs/<thema>` oder `chore/<thema>`.
-* Commit-Nachrichten folgen Conventional Commits mit Komponente als Scope: `feat(backend): …`, `fix(frontend): …`, `docs(ms3): …`.
-* Ein Pull Request enthält eine Domäne oder ein Thema. Er wird zusammengeführt, wenn die CI grün ist, die Reviews laut Rollentabelle vorliegen und alle Anmerkungen bearbeitet sind.
+* Der Branch `main` ist geschützt. Änderungen kommen nur per Pull Request mit mindestens einer Freigabe hinein. Force-Pushes und das Löschen des Branches sind gesperrt.
+* Für Container-, Workflow- und Deploy-Dateien ist Julian Ammann als Code Owner und Pflicht-Reviewer eingetragen, weil diese Dateien bestimmen, was auf dem Produktionsserver läuft.
+* Branches sind kurzlebig und heißen `feature/<domäne>-<thema>`, `fix/<thema>`, `docs/<thema>` oder `chore/<thema>`.
+* Commit-Nachrichten folgen Conventional Commits mit der Komponente als Scope, zum Beispiel `feat(backend): …`, `fix(frontend): …`, `docs(ms3): …`.
+* Ein Pull Request umfasst eine Domäne oder ein Thema. Er wird zusammengeführt, wenn die CI grün ist, die Reviews laut Rollentabelle vorliegen und alle Anmerkungen bearbeitet sind.
 
 ### Lokale Qualitätssicherung über Git-Hooks
 
-| Hook         | Prüfung                                                                                         | Komponente         |
-| ------------ | ----------------------------------------------------------------------------------------------- | ------------------ |
-| `pre-commit` | Ruff Lint mit Auto-Fix und Ruff Format                                                          | Backend            |
-| `pre-commit` | ESLint mit Auto-Fix und Prettier                                                                | Frontend           |
-| `pre-commit` | OpenAPI-Export und Neugenerierung der TypeScript-Typen bei Änderungen an `api/` oder `schemas/` | Backend → Frontend |
-| `pre-commit` | gitleaks-Scan der gestagten Dateien                                                             | gesamt             |
-| `pre-push`   | Pyright im Strict-Modus                                                                         | Backend            |
-| `pre-push`   | `alembic check` auf fehlende Migrationen                                                        | Backend            |
-| `pre-push`   | `svelte-check`                                                                                  | Frontend           |
+| Zeitpunkt     | Prüfung                                                                    | Komponente         |
+| ------------- | -------------------------------------------------------------------------- | ------------------ |
+| vor Commit    | Ruff Lint mit Auto-Fix und Ruff Format                                     | Backend            |
+| vor Commit    | ESLint mit Auto-Fix und Prettier                                           | Frontend           |
+| vor Commit    | Neuerzeugung der Frontend-Typen, wenn sich Endpunkte oder Schemas ändern   | Backend → Frontend |
+| vor Commit    | Secret-Scan der geänderten Dateien mit gitleaks                            | gesamt             |
+| vor Push      | Typprüfung mit Pyright im Strict-Modus                                     | Backend            |
+| vor Push      | Prüfung auf fehlende Migrationen                                           | Backend            |
+| vor Push      | Typprüfung mit `svelte-check`                                              | Frontend           |
 
 Hooks lassen sich lokal umgehen. Die CI wiederholt deshalb alle Prüfungen.
 
 ### Continuous Integration
 
-GitHub Actions führt die Prüfungen pfadgefiltert aus. Ein Platzhalter-Workflow meldet die Pflichtprüfungen bei reinen Dokumentationsänderungen als erfolgreich, damit die Branch Protection nicht blockiert.
+GitHub Actions führt die Prüfungen nur für die geänderte Komponente aus. Bei reinen Dokumentationsänderungen meldet ein Platzhalter-Workflow die Pflichtprüfungen als erfolgreich, damit der Branchschutz nicht blockiert.
 
-| Workflow       | Auslöser                                     | Prüfungen                                                                                                                                                                                            |
-| -------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `backend.yml`  | Änderungen unter `backend/`                  | Ruff, Pyright (strict), Migrationen gegen PostgreSQL 17 anwenden und auf Vollständigkeit prüfen, pytest mit Coverage, Abgleich `frontend/openapi.json` mit dem Backend-Code, pip-audit (blockierend) |
-| `frontend.yml` | Änderungen unter `frontend/`                 | Aktualität der generierten Typen gegenüber `openapi.json`, Prettier, ESLint, svelte-check, Vitest mit Playwright (Chromium), Build, pnpm audit (blockierend)                                         |
-| `docker.yml`   | Änderungen an Backend oder Frontend          | Image-Build beider Komponenten, Push nach GHCR bei `main` und Tags `v*`                                                                                                                              |
-| `gitleaks.yml` | jeder Push auf `main` und jeder Pull Request | Secret-Scan über die gesamte Historie                                                                                                                                                                |
+| Workflow | Auslöser                            | Prüfungen                                                                                                                                                              |
+| -------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend  | Änderungen im Backend               | Lint, Typprüfung, Migrationen gegen PostgreSQL 17 einspielen und auf Vollständigkeit prüfen, Tests mit Abdeckungsmessung, OpenAPI-Spezifikation aktuell, Schwachstellenscan |
+| Frontend | Änderungen im Frontend              | generierte Typen aktuell, Formatierung, Lint, Typprüfung, Unit- und Komponententests im Browser, Build, Schwachstellenscan                                              |
+| Docker   | Änderungen an Backend oder Frontend | Build beider Images, Veröffentlichung in der GitHub Container Registry bei `main` und Versions-Tags                                                                     |
+| Secrets  | jeder Push auf `main` und jeder Pull Request | Secret-Scan über die gesamte Historie                                                                                                                        |
 
-Der API-Vertrag ist damit in beide Richtungen abgesichert. Die Backend-CI prüft, dass das Schema zum Code passt. Die Frontend-CI prüft, dass die Typen zum Schema passen. Alle Workflows laufen mit minimalen Berechtigungen (`contents: read`), nur der Docker-Workflow zusätzlich mit `packages: write`. Die CI verwendet dieselbe `mise.toml` wie die lokale Umgebung.
+Die Backend-CI prüft, dass die Spezifikation zum Code passt, die Frontend-CI, dass die Typen zur Spezifikation passen. Der API-Vertrag ist so von beiden Seiten abgesichert. Alle Workflows laufen mit Leserechten, nur der Docker-Workflow darf zusätzlich Images veröffentlichen. Die CI nutzt dieselben gepinnten Werkzeugversionen wie die lokale Umgebung.
 
 ### Abhängigkeiten
 
-* Backend-Abhängigkeiten sind in `pyproject.toml` deklariert und in `uv.lock` fixiert, Frontend-Abhängigkeiten in `package.json` und `pnpm-lock.yaml`. Die CI installiert nur aus den Lockfiles (`--frozen`).
-* Entwicklungswerkzeuge liegen in getrennten Dev-Gruppen und gelangen nicht in die Produktions-Images.
-* Dependabot (`.github/dependabot.yml`) prüft wöchentlich uv, npm, GitHub Actions und Docker-Basis-Images. Updates kommen gruppiert als Pull Request.
+* Alle Abhängigkeiten sind in Lockfiles fixiert. Die CI installiert nur aus den Lockfiles.
+* Entwicklungswerkzeuge sind von den Laufzeitabhängigkeiten getrennt und gelangen nicht in die Produktions-Images.
+* Dependabot prüft wöchentlich Python- und npm-Pakete, GitHub Actions und Docker-Basis-Images und öffnet gebündelte Pull Requests.
 * `pip-audit` und `pnpm audit` brechen den Build bei bekannten Schwachstellen ab (QZ-06).
 
 ### Konfiguration und Geheimnisse
 
-Die Laufzeitkonfiguration kommt nur aus Umgebungsvariablen, die pydantic-settings typisiert einliest. Jedes Feld hat eine Beschreibung, aus der die Konfigurationstabelle der Betriebsdokumentation erzeugt wird.
+Die Anwendung liest ihre Konfiguration ausschließlich aus Umgebungsvariablen. Jede Variable ist im Code typisiert und beschrieben. Daraus entsteht automatisch die Konfigurationstabelle der Betriebsdokumentation.
 
-| Variable             | Standard                | Bedeutung                                                                                         |
-| -------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
-| `APP_ENV`            | `development`           | `development` aktiviert `/docs` und Konsolen-Logs, `production` und `test` schalten auf JSON-Logs |
-| `LOG_LEVEL`          | `INFO`                  | `DEBUG`, `INFO`, `WARNING`, `ERROR`                                                               |
-| `DATABASE_URL`       | lokale Entwicklungs-DB  | PostgreSQL mit asyncpg-Treiber                                                                    |
-| `DEFAULT_TIMEZONE`   | `Europe/Berlin`         | Zeitzone für Kalenderauswertungen                                                                 |
-| `UPLOADS_DIR`        | `/data/uploads`         | Ablage der Bilddateien                                                                            |
-| `SESSION_TTL_DAYS`   | `14`                    | Laufzeit einer Sitzung                                                                            |
-| `API_URL` (Frontend) | `http://localhost:8000` | Backend-Adresse für `handleFetch` und Proxy                                                       |
-| `ORIGIN` (Frontend)  | keiner                  | öffentliche Origin, nötig für Form Actions in Produktion                                          |
+| Variable           | Standard               | Bedeutung                                                                                     |
+| ------------------ | ---------------------- | --------------------------------------------------------------------------------------------- |
+| `APP_ENV`          | `development`          | `development` aktiviert die API-Dokumentation und lesbare Logs, `production` JSON-Logs        |
+| `LOG_LEVEL`        | `INFO`                 | `DEBUG`, `INFO`, `WARNING`, `ERROR`                                                           |
+| `DATABASE_URL`     | lokale Entwicklungs-DB | Verbindung zu PostgreSQL                                                                      |
+| `DEFAULT_TIMEZONE` | `Europe/Berlin`        | Zeitzone für Kalenderauswertungen                                                             |
+| `UPLOADS_DIR`      | `/data/uploads`        | Ablage der Bilddateien                                                                        |
+| `SESSION_TTL_DAYS` | `14`                   | Laufzeit einer Sitzung in Tagen                                                               |
+| `SMTP_*`           | keiner                 | Zugang zum E-Mail-Anbieter                                                                    |
+| `API_URL`          | `http://localhost:8000` | Adresse des Backends aus Sicht des Frontends                                                 |
+| `ORIGIN`           | keiner                 | öffentliche Adresse des Frontends, in Produktion Pflicht                                      |
 
 Regeln für Geheimnisse:
 
-* `.env`-Dateien sind über `.gitignore` ausgeschlossen. `.env.example` enthält nur unkritische Entwicklungswerte.
+* `.env`-Dateien sind von der Versionierung ausgeschlossen. Die Vorlage `.env.example` enthält nur unkritische Entwicklungswerte.
 * gitleaks prüft vor jedem Commit und in der CI über die gesamte Historie.
-* Produktionsgeheimnisse (Datenbankzugang, SMTP-Zugang) liegen nicht im Projekt-Repository. Sie liegen als verschlüsselte Environment-Secrets im separaten Infrastruktur-Repository und werden beim Deploy eingespielt.
-* Testkonten und Zugangsdaten für den Tutor werden nur über Redmine übergeben.
+* Produktionsgeheimnisse wie Datenbank- und SMTP-Zugang liegen nicht im Projekt-Repository, sondern verschlüsselt im separaten Infrastruktur-Repository. Sie werden erst beim Deploy eingespielt.
+* Testkonten und Zugangsdaten für den Tutor übergibt das Team ausschließlich über Redmine.
 
 ### Teststrategie
 
-| Ebene                         | Werkzeug                                  | Umfang                                                                                                                                                                   | Verantwortlich              |
-| ----------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
-| Unit Backend                  | pytest, `RecordingMailer`, Fake-Clock     | Services, Scheduler-Planung, Vorschlagslogik                                                                                                                             | Entwickler der Domäne       |
-| Integration Backend           | pytest, httpx, testcontainers             | jeder Endpunkt: Normalfall, Validierung, Fremdzugriff → 404. Echter PostgreSQL-17-Container, alle Migrationen eingespielt, jeder Test in einem zurückgerollten Savepoint | Entwickler der Domäne       |
-| Berechtigung                  | wie Integration                           | Mandantentrennung je Ressource, Teilen-Link zeigt nur freigegebene Personen                                                                                              | Yin Yin Wu-Hanke            |
-| Unit und Komponenten Frontend | Vitest, `vitest-browser-svelte`, Chromium | Hilfsfunktionen (Session, Weiterleitung, Fehler-Mapping), Komponenten                                                                                                    | Julian Ammann               |
-| End-to-End                    | Playwright gegen den Compose-Stack        | 4 bis 6 Kernabläufe: registrieren, Person anlegen, Idee → Beschenkung → verschenkt, Teilen-Link öffnen, Konto löschen. Mehrere Browser-Engines (QZ-08)                   | Julian Ammann, Anton Hirsch |
-| Last                          | Seed-Skript mit synthetischem Testbestand | Nachweis QZ-02, Messwerte in den Testabschlussbericht                                                                                                                    | Anton Hirsch                |
+| Ebene                  | Werkzeug                               | Umfang                                                                                                                              | Verantwortlich              |
+| ---------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| Unit Backend           | pytest mit Test-Uhr und Test-Postfach  | Services, Planung der Benachrichtigungen, Vorschlagslogik                                                                           | Entwickler der Domäne       |
+| Integration Backend    | pytest, httpx, testcontainers          | jeder Endpunkt mit Normalfall, Validierung und Fremdzugriff → 404. Echte PostgreSQL-Datenbank, jeder Test wird danach zurückgerollt | Entwickler der Domäne       |
+| Berechtigung           | wie Integration                        | Mandantentrennung je Ressource, Teilen-Link zeigt nur freigegebene Personen                                                         | Yin Yin Wu-Hanke            |
+| Unit Frontend          | Vitest im Browser                      | Hilfsfunktionen und Komponenten                                                                                                     | Julian Ammann               |
+| End-to-End             | Playwright gegen den kompletten Stack  | Kernabläufe: registrieren, Person anlegen, Idee → Beschenkung → verschenkt, Teilen-Link öffnen, Konto löschen. Chrome, Firefox, Safari (QZ-08) | Julian Ammann, Anton Hirsch |
+| Last                   | Skript mit synthetischem Testbestand   | Nachweis QZ-02, Messwerte gehen in den Testabschlussbericht                                                                         | Anton Hirsch                |
 
-* `pytest-cov` misst die Abdeckung bei jedem Lauf. Das Ziel aus QZ-07 sind mindestens 70 % Zeilenabdeckung im Backend.
-* `--strict-markers` lehnt falsch geschriebene Marker ab. Warnungen gelten in pytest als Fehler.
-* Jeder Test trägt `@pytest.mark.requirement("F-xx", "Q-xx")`. Jeder vollständige pytest-Lauf schreibt die Rückverfolgbarkeitsmatrix `docs/generated/rueckverfolgbarkeit.md` (Anforderung ↔ Test ↔ Ergebnis). Das ist der Nachweis für QZ-01.
-* E2E-Tests laufen in einem eigenen Workflow nur auf `main` und vor Releases, damit Pull Requests schnell bleiben.
+* Die Testabdeckung wird bei jedem Lauf gemessen. Ziel aus QZ-07 sind mindestens 70 % Zeilenabdeckung im Backend.
+* Jeder Test nennt die Anforderungen, die er prüft. Aus jedem vollständigen Testlauf entsteht automatisch die Rückverfolgbarkeitsmatrix Anforderung ↔ Test ↔ Ergebnis als Nachweis für QZ-01.
+* Warnungen gelten in den Backend-Tests als Fehler.
+* End-to-End-Tests laufen nur auf `main` und vor Releases, weil sie Pull Requests sonst zu stark verlangsamen.
 
 ### Bereitstellung und Betrieb
 
 #### Container
 
-| Image                                  | Basis              | Merkmale                                                                                                                              |
-| -------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `ghcr.io/julianammann/isefgm/backend`  | `python:3.14-slim` | Multi-Stage mit uv, Nicht-Root-Benutzer, nur Produktionsabhängigkeiten, Port 8000. Dient auch als Image für `migrate` und `scheduler` |
-| `ghcr.io/julianammann/isefgm/frontend` | `node:26-alpine`   | Multi-Stage mit pnpm, Benutzer `node`, Port 3000                                                                                      |
+| Image    | Basis              | Merkmale                                                                                                                  |
+| -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Backend  | `python:3.14-slim` | mehrstufiger Build, kein Root-Benutzer, nur Laufzeitabhängigkeiten. Dient auch für Migration und Scheduler               |
+| Frontend | `node:26-alpine`   | mehrstufiger Build, kein Root-Benutzer                                                                                    |
 
-Images werden mit Branch, Pull Request, Commit-SHA und bei Releases mit der SemVer-Version getaggt.
+Die Images werden in der GitHub Container Registry mit Commit-Kennung und bei Releases mit der Versionsnummer veröffentlicht.
 
-#### Compose-Dateien
+#### Compose-Konfiguration
 
-| Datei                     | Inhalt                                                                                                                                                                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `compose.yaml`            | Basis: Dienste `db`, `migrate`, `api`, `scheduler` (per Profil, bis der Scheduler existiert), `frontend`. Health-Checks, internes Netz `app-net`, Volumes `pgdata` und `uploads`, `no-new-privileges`. Keine Ports, kein Build |
-| `compose.override.yaml`   | nur lokal: Build-Kontexte, Ports, Development-Modus                                                                                                                                                                            |
-| `compose.production.yaml` | Produktion: Frontend am Traefik-Netz mit Router-Labels auf die Domain, Speicher- und CPU-Limits für alle Dienste                                                                                                               |
+Die Container-Konfiguration besteht aus drei Dateien:
 
-Health-Checks steuern die Startreihenfolge: Die API startet erst nach erfolgreicher Migration, das Frontend erst bei gesunder API. `/api/v1/health/live` und `/api/v1/health/ready` melden Prozess- und Datenbankzustand.
+| Datei      | Inhalt                                                                                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basis      | Dienste Datenbank, Migration, API, Scheduler und Frontend. Health-Checks, internes Netz, Volumes für Datenbank und Bilder. Keine offenen Ports             |
+| Lokal      | Build aus dem Quellcode, offene Ports, Entwicklungsmodus                                                                                                   |
+| Produktion | Anbindung des Frontends an den Reverse Proxy mit der öffentlichen Domain, Speicher- und CPU-Limits für alle Dienste                                        |
+
+Health-Checks steuern die Startreihenfolge. Die API startet erst nach erfolgreicher Migration, das Frontend erst, wenn die API bereit ist. Zwei Health-Endpunkte melden, ob der Prozess läuft und ob die Datenbank erreichbar ist.
 
 #### Hosting
 
-Das System läuft auf einem bestehenden, gehärteten Server eines Teammitglieds. Traefik übernimmt dort Routing, TLS mit Let's Encrypt, HSTS, Security-Header und Rate-Limit am Eingang. Auch Firewall, Monitoring und Log-Sammlung stellt der Server. Das Projekt liefert nur seine Compose-Dateien.
+Das System läuft auf einem bestehenden, gehärteten Server eines Teammitglieds. Dort übernimmt Traefik Routing, TLS-Zertifikate über Let's Encrypt, HSTS, Sicherheits-Header und ein Rate-Limit am Eingang. Firewall, Monitoring und Log-Sammlung stellt ebenfalls der Server. Das Projekt liefert nur seine Container-Konfiguration.
 
-Julian Ammann stößt das Deploy zentral im separaten Infrastruktur-Repository an, sobald der `docker`-Workflow grün ist. Deployt wird immer mit vollem Commit-SHA und dem dazu gebauten Image-Tag, nie mit `main`. Im öffentlichen Projekt-Repository liegen damit keine Deploy-Credentials.
+Julian Ammann stößt das Deploy im separaten Infrastruktur-Repository an, sobald die Images gebaut sind. Deployt wird immer ein fester Commit mit dem dazu gebauten Image, nie der jeweils aktuelle Stand von `main`. Weil das Deploy dort angestoßen wird, liegen im öffentlichen Projekt-Repository keine Deploy-Zugangsdaten. Vor jedem Deploy lehnen automatische Prüfungen offene Ports, Einbindungen von Host-Verzeichnissen und fremde Netze ab.
 
-Vor jedem Deploy lehnen automatische Gates Ports, Bind-Mounts und fremde Netze im Stack ab. Lokal lässt sich das mit `docker compose -f compose.yaml -f compose.production.yaml config` vorab prüfen.
+Schon in Sprint 0 ist die leere Anwendung mit Health-Endpunkt unter HTTPS erreichbar, damit Probleme bei der Bereitstellung nicht erst kurz vor MS 4 auffallen.
 
-Schon in Sprint 0 ist die leere Anwendung mit Health-Endpunkt als Walking Skeleton unter HTTPS erreichbar. Deployment-Probleme sollen nicht erst kurz vor MS 4 auffallen.
-
-Der Stack verarbeitet nur synthetische Testdaten, ein Offsite-Backup gibt es nicht. Nach einem Datenverlust spielt ein Seed-Skript Testkonten und Testbestand neu ein. Dieses Skript muss deshalb existieren, bevor das System dem Tutor bereitgestellt wird.
-
-Die öffentliche Domain legt das Team in Sprint 0 fest und trägt sie in die Betriebsdokumentation ein.
+Das System verarbeitet nur synthetische Testdaten, ein externes Backup ist deshalb nicht vorgesehen. Nach einem Datenverlust spielt ein Seed-Skript Testkonten und Testbestand neu ein. Das Skript entsteht vor der Bereitstellung für den Tutor.
 
 ### Definition of Done
 
-Ein Endpunkt beziehungsweise eine Funktion ist fertig, wenn alle Punkte erfüllt sind:
+Eine Funktion ist fertig, wenn alle Punkte erfüllt sind:
 
 **Backend**
 
-* [ ] Tabelle entspricht `docs/datenmodell.md`, Migration erzeugt, gegengelesen und `alembic check` grün
-* [ ] jede Tabelle und Spalte hat `comment=`
-* [ ] Service erhält `owner_id` und filtert jede Query damit, Fachfehler als `DomainError`
-* [ ] Router mit `CurrentUser`, `operation_id`, `summary`, `description`; Schema-Felder mit `description` und `examples`
-* [ ] Listen paginiert mit `Page[T]`
-* [ ] Tests für Normalfall, Validierung und Fremdzugriff → 404, jeder mit `requirement`-Marker
-* [ ] `mise run openapi` und `mise run docs` ausgeführt, generierte Dateien committet
+* [ ] Tabelle entspricht dem verbindlichen Datenmodell, Migration erzeugt, gegengelesen und vollständig
+* [ ] jede Tabelle und Spalte hat einen Datenbankkommentar
+* [ ] Service filtert jede Abfrage nach dem Besitzer, fachliche Fehler nutzen die gemeinsame Fehlerklasse
+* [ ] Endpunkt erfordert Anmeldung, hat Operation-ID, Zusammenfassung und Beschreibung. Schema-Felder haben Beschreibung und Beispiel
+* [ ] Listen sind paginiert
+* [ ] Tests für Normalfall, Validierung und Fremdzugriff → 404, jeweils mit Anforderungs-ID
+* [ ] OpenAPI-Spezifikation und generierte Dokumentation sind aktualisiert und committet
 
 **Frontend**
 
-* [ ] Daten per `load` über `locals.api`, Mutationen als Form Action
-* [ ] Fehlerzustände sichtbar und per Screenreader angekündigt, ohne JavaScript bedienbar
-* [ ] Typen nur aus `schema.d.ts`, Lint, `svelte-check` und Vitest grün
+* [ ] Daten werden serverseitig geladen, Änderungen laufen über Formularaktionen
+* [ ] Fehler sind sichtbar und werden von Screenreadern angekündigt. Die Seite ist ohne JavaScript bedienbar
+* [ ] Typen stammen nur aus der generierten Typdatei. Lint, Typprüfung und Tests sind grün
 
 **Gemeinsam**
 
 * [ ] CI grün, Review laut Rollentabelle freigegeben
-* [ ] betroffene Anforderung in der Rückverfolgbarkeitsmatrix mit `passed`
+* [ ] betroffene Anforderung steht in der Rückverfolgbarkeitsmatrix als bestanden
 
 ## Konfiguration der Liefergegenstände
 
 ### Liefergegenstände und Zuständigkeiten
 
-Jeder Liefergegenstand hat eine Kennung, eine verantwortliche und eine prüfende Person sowie einen festen Ablageort. Die prüfende Person ist nie die verantwortliche Person.
+Jeder Liefergegenstand erhält eine Kennung, eine verantwortliche und eine prüfende Person sowie einen festen Ablageort. Die prüfende Person ist nie die verantwortliche.
 
-| ID    | Liefergegenstand                                                              | MS | Format                                    | Ablage                                                                                                    | Verantwortlich                                                      | Prüfend            |
-| ----- | ----------------------------------------------------------------------------- | -- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------ |
-| LG-01 | Konfiguration der Softwareentwicklung und Qualitätsplanung                    | 3  | Markdown → PDF                            | `docs/ms3_konfiguration_se_qp.md`, `docs/datenmodell.md`                                                  | Julian Ammann                                                       | Kevin Jordan Taghu |
-| LG-02 | Programmcode Backend                                                          | 4  | Git-Repository                            | `backend/`                                                                                                | Kevin Jordan Taghu, Anton Hirsch (Auth: Julian Ammann)              | Julian Ammann      |
-| LG-03 | Programmcode Frontend                                                         | 4  | Git-Repository                            | `frontend/`                                                                                               | Julian Ammann                                                       | Yin Yin Wu-Hanke   |
-| LG-04 | Lauffähiges System (Link)                                                     | 4  | Container-Images, URL                     | GHCR, Produktionsserver                                                                                   | Julian Ammann                                                       | Anton Hirsch       |
-| LG-05 | Benutzerhandbuch                                                              | 4  | Markdown → PDF, Screenshots aus E2E-Tests | `docs/ms4/benutzerhandbuch.md`, `docs/handbuch/`                                                          | Yin Yin Wu-Hanke                                                    | Anton Hirsch       |
-| LG-06 | Fachliche Dokumentation: Prozesse, Konzepte, Geschäftsregeln                  | 4  | Markdown → PDF                            | `docs/ms4/fachliche_dokumentation.md`                                                                     | Anton Hirsch                                                        | Kevin Jordan Taghu |
-| LG-07 | Technische Dokumentation: Architektur, Komponenten, Schnittstellen, Datenbank | 4  | Markdown, teilweise generiert             | `docs/ms4/technische_dokumentation.md`, `docs/generated/schnittstellen.md`, `docs/generated/datenbank.md` | Julian Ammann (Architektur, Frontend), Kevin Jordan Taghu (Backend) | Anton Hirsch       |
-| LG-08 | Betriebsdokumentation: Installation, Konfiguration, Admin-Account             | 4  | Markdown, teilweise generiert             | `deploy/README.md`, `docs/generated/konfiguration.md`, `README.md`                                        | Julian Ammann                                                       | Kevin Jordan Taghu |
-| LG-09 | Testabschlussbericht mit Testfällen und Testprotokollen                       | 4  | Markdown → PDF, CI-Protokolle             | `docs/ms4/testabschlussbericht.md`, `docs/generated/rueckverfolgbarkeit.md`                               | Anton Hirsch                                                        | Yin Yin Wu-Hanke   |
-| LG-10 | Liste der Testkonten und Zugangsdaten                                         | 4  | PDF                                       | nur Redmine, nie im Repository                                                                            | Yin Yin Wu-Hanke                                                    | Julian Ammann      |
-| LG-11 | Ergebnispräsentation                                                          | 5  | Video oder Link                           | `docs/ms5/` (Folien)                                                                                      | Kevin Jordan Taghu                                                  | Anton Hirsch       |
-| LG-12 | Gemeinsamer Projektbericht                                                    | 6  | PDF                                       | `docs/ms6/`                                                                                               | Kevin Jordan Taghu                                                  | alle               |
+| ID    | Liefergegenstand                                                              | MS | Format                                    | Ablage                                    | Verantwortlich                                                      | Prüfend            |
+| ----- | ----------------------------------------------------------------------------- | -- | ----------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------- | ------------------ |
+| LG-01 | Konfiguration der Softwareentwicklung und Qualitätsplanung                    | 3  | Markdown → PDF                            | `docs/`                                   | Julian Ammann                                                       | Kevin Jordan Taghu |
+| LG-02 | Programmcode Backend                                                          | 4  | Git-Repository                            | `backend/`                                | Kevin Jordan Taghu, Anton Hirsch (Anmeldung: Julian Ammann)         | Julian Ammann      |
+| LG-03 | Programmcode Frontend                                                         | 4  | Git-Repository                            | `frontend/`                               | Julian Ammann                                                       | Yin Yin Wu-Hanke   |
+| LG-04 | Lauffähiges System (Link)                                                     | 4  | Container-Images, URL                     | GitHub Container Registry, Produktionsserver | Julian Ammann                                                    | Anton Hirsch       |
+| LG-05 | Benutzerhandbuch                                                              | 4  | Markdown → PDF mit Screenshots            | `docs/ms4/`                               | Yin Yin Wu-Hanke                                                    | Anton Hirsch       |
+| LG-06 | Fachliche Dokumentation: Prozesse, Konzepte, Geschäftsregeln                  | 4  | Markdown → PDF                            | `docs/ms4/`                               | Anton Hirsch                                                        | Kevin Jordan Taghu |
+| LG-07 | Technische Dokumentation: Architektur, Komponenten, Schnittstellen, Datenbank | 4  | Markdown, teilweise generiert             | `docs/ms4/`, `docs/generated/`            | Julian Ammann (Architektur, Frontend), Kevin Jordan Taghu (Backend) | Anton Hirsch       |
+| LG-08 | Betriebsdokumentation: Installation, Konfiguration, Admin-Account             | 4  | Markdown, teilweise generiert             | `deploy/`, `docs/generated/`              | Julian Ammann                                                       | Kevin Jordan Taghu |
+| LG-09 | Testabschlussbericht mit Testfällen und Testprotokollen                       | 4  | Markdown → PDF, CI-Protokolle             | `docs/ms4/`, `docs/generated/`            | Anton Hirsch                                                        | Yin Yin Wu-Hanke   |
+| LG-10 | Liste der Testkonten und Zugangsdaten                                         | 4  | PDF                                       | nur Redmine, nie im Repository            | Yin Yin Wu-Hanke                                                    | Julian Ammann      |
+| LG-11 | Ergebnispräsentation                                                          | 5  | Video oder Link                           | `docs/ms5/`                               | Kevin Jordan Taghu                                                  | Anton Hirsch       |
+| LG-12 | Gemeinsamer Projektbericht                                                    | 6  | PDF                                       | `docs/ms6/`                               | Kevin Jordan Taghu                                                  | alle               |
 
-### Herkunft der Inhalte
+### Dokumentation aus dem Code
 
-MS 4 verlangt acht Liefergegenstände, davon fünf Dokumente. Ein großer Teil davon lässt sich aus dem Code erzeugen, wenn die Fakten schon beim Schreiben dort stehen. Sonst müsste das Team die gesamte Dokumentation in KW 41 nachziehen.
+MS 4 verlangt acht Liefergegenstände, davon fünf Dokumente. Ein großer Teil davon entsteht direkt beim Entwickeln, sonst müsste das Team alles in der letzten Woche schreiben. Nach den Regeln zur Dokumentation im Code tragen Endpunkte, Tabellen, Konfiguration und Tests ihre Beschreibung von Anfang an. Ein gemeinsamer Befehl erzeugt daraus die Dokumente.
 
-| Liefergegenstand                          | Quelle                                                                | Erzeugt durch                                                                            | Anteil aus Code  |
-| ----------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------- |
-| Technische Doku: Schnittstellen           | `summary`, `description`, `Field(description=)`, `OPENAPI_TAGS`       | `mise run docs` → `docs/generated/schnittstellen.md`, dazu `openapi.json` und Swagger UI | fast vollständig |
-| Technische Doku: Datenbank                | `comment=` an Tabellen und Spalten                                    | `mise run docs` → `docs/generated/datenbank.md`, Beziehungen in `docs/datenmodell.md`    | weitgehend       |
-| Technische Doku: Architektur, Komponenten | Backend- und Frontend-README                                          | von Hand                                                                                 | teilweise        |
-| Betriebsdoku: Konfiguration               | `Field(description=)` in `Settings`                                   | `mise run docs` → `docs/generated/konfiguration.md`                                      | vollständig      |
-| Betriebsdoku: Installation, Admin-Account | `compose*.yaml`, `deploy/README.md`, Seed-Skript                      | von Hand                                                                                 | teilweise        |
-| Testabschlussbericht                      | `requirement`-Marker, pytest, pytest-cov, Vitest, Playwright          | pytest → `docs/generated/rueckverfolgbarkeit.md`, Coverage-Ausgabe, CI-Protokolle        | vollständig      |
-| Fachliche Doku: Geschäftsregeln           | Docstrings der Services, `DomainError`-Texte, fachlich benannte Tests | von Hand                                                                                 | teilweise        |
-| Fachliche Doku: Prozesse, Konzepte        | keine                                                                 | von Hand, Mermaid-Sequenzdiagramme, Glossar                                              | kaum             |
-| Benutzerhandbuch                          | Playwright-Screenshots                                                | Text von Hand, Screenshots aus den E2E-Tests                                             | kaum             |
+| Liefergegenstand                          | Quelle im Code                                               | Entstehung                                                      | Anteil aus Code  |
+| ----------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- | ---------------- |
+| Technische Doku: Schnittstellen           | Beschreibungen an Endpunkten und Schema-Feldern              | generiert, dazu OpenAPI-Spezifikation und interaktive API-Doku  | fast vollständig |
+| Technische Doku: Datenbank                | Kommentare an Tabellen und Spalten, ER-Diagramm              | generiert                                                       | weitgehend       |
+| Technische Doku: Architektur, Komponenten | Architekturentscheidungen aus diesem Dokument                | von Hand                                                        | teilweise        |
+| Betriebsdoku: Konfiguration               | Beschreibungen der Umgebungsvariablen                        | generiert                                                       | vollständig      |
+| Betriebsdoku: Installation, Admin-Account | Compose-Dateien, Seed-Skript                                 | von Hand                                                        | teilweise        |
+| Testabschlussbericht                      | Anforderungs-IDs an Tests, Testläufe, Abdeckung              | generiert aus dem Testlauf, ergänzt um Bewertung                | weitgehend       |
+| Fachliche Doku: Geschäftsregeln           | Beschreibungen der Services, Fehlermeldungen, Testnamen      | von Hand                                                        | teilweise        |
+| Fachliche Doku: Prozesse, Konzepte        | keine                                                        | von Hand, mit Sequenzdiagrammen und Glossar                     | kaum             |
+| Benutzerhandbuch                          | Screenshots aus den End-to-End-Tests                         | Text von Hand, Screenshots automatisch                          | kaum             |
 
-Die Dateien unter `docs/generated/` werden committet, damit sie ohne Toolchain lesbar sind und Änderungen im Pull-Request-Diff erscheinen. Von Hand bearbeitet werden sie nie, darauf weist die erste Zeile jeder Datei hin. Vor dem Commit läuft einmal der vollständige Testlauf, weil ein Teillauf die Matrix mit einem Teilstand überschreibt.
-
-Die Playwright-Abläufe legen Screenshots für das Benutzerhandbuch unter `docs/handbuch/<ablauf>-<schritt>.png` ab. Ändert sich die Oberfläche, entstehen die Bilder beim nächsten Lauf neu.
+Die generierten Dateien liegen unter `docs/generated/` und werden committet, damit man sie ohne Werkzeuge lesen und Änderungen im Pull Request sehen kann. Von Hand bearbeitet werden sie nie. Die Screenshots für das Benutzerhandbuch erzeugen die End-to-End-Tests bei jedem Lauf neu, sodass sie nach Änderungen an der Oberfläche aktuell bleiben.
 
 ### Identifikation und Versionierung
 
-* Dokumente liegen unter `docs/` und heißen `ms<Nummer>_<thema>.md`. Ab MS 4 erhält jeder Meilenstein einen Unterordner `docs/ms<Nummer>/`. Bilder liegen unter `docs/images/`. Dateinamen sind durchgehend klein geschrieben, sonst brechen Links auf case-sensitiven Systemen.
-* PDF-Abgabefassungen werden aus den Markdown-Quellen beziehungsweise aus `docs/latex/` erzeugt und unter `docs/pdf/` abgelegt. Sie sind abgeleitete Kopien. Änderungen erfolgen immer in der Quelle.
-* Die Software folgt Semantic Versioning. Die Version steht in `backend/pyproject.toml` und `frontend/package.json`, derzeit `0.1.0`. Die für MS 4 abgegebene Fassung erhält den Tag `v1.0.0`. Der Tag löst Build und Veröffentlichung der Images mit derselben Versionsnummer aus. Korrekturen nach Tutorfeedback erhöhen die Patch-Version (`v1.0.1`).
-* Abgabestände werden als Git-Tag `ms<Nummer>-abgabe` markiert. Der eingereichte Stand bleibt damit reproduzierbar, auch wenn `main` weiterentwickelt wird.
+* Dokumente liegen unter `docs/` und heißen `ms<Nummer>_<thema>.md`. Ab MS 4 erhält jeder Meilenstein einen Unterordner `docs/ms<Nummer>/`. Dateinamen sind durchgehend klein geschrieben.
+* PDF-Abgabefassungen werden aus den Markdown- oder LaTeX-Quellen erzeugt und unter `docs/pdf/` abgelegt. Änderungen erfolgen immer in der Quelle, nie im PDF.
+* Die Software folgt Semantic Versioning, aktuell `0.1.0`. Die Abgabe zu MS 4 erhält die Version `1.0.0`. Das Setzen der Version löst Build und Veröffentlichung der Images mit derselben Versionsnummer aus. Korrekturen nach Tutorfeedback erhöhen die letzte Stelle, etwa `1.0.1`.
+* Jeder Abgabestand erhält einen Git-Tag `ms<Nummer>-abgabe`. Über den Tag lässt sich der eingereichte Stand jederzeit wiederherstellen, auch wenn `main` weiterentwickelt wird.
 
 ### Baselines je Meilenstein
 
-| Baseline | Inhalt                                                                                                                      | Kennzeichnung                                           |
-| -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| MS 3     | Konfigurationsdokument, Datenmodell, Entwicklungsumgebung, CI-Pipeline, Grundgerüst mit Authentifizierung, Walking Skeleton | Tag `ms3-abgabe`                                        |
-| MS 4     | Programmcode, Container-Images, Dokumentation LG-05 bis LG-09, generierte Dokumente                                         | Tags `v1.0.0` und `ms4-abgabe`, Images `:1.0.0` in GHCR |
-| MS 5     | Präsentation auf Basis der MS-4-Baseline                                                                                    | Tag `ms5-abgabe`                                        |
-| MS 6     | Projektbericht                                                                                                              | Tag `ms6-abgabe`                                        |
+| Baseline | Inhalt                                                                                                     | Kennzeichnung                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| MS 3     | dieses Dokument, Datenmodell, Entwicklungsumgebung, CI, Grundgerüst mit Anmeldung, Walking Skeleton         | Tag `ms3-abgabe`                               |
+| MS 4     | Programmcode, Container-Images, Dokumentation LG-05 bis LG-09, generierte Dokumente                        | Tags `v1.0.0` und `ms4-abgabe`, Images `1.0.0` |
+| MS 5     | Präsentation auf Basis der MS-4-Baseline                                                                   | Tag `ms5-abgabe`                               |
+| MS 6     | Projektbericht                                                                                             | Tag `ms6-abgabe`                               |
 
 Nach einer Baseline ändert sich der abgegebene Stand nur über einen neuen Pull Request und eine neue Version.
 
 ### Änderungs- und Freigabeprozess
 
 1. Die verantwortliche Person erstellt oder ändert den Liefergegenstand in einem eigenen Branch.
-2. Sie öffnet einen Pull Request gegen `main`. Die prüfende Person reviewt Inhalt, Form und Vollständigkeit gegen die Qualitätsziele und die Definition of Done.
-3. Die CI muss grün sein. Bei Dokumenten ohne Codeänderung meldet der Platzhalter-Workflow die Pflichtprüfungen als erfolgreich.
-4. Nach der Freigabe wird der Pull Request zusammengeführt. Die Abgabefassung wird erzeugt und der Stand getaggt.
+2. Sie öffnet einen Pull Request gegen `main`. Die prüfende Person prüft Inhalt, Form und Vollständigkeit gegen die Qualitätsziele und die Definition of Done.
+3. Die CI muss grün sein.
+4. Nach der Freigabe wird der Pull Request zusammengeführt, die Abgabefassung erzeugt und der Stand getaggt.
 5. Die Projektleitung lädt die Abgabe in Redmine hoch, setzt das Meilensteinticket auf **Feedback** und weist es dem Tutor zu.
-6. Tutorfeedback wird am Redmine-Ticket festgehalten. Notwendige Korrekturen durchlaufen erneut die Schritte 1 bis 5. Der Tutor nimmt mit dem Status **closed** ab.
+6. Das Tutorfeedback steht am Redmine-Ticket. Notwendige Korrekturen durchlaufen erneut die Schritte 1 bis 5. Der Tutor nimmt mit dem Status **closed** ab.
 
 Die letzten zwei Tage vor jeder Abgabe sind für Review, Korrektur und Bereitstellung reserviert.
 
 ### Prüfverfahren für Liefergegenstände
 
-| Liefergegenstand           | Prüfung                                                                                                                     |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Programmcode               | CI grün (Lint, Typen, Tests, Audits, Secret-Scan), Review laut Rollentabelle, Definition of Done erfüllt                    |
-| Lauffähiges System         | Deployment-Test aus leerem Zustand, Health-Endpunkte, E2E-Abläufe gegen die Produktions-URL, Anmeldung mit allen Testkonten |
-| Generierte Dokumente       | erzeugt aus dem Release-Commit, Diff im Pull Request geprüft                                                                |
-| Handgeschriebene Dokumente | eine nicht beteiligte Person liest den Text gegen den Code und zeichnet das im Pull Request ab                              |
-| Testabschlussbericht       | Zahlen (Testanzahl, Coverage, Antwortzeiten) nur aus echten Läufen des Release-Commits, Matrix vollständig                  |
-| Testkonten                 | Login mit jedem Konto vor Übergabe, keine Zugangsdaten im Repository (gitleaks)                                             |
+| Liefergegenstand           | Prüfung                                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Programmcode               | CI grün (Lint, Typen, Tests, Schwachstellen- und Secret-Scan), Review laut Rollentabelle, Definition of Done erfüllt            |
+| Lauffähiges System         | Installation aus leerem Zustand, Health-Endpunkte, End-to-End-Abläufe gegen die Produktionsadresse, Anmeldung mit allen Testkonten |
+| Generierte Dokumente       | aus dem Release-Stand erzeugt, Änderungen im Pull Request geprüft                                                               |
+| Handgeschriebene Dokumente | eine nicht beteiligte Person liest den Text gegen den Code und gibt ihn im Pull Request frei                                    |
+| Testabschlussbericht       | Zahlen zu Testanzahl, Abdeckung und Antwortzeiten nur aus echten Läufen des Release-Stands, Matrix vollständig                  |
+| Testkonten                 | Anmeldung mit jedem Konto vor der Übergabe, keine Zugangsdaten im Repository                                                    |
 
 ### Schutz vertraulicher Liefergegenstände
 
-Weil das Repository öffentlich ist, werden Zugangsdaten, Testkonten und Produktionsgeheimnisse nie versioniert. Testkonten gehen nur über Redmine an den Tutor (LG-10), Produktionsgeheimnisse liegen im separaten Infrastruktur-Repository. Der Prototyp verarbeitet nur synthetische Testdaten. gitleaks fängt lokal und in der CI Geheimnisse ab, die versehentlich in einen Commit geraten.
+Das Repository ist öffentlich. Zugangsdaten, Testkonten und Produktionsgeheimnisse werden deshalb nie versioniert. Testkonten erhält der Tutor nur über Redmine (LG-10), Produktionsgeheimnisse liegen im separaten Infrastruktur-Repository. Der Prototyp verarbeitet ausschließlich synthetische Testdaten. gitleaks fängt lokal und in der CI Geheimnisse ab, die versehentlich in einen Commit geraten.
 
 ## Qualitätsplanung
 
