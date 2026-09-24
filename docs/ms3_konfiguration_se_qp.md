@@ -497,7 +497,56 @@ Qualitätskriterien nach ISO/IEC 25010
 | QZ-07 | Wartbarkeit | Linter und Typprüfung laufen ohne Fehler; jeder Merge auf main erfolgt nach Code-Review; Zeilenabdeckung der Backend-Unit-Tests ≥ 70 %; jeder API-Endpunkt besitzt mindestens einen automatisierten Test; Frontend und Backend sind getrennt bau- und testbar. | ESLint, svelte-check, Ruff, pytest-cov, Branch Protection, Endpunktliste gegen Testliste | --- |
 | QZ-08 | Übertragbarkeit | Das Gesamtsystem startet aus leerem Zustand mit docker compose up anhand der Betriebsdokumentation; Kernfunktionen sind in aktuellen Versionen von Chrome, Firefox und Safari sowie auf Smartphone-Displaybreite nutzbar. | Deployment-Test auf sauberer Umgebung durch nicht beteiligte Person, Playwright mit mehreren Browser-Engines | --- |
 
-
 ### Qualität des Softwaresystems
 
+Die Qualitätsziele QZ-01 bis QZ-08 werden über die in der Konfiguration der
+Softwareentwicklung beschriebenen Maßnahmen erreicht: Teststrategie, lokale
+Git-Hooks, Continuous Integration, Code-Review und Definition of Done. Jede
+Änderung durchläuft dieselben Prüfschritte, bevor sie auf `main` gelangt.
+
+| Zeitpunkt | Prüfung | Nachweis |
+| --- | --- | --- |
+| bei jedem Commit | Formatierung, Linting und Secret-Scan über die Git-Hooks | Ausgabe der Hooks |
+| bei jedem Pull Request | Lint, Typprüfung, Unit- und Integrationstests, Build und Schwachstellen-Scan sowie mindestens eine Review-Freigabe | grüne CI und Freigabe im Pull Request |
+| je Sprint | funktionale Abnahme der umgesetzten Anforderungen (QZ-01) und Messung der Testabdeckung (QZ-07) | Rückverfolgbarkeitsmatrix, Abdeckungsbericht |
+| vor MS 4 | End-to-End-Abläufe über mehrere Browser (QZ-08), Last- und Antwortzeitmessung (QZ-02) sowie Barrierefreiheits- und Sicherheitsprüfung (QZ-04, QZ-06) | Testabschlussbericht |
+
+Zentrale Nachweise sind die Rückverfolgbarkeitsmatrix Anforderung ↔ Test ↔ Ergebnis
+(QZ-01), die bei jedem Lauf gemessene Zeilenabdeckung von mindestens 70 % im Backend
+(QZ-07) sowie die grüne Continuous Integration mit bestandenem Review als
+Voraussetzung für jede Zusammenführung. Die abschließenden Messwerte stammen
+ausschließlich aus echten Läufen des Release-Stands und fließen in den
+Testabschlussbericht.
+
+Wird ein Qualitätsziel verfehlt, wird die betroffene Änderung nicht zusammengeführt.
+Die Ursache wird behoben oder der Umfang wird angepasst, bevor weitergearbeitet wird.
+
 ### Qualität der Liefergegenstände
+
+Neben dem Softwaresystem werden auch die übrigen Liefergegenstände geplant geprüft,
+darunter Dokumente, Videos, Programmcode, das lauffähige System, der
+Testabschlussbericht und die Testkonten. Grundlage sind die Rollentabelle, die
+Prüfverfahren für Liefergegenstände und die Definition of Done aus der Konfiguration.
+
+Für jeden Liefergegenstand gilt:
+
+- Es sind eine verantwortliche und eine prüfende Person festgelegt. Die erstellende
+  Person gibt ihren eigenen Liefergegenstand nicht allein frei.
+- Die Prüfung erfolgt vor der Abgabe anhand des festgelegten Prüfverfahrens. Das
+  Ergebnis wird im Pull Request oder am zugehörigen Redmine-Ticket festgehalten.
+- Jeder Meilenstein hat einen eindeutig gekennzeichneten Abgabestand, auf den sich
+  die Prüfung bezieht.
+
+Für Dokumente und Präsentationen gelten zusätzliche Prüfpunkte:
+
+| Merkmal | Prüfung |
+| --- | --- |
+| Vollständigkeit | Alle für den Meilenstein geforderten Inhalte sind enthalten. |
+| Fachliche Richtigkeit | Eine nicht beteiligte Person liest den Text gegen den aktuellen Stand von Code und Datenmodell. |
+| Form | Einheitliche Struktur, Rechtschreibung, Format und Titelblatt werden geprüft. |
+| Nachvollziehbarkeit | Aussagen sind mit Anforderungen, Artefakten oder dem Repository verknüpft. |
+
+Der Projektbericht (MS 6) wird zusätzlich über Turnitin eingereicht. Jedes Mitglied
+verantwortet seinen namentlich zugeordneten Textteil. Generierte Dokumente werden
+immer aus dem geprüften Release-Stand erzeugt, damit Dokumentation und System
+zusammenpassen.
