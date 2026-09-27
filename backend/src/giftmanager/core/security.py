@@ -1,0 +1,36 @@
+"""Password hashing (Argon2id) and session tokens."""
+
+import hashlib
+import secrets
+
+from anyio import to_thread
+from pwdlib import PasswordHash
+
+# Argon2id via pwdlib's recommended profile.
+_password_hash = PasswordHash.recommended()
+
+# Verified against when the e-mail is unknown, so a login attempt takes the same
+# time whether or not the account exists.
+UNKNOWN_USER_HASH = _password_hash.hash("not-a-real-password")
+
+
+# Argon2id is CPU-bound for tens of milliseconds; both run in a worker thread so a
+# login does not stall every other request on the event loop.
+async def hash_password(password: str) -> str:
+    """Hash a password with Argon2id."""
+    return await to_thread.run_sync(_password_hash.hash, password)
+
+
+async def verify_password(password: str, password_hash: str) -> bool:
+    """Check a password against a stored Argon2id hash."""
+    return await to_thread.run_sync(_password_hash.verify, password, password_hash)
+
+
+def new_session_token() -> str:
+    """256 bits of randomness; only its hash is stored."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_session_token(token: str) -> str:
+    """SHA-256 hex digest of a session token, as stored in `user_session.token_hash`."""
+    return hashlib.sha256(token.encode()).hexdigest()

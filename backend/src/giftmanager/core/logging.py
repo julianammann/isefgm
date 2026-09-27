@@ -1,3 +1,5 @@
+"""Structured logging via structlog for the app and third-party loggers."""
+
 import logging
 import sys
 import uuid
@@ -10,6 +12,12 @@ _FOREIGN_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access", "sqlalchemy.en
 
 
 def configure_logging(level: str, *, json: bool) -> None:
+    """Route all logging, including uvicorn, SQLAlchemy and Alembic, through structlog.
+
+    Args:
+        level: Minimum log level, e.g. ``"INFO"``.
+        json: Emit JSON lines (production, test) instead of coloured console output.
+    """
     shared: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_logger_name,
@@ -53,6 +61,10 @@ def configure_logging(level: str, *, json: bool) -> None:
 async def request_id_middleware(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
+    """Bind a request ID to every log line of the request and echo it as `x-request-id`.
+
+    An incoming `x-request-id` header is reused; otherwise a random UUID is generated.
+    """
     request_id = request.headers.get("x-request-id", str(uuid.uuid4()))
     structlog.contextvars.clear_contextvars()
     structlog.contextvars.bind_contextvars(

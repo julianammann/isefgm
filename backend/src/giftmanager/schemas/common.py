@@ -1,0 +1,47 @@
+"""Shared schemas: pagination and the problem-details error body."""
+
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+# Use as `Annotated[PageParams, Query()]` in every list endpoint.
+class PageParams(BaseModel):
+    """Pagination for list endpoints (Q-05)."""
+
+    limit: int = Field(50, ge=1, le=200)
+    offset: int = Field(0, ge=0)
+
+
+class Page[T](BaseModel):
+    """One page of a list, with the total number of items."""
+
+    items: list[T]
+    total: int
+    limit: int
+    offset: int
+
+
+class ValidationIssue(BaseModel):
+    """One invalid field of a request."""
+
+    loc: list[str]
+    msg: str
+    type: str
+
+
+class Problem(BaseModel):
+    """Error body for every status outside 2xx (RFC 9457)."""
+
+    type: str = "about:blank"
+    title: str
+    status: int
+    detail: str
+    errors: list[ValidationIssue] | None = None
+
+
+# Reusable `responses=` fragments so the OpenAPI schema (and the generated
+# TypeScript client) know the error shape.
+def problem_responses(*codes: int) -> dict[int | str, dict[str, Any]]:
+    """Build a `responses=` mapping that documents the problem-details body for `codes`."""
+    return {code: {"model": Problem} for code in codes}
