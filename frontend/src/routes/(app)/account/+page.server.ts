@@ -7,7 +7,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 import { problemMessage } from '$lib/api/client';
-import { SESSION_COOKIE } from '$lib/server/session';
+import { clearSessionCookies } from '$lib/server/session';
 
 /**
  * `logoutAll`: ends every session of the account in the backend, on every device and this
@@ -24,7 +24,7 @@ export const actions: Actions = {
         logoutAllMessage: problemMessage(error, 'Abmelden auf allen Geräten fehlgeschlagen.')
       });
     }
-    cookies.delete(SESSION_COOKIE, { path: '/' });
+    clearSessionCookies(cookies);
     redirect(303, '/login');
   },
   delete: async ({ request, locals, cookies }) => {
@@ -36,7 +36,7 @@ export const actions: Actions = {
     if (!response.ok) {
       return fail(response.status, { message: problemMessage(error, 'Löschen fehlgeschlagen.') });
     }
-    cookies.delete(SESSION_COOKIE, { path: '/' });
+    clearSessionCookies(cookies);
     redirect(303, '/login');
   }
 };

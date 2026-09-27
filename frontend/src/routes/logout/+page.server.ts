@@ -6,7 +6,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-import { SESSION_COOKIE } from '$lib/server/session';
+import { clearSessionCookies } from '$lib/server/session';
 
 /** There is no logout page; a plain GET goes back to `/`. */
 export const load: PageServerLoad = () => {
@@ -17,7 +17,7 @@ export const load: PageServerLoad = () => {
 export const actions: Actions = {
   default: async ({ locals, cookies }) => {
     await locals.api.POST('/api/v1/auth/logout');
-    cookies.delete(SESSION_COOKIE, { path: '/' });
+    clearSessionCookies(cookies);
     redirect(303, '/login');
   }
 };

@@ -7,7 +7,10 @@ type ActionEvent = Parameters<typeof actions.logoutAll>[0];
 /** Action event whose backend answers every POST with `status`. */
 function fakeEvent(status: number) {
   const POST = vi.fn().mockResolvedValue({ response: new Response(null, { status }) });
-  const cookies = { delete: vi.fn() };
+  const cookies = {
+    get: vi.fn((name: string) => (name === '__Host-session' ? 'token' : undefined)),
+    delete: vi.fn()
+  };
   const event = { locals: { api: { POST } }, cookies } as unknown as ActionEvent;
   return { event, POST, cookies };
 }
@@ -20,7 +23,10 @@ describe('logoutAll', () => {
       location: '/login'
     });
     expect(POST).toHaveBeenCalledWith('/api/v1/auth/logout-all');
-    expect(cookies.delete).toHaveBeenCalledWith('session', { path: '/' });
+    expect(cookies.delete).toHaveBeenCalledExactlyOnceWith('__Host-session', {
+      path: '/',
+      secure: true
+    });
   });
 
   it('keeps the cookie and reports a backend failure', async () => {

@@ -10,7 +10,7 @@ import { error, json, redirect, type Handle, type HandleFetch } from '@sveltejs/
 import { createApiClient } from '$lib/api/client';
 import { isCrossSiteApiWrite } from '$lib/server/csrf';
 import { guard, SERVICE_UNAVAILABLE, type Auth } from '$lib/server/guard';
-import { forwardSessionCookie, SESSION_COOKIE } from '$lib/server/session';
+import { clearSessionCookies, forwardSessionCookie, hasSessionCookie } from '$lib/server/session';
 
 const API_URL = env.API_URL ?? 'http://localhost:8000';
 
@@ -52,7 +52,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   // Pages only: /api/* is the browser proxy, which never reads locals.user, and a
   // lookup there would double every proxied call.
-  if (event.cookies.get(SESSION_COOKIE) && !event.url.pathname.startsWith('/api/')) {
+  if (hasSessionCookie(event.cookies) && !event.url.pathname.startsWith('/api/')) {
     try {
       const { data, response } = await event.locals.api.GET('/api/v1/auth/me');
       if (data) {
@@ -61,7 +61,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         forwardSessionCookie(response.headers, event.cookies);
       } else if (response.status === 401) {
         // Expired or revoked: drop the cookie so later requests skip the lookup.
-        event.cookies.delete(SESSION_COOKIE, { path: '/' });
+        clearSessionCookies(event.cookies);
       } else {
         // 5xx, e.g. database down: the session may well be valid. Keep the cookie.
         event.locals.authUnavailable = true;
