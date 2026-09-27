@@ -29,9 +29,10 @@ class Settings(BaseSettings):
         description="Title in OpenAPI and in the Swagger UI.",
     )
     app_env: Literal["development", "test", "production"] = Field(
-        default="development",
-        description="`development` enables `/docs` and console logs; "
-        "`production` and `test` write JSON logs and set `Secure` on the session cookie.",
+        default="production",
+        description="`development` enables `/docs`, `/openapi.json` and console logs; "
+        "`production` and `test` write JSON logs and set `Secure` on the session cookie. "
+        "Unset means `production`; `mise run dev` and `compose.override.yaml` set `development`.",
     )
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
         default="INFO", description="Log threshold for the app, Uvicorn, SQLAlchemy and Alembic."
@@ -73,7 +74,7 @@ class Settings(BaseSettings):
 
     @property
     def is_dev(self) -> bool:
-        """True in development: enables `/docs`, console logs and non-`Secure` cookies."""
+        """True in development: `/docs`, `/openapi.json`, console logs, non-`Secure` cookies."""
         return self.app_env == "development"
 
 

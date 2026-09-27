@@ -47,6 +47,9 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan,
         openapi_tags=OPENAPI_TAGS,
+        # Schema and Swagger UI only in development. app.openapi() still works, so
+        # export_openapi and export_docs produce the full schema in every environment.
+        openapi_url="/openapi.json" if settings.is_dev else None,
         docs_url="/docs" if settings.is_dev else None,
         redoc_url=None,
     )

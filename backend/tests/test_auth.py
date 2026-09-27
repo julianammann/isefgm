@@ -32,6 +32,7 @@ async def test_register_logs_in_and_normalizes_email(client: AsyncClient) -> Non
     assert "password" not in body and "password_hash" not in body
     assert "session" in r.cookies
     assert "HttpOnly" in r.headers["set-cookie"]
+    assert "Secure" in r.headers["set-cookie"]
 
     me = await client.get(ME)
     assert me.status_code == 200

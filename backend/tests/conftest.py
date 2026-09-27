@@ -1,3 +1,11 @@
+import os
+
+# Tests run as APP_ENV=test whatever the shell or .env says, i.e. with production
+# behaviour (Secure cookie, JSON logs, no /docs). httpx only sends Secure cookies over
+# https, hence the https base URL below. Set before giftmanager is imported, because
+# get_settings() is cached on first use.
+os.environ["APP_ENV"] = "test"
+
 from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -44,7 +52,7 @@ async def client(session: AsyncSession) -> AsyncIterator[AsyncClient]:
         yield session
 
     app.dependency_overrides[get_session] = _override
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as client:
         yield client
     app.dependency_overrides.clear()
 

@@ -90,7 +90,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | Variable | Default | Bedeutung |
 |---|---|---|
 | `DATABASE_URL` | `postgresql+asyncpg://app:app@localhost:5432/app` | asyncpg-Treiber erforderlich |
-| `APP_ENV` | `development` | `development` aktiviert `/docs` und Console-Logs; `production`/`test` → JSON-Logs |
+| `APP_ENV` | `production` | `development` aktiviert `/docs`, `/openapi.json` und Console-Logs, Cookie ohne `Secure`; `production`/`test` → JSON-Logs. `mise run dev` und `compose.override.yaml` setzen `development` |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `DEFAULT_TIMEZONE` | `Europe/Berlin` | Zeitzone für die Auswertung von Kalenderdaten (Scheduler) |
 | `UPLOADS_DIR` | `data/uploads` | Ablage für Bild-Uploads, in Produktion ein Volume |
@@ -127,7 +127,7 @@ log = structlog.get_logger()
 log.info("gift created", gift_id=gift.id)
 ```
 
-Immer Key-Value statt f-Strings – im JSON-Modus werden daraus filterbare Felder. Die `request_id` aus dem Header `x-request-id` (oder generiert) hängt automatisch an jeder Zeile eines Requests. Uvicorn-, SQLAlchemy- und Alembic-Logs laufen durch denselben Renderer.
+Immer Key-Value statt f-Strings – im JSON-Modus werden daraus filterbare Felder. Die `request_id` aus dem Header `x-request-id` (übernommen, wenn er `[A-Za-z0-9._-]{1,64}` entspricht, sonst eine neue UUID) hängt automatisch an jeder Zeile eines Requests. Uvicorn-, SQLAlchemy- und Alembic-Logs laufen durch denselben Renderer.
 
 ## Docker
 ```sh
@@ -149,4 +149,4 @@ Multi-Stage: uv-Builder → `python:3.14-slim`, Non-Root-User, nur Produktions-D
 | `GET /api/v1/auth/me` | Eigenes Konto (401 ohne gültige Session) |
 | `DELETE /api/v1/auth/account` | Konto mit allen Daten löschen (204) |
 | `GET /docs` | Swagger UI, nur `APP_ENV=development` |
-| `GET /openapi.json` | Schema |
+| `GET /openapi.json` | Schema, nur `APP_ENV=development`; Export in jeder Umgebung: `mise run openapi` |
