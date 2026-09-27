@@ -5,14 +5,17 @@
 # compose.override.yaml, which Compose loads automatically and the deploy ignores.
 #
 # Variables come from the deploy-rendered .env (IMAGE_TAG, APP_FQDN, secrets).
-# Defaults after :- exist only so `docker compose up` works locally.
+# Defaults after :- exist only so `docker compose up` works locally. Secrets get
+# no default: ${VAR:?} makes Compose refuse to run when one is missing, so a
+# forgotten deploy secret fails the deploy instead of falling back to a
+# well-known password. Locally, set POSTGRES_PASSWORD in .env.
 
 x-backend: &backend
   image: ghcr.io/julianammann/isefgm/backend:${IMAGE_TAG:-main}
   environment: &backend-env
     APP_ENV: ${APP_ENV:-production}
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@isefgm-db:5432/${POSTGRES_DB:-app}
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@isefgm-db:5432/${POSTGRES_DB:-app}
     DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Europe/Berlin}
     UPLOADS_DIR: /data/uploads
   networks: [app-net]
@@ -27,7 +30,7 @@ services:
       - no-new-privileges:true
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-app}
     volumes:
       - pgdata:/var/lib/postgresql/data
