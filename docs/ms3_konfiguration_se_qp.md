@@ -31,7 +31,7 @@ Grundlage sind die Anforderungen aus den in MS 1 festgelegten funktionalen Anfor
 
 **Konkretisierung**: Die Anforderungen aus MS 1 sind bewusst auf grober Ebene formuliert. Das Team konkretisiert sie schrittweise während der Umsetzung, jeweils zu Beginn des Abschnitts, in dem sie umgesetzt werden. Dabei werden sie in umsetzbare Aufgaben zerlegt und um prüfbare Akzeptanzkriterien ergänzt. Aus den Akzeptanzkriterien entstehen die Testfälle. Offene fachliche Fragen klärt das Team in der Planungphase. Fragen, die nur der Tutor beantworten kann, stellt die Projektleitung über Redmine.
 
-**Nachvollziehbarkeit**: Die Kennungen aus MS 1 bleiben über das gesamte Projekt hinweg erhalten. Aufgaben, Änderungen und Tests verweisen auf die betroffenen Anforderungen. Anforderungen, Akzeptanzkriterien und Aufgaben werden in der vorhandenen Projektdokumentation gepflegt; jedes Arbeitspaket nennt verantwortliche Person, Zieltermin und Bearbeitungsstand. Das Product Backlog enthält alle offenen Arbeitspakete; das Sprint Backlog den für den jeweiligen Abschnitt ausgewählten Umfang. Beide führen Anforderungs-ID, Akzeptanzkriterien, Priorität, verantwortliche Person, Zieltermin und Status. Fehler und Blocker werden dort mit Reproduktionsschritten sowie Verweisen auf Anforderung und Pull Request dokumentiert. Testfälle liegen in `backend/tests/` beziehungsweise den Frontend-Tests und führen die geprüften Anforderungs-IDs. Die Rückverfolgbarkeitsmatrix aus dem Testlauf (QZ-01) zeigt, ob eine Anforderung erfüllt ist. Testprotokolle werden aus den CI-Läufen übernommen und im Testabschlussbericht dokumentiert. Wesentliche Projektentscheidungen und die Prüfungen der Liefergegenstände samt Ergebnis werden ebenfalls in der Projektdokumentation festgehalten. Damit wird Q-09 abgedeckt.
+**Nachvollziehbarkeit**: Die Kennungen aus MS 1 bleiben über das gesamte Projekt hinweg erhalten. Aufgaben, Änderungen und Tests verweisen auf die betroffenen Anforderungen. Aufgaben werden als GitHub Issues im Projekt-Repository geführt und im GitHub Project „Geschenke-Manager Backlog“ geplant. Jedes Issue nennt im Titel oder im Feld „Anforderung“ die Anforderungs-ID und enthält die Akzeptanzkriterien als Checkliste; die PSP-Nummer steht in der Beschreibung. Das Project führt je Issue die Felder Abschnitt, Zieltermin, Priorität (MUSS oder SOLL), Bereich und Status. Die verantwortliche Person wird dem Issue zugewiesen. Das Product Backlog umfasst alle offenen Issues des Projects; das Sprint Backlog sind die Issues, deren Feld „Abschnitt“ auf den laufenden Abschnitt gesetzt ist. Die Bugliste sind die Issues mit dem Label `bug`; sie enthalten Reproduktionsschritte sowie Verweise auf Anforderung und Pull Request. Blocker werden ebenfalls als Issue erfasst und zusätzlich über Signal gemeldet. Pull Requests schließen ihre Issues über `Closes #<Nummer>`. Testfälle liegen in `backend/tests/` beziehungsweise den Frontend-Tests und führen die geprüften Anforderungs-IDs. Die Rückverfolgbarkeitsmatrix aus dem Testlauf (QZ-01) zeigt, ob eine Anforderung erfüllt ist. Testprotokolle werden aus den CI-Läufen übernommen und im Testabschlussbericht dokumentiert. Wesentliche Projektentscheidungen werden als GitHub Issue mit Begründung festgehalten, die Prüfungen der Liefergegenstände samt Ergebnis im Pull Request oder am zugehörigen Redmine-Ticket. Damit wird Q-09 abgedeckt.
 
 **Qualitätssicherung**: Bevor eine Anforderung umgesetzt wird, wird die Konkretisierung darauf geprüft, ob sie eindeutig, testbar und widerspruchsfrei ist und ob Akzeptanzkriterien vorliegen. Nach der Umsetzung wird die fachliche Korrektheit gegen die Anforderung geprüft.
 
@@ -218,7 +218,7 @@ Für Bilder (PSP 4.4, Anton Hirsch) sind JPEG, PNG und WebP bis 5 MB erlaubt. Da
 
 ### Konfiguration des Frontends
 
-Das Frontend setzt Yin Yin Wu-Hanke mit Unterstützung von Julian Ammann um.
+Das Frontend setzen Julian Ammann und Yin Yin Wu-Hanke gemeinsam um und prüfen sich gegenseitig.
 
 #### Datenfluss
 
@@ -318,8 +318,8 @@ Die Frontend-CI prüft, dass die generierten Typen zur OpenAPI-Spezifikation pas
 
 * Alle Abhängigkeiten sind in Lockfiles fixiert. Die CI installiert nur aus den Lockfiles.
 * Entwicklungswerkzeuge sind von den Laufzeitabhängigkeiten getrennt und gelangen nicht in die Produktions-Images.
-* Dependabot prüft wöchentlich Python- und npm-Pakete, GitHub Actions und Docker-Basis-Images und öffnet gebündelte Pull Requests.
-* `pip-audit` und `pnpm audit` laufen in den bestehenden Workflows derzeit mit `continue-on-error`; Funde blockieren einen Merge daher noch nicht. Vor MS 4 werden diese Fehlerfortsetzungen entfernt: Befunde der Schweregrade hoch und kritisch blockieren einen Merge. Begründete Ausnahmen dokumentiert die verantwortliche Person mit Risiko und Behebungsziel; Yin Yin Wu-Hanke prüft und genehmigt sie. Mittlere und niedrige Befunde werden in der Fehlerliste mit Priorität und Zieltermin erfasst (QZ-06). Der Docker-Workflow baut derzeit Images, scannt sie aber noch nicht; ein Image-Scan wird vor MS 4 ergänzt.
+* Dependabot prüft künftig wöchentlich Python- und npm-Pakete, GitHub Actions und Docker-Basis-Images und öffnet gebündelte Pull Requests. Die Konfiguration wird vor MS 4 auf `main` eingerichtet.
+* `pip-audit` und `pnpm audit` laufen in den bestehenden Workflows derzeit mit `continue-on-error`; Funde blockieren einen Merge daher noch nicht. Der Backend-Scan prüft zudem bisher die eigene Werkzeugumgebung von `pip-audit` statt der gesperrten Projektabhängigkeiten. Vor MS 4 werden beide Scans korrigiert und die Fehlerfortsetzungen entfernt. Im Frontend blockieren dann Befunde der Schweregrade hoch und kritisch einen Merge (`pnpm audit --audit-level=high`); mittlere und niedrige Befunde werden in der Bugliste mit Priorität und Zieltermin erfasst. `pip-audit` weist keine Schweregrade aus, deshalb blockiert im Backend jeder Befund. Begründete Ausnahmen dokumentiert die verantwortliche Person in einem Issue mit Risiko und Behebungsziel und hinterlegt sie per `--ignore-vuln`; Yin Yin Wu-Hanke prüft und genehmigt sie (QZ-06). Der Docker-Workflow baut derzeit Images, scannt sie aber noch nicht; ein Image-Scan wird vor MS 4 ergänzt.
 
 ### Konfiguration und Geheimnisse
 
@@ -439,6 +439,23 @@ Jeder Liefergegenstand erhält eine Kennung, eine verantwortliche und eine prüf
 | LG-11 | Ergebnispräsentation: Projektablauf mit Teilergebnissen, Liefergegenständen und Reflexion ihrer Erstellung; technischer Überblick, Testabschlussbericht, Demo und Lessons Learned | 5 | Video oder Link, höchstens 20 Minuten; Demo höchstens 7 Minuten | `docs/ms5/` | Kevin Jordan Taghu | Anton Hirsch |
 | LG-12 | Gemeinsamer Projektbericht | 6  | PDF | `docs/ms6/` | Kevin Jordan Taghu | alle |
 
+### Gliederung, Inhalte und Umfang
+
+| ID | Gliederung und Inhalte | Umfang |
+| --- | --- | --- |
+| LG-01 | Konfiguration der Softwareentwicklung, Konfiguration der Liefergegenstände, Qualitätsplanung (Gliederung dieses Dokuments) | alle in der Aufgabenstellung zu MS 3 genannten Inhalte |
+| LG-02 | Backend nach der Repository-Struktur: Migrationen, Router, Kern, Modelle, Schemas, Services, Tests | alle MUSS-Anforderungen mit Tests; Definition of Done je Funktion erfüllt |
+| LG-03 | Frontend nach der Repository-Struktur: API-Client mit generierten Typen, Seiten, Proxy für `/api/*`, Tests | alle Oberflächen zu den MUSS-Anforderungen |
+| LG-04 | Öffentliche Adresse, Container-Images mit Versionsnummer, Health-Endpunkte | im Browser ohne lokale Installation prüfbar |
+| LG-05 | Einstieg und Anmeldung, Personen und Anlässe, Geschenkideen und Beschenkungen, Aufgaben und Notizen, Benachrichtigungen, Teilen-Links, Konto löschen, häufige Fragen. Jeder Ablauf mit Schrittfolge und Screenshot | ein Kapitel je Kernablauf aus den End-to-End-Tests |
+| LG-06 | Fachliche Prozesse mit Sequenzdiagrammen, fachliche Konzepte (Person, Anlass, Geschenk/Idee, Beschenkung, Teilen-Link), Geschäftsregeln mit Verweis auf die Anforderungs-IDs, Glossar | jede MUSS-Anforderung mindestens einer Regel oder einem Prozess zugeordnet |
+| LG-07 | Architekturüberblick und Architekturentscheidungen, Komponenten von Backend, Frontend und Scheduler, Schnittstellen (OpenAPI-Dokumentation), Datenbank (ER-Diagramm, Tabellen- und Spaltenbeschreibungen) | Schnittstellen und Datenbank vollständig generiert, übrige Kapitel von Hand |
+| LG-08 | Voraussetzungen, Installation aus leerem Zustand, Konfiguration (Umgebungsvariablen), Admin-Account, Aktualisierung, Neuaufbau des Testbestands über das Seed-Skript | reicht einer nicht beteiligten Person für die Installation (QZ-08) |
+| LG-09 | Testgegenstand und Testumgebung, Teststrategie, Testfälle je Ebene, Rückverfolgbarkeitsmatrix, Testprotokolle, Messwerte zu QZ-01 bis QZ-09, offene Fehler aus der Bugliste, Bewertung | alle Qualitätsziele mit Messwert und Ergebnis |
+| LG-10 | Je Konto Zweck, Anmeldename und Passwort; Admin-Account gesondert gekennzeichnet | alle für die Prüfung durch den Tutor benötigten Konten |
+| LG-11 | Projektablauf mit Teilergebnissen, Liefergegenständen und Reflexion; technischer Überblick; Überblick Testabschlussbericht; Demo; Lessons Learned | höchstens 20 Minuten, Demo höchstens 7 Minuten |
+| LG-12 | Titelblatt mit Angaben aller Mitglieder und Seitenbereichen, Einleitung, Projektverlauf MS 0 bis MS 5 mit Ergebnissen, Reflexion und Fazit | je Person ein zusammenhängender, namentlich zugeordneter Textteil von 7 bis 10 Seiten. Jedes Mitglied reicht den Bericht gesondert in Turnitin ein |
+
 ### Dokumentation aus dem Code
 
 MS 4 verlangt acht Liefergegenstände, davon fünf Dokumente. Ein großer Teil davon entsteht direkt beim Entwickeln, sonst müsste das Team alles in der letzten Woche schreiben. Nach den Regeln zur Dokumentation im Code tragen Endpunkte, Tabellen, Konfiguration und Tests ihre Beschreibung von Anfang an. Ein gemeinsamer Befehl erzeugt daraus die Dokumente.
@@ -468,7 +485,7 @@ Die generierten Dateien liegen unter `docs/generated/` und werden committet, dam
 
 | Baseline | Inhalt | Kennzeichnung |
 | --- | --- | --- |
-| MS 3 | dieses Dokument, Datenmodell, Entwicklungsumgebung, CI, Grundgerüst mit Anmeldung, Walking Skeleton | Tag `ms3-abgabe` |
+| MS 3 | dieses Dokument, Datenmodell, Entwicklungsumgebung, CI, Grundgerüst mit Health-Endpunkten | Tag `ms3-abgabe` |
 | MS 4 | Programmcode, Container-Images, Dokumentation LG-05 bis LG-09, generierte Dokumente | Tags `v1.0.0` und `ms4-abgabe`, Images `1.0.0` |
 | MS 5 | Präsentation auf Basis der MS-4-Baseline | Tag `ms5-abgabe` |
 | MS 6 | Projektbericht | Tag `ms6-abgabe` |
@@ -544,12 +561,14 @@ Git-Hooks, Continuous Integration, Code-Review und Definition of Done. Jede
 | Zeitpunkt | Prüfung | Nachweis |
 | --- | --- | --- |
 | bei jedem Commit | Formatierung, Linting und Secret-Scan über die Git-Hooks | Ausgabe der Hooks |
-| bei jedem Pull Request | Lint, Typprüfung, Unit- und Integrationstests, Build, Schwachstellenscan und mindestens eine Review-Freigabe; hoch- und kritische Befunde blockieren nach Aktivierung der Richtlinie | grüne CI und Freigabe im Pull Request |
-| je Sprint | funktionale Abnahme der umgesetzten Anforderungen (QZ-01) und Messung der Testabdeckung (QZ-07) | Rückverfolgbarkeitsmatrix, Abdeckungsbericht |
+| bei jedem Pull Request | Lint, Typprüfung, Unit- und Integrationstests, Build, Schwachstellenscan und mindestens eine Review-Freigabe; nach Aktivierung der Richtlinie blockieren Befunde nach den Regeln unter „Abhängigkeiten“ | grüne CI und Freigabe im Pull Request |
+| je Sprint | funktionale Abnahme der umgesetzten Anforderungen (QZ-01) und, sobald in der CI eingerichtet, Messung der Testabdeckung (QZ-07) | Rückverfolgbarkeitsmatrix, Abdeckungsbericht |
 | vor MS 4 | End-to-End-Abläufe über mehrere Browser (QZ-08), Last- und Antwortzeitmessung (QZ-02), Barrierefreiheit (QZ-04), Sicherheitsprüfung (QZ-06) und Zeitkorrektheit (QZ-09) | Testabschlussbericht |
 
+Neben den automatischen Prüfungen werden Artefakte statisch geprüft. Die Konkretisierung der Anforderungen prüft das Team vor der Umsetzung (siehe Anforderungsmanagement). Architekturentscheidungen werden vor der Umsetzung als GitHub Issue mit Begründung und betrachteten Alternativen festgehalten und von einer zweiten Person freigegeben; Änderungen an Container-, Workflow- und Deploy-Konfiguration prüft Julian Ammann. Testfälle werden im selben Pull Request wie der Code reviewt. Die prüfende Person kontrolliert dabei, ob sie die Akzeptanzkriterien der genannten Anforderung abdecken und neben dem Normalfall auch Validierung und Fremdzugriff prüfen.
+
 Zentrale Nachweise sind die Rückverfolgbarkeitsmatrix Anforderung ↔ Test ↔ Ergebnis
-(QZ-01), die bei jedem Lauf gemessene Zeilenabdeckung von mindestens 70 % im Backend (QZ-07) sowie die grüne Continuous Integration mit bestandenem Review als
+(QZ-01), die in der CI gemessene Zeilenabdeckung von mindestens 70 % im Backend (QZ-07) sowie die grüne Continuous Integration mit bestandenem Review als
 Voraussetzung für jede Zusammenführung. Die abschließenden Messwerte stammen
 ausschließlich aus echten Läufen des Release-Stands und fließen in den
 Testabschlussbericht.
