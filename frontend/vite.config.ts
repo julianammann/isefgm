@@ -32,13 +32,10 @@ export default defineConfig({
           'style-src': ['self'],
           // The one exception: SvelteKit's generated route announcer (#svelte-announcer)
           // hides itself with a style attribute. Blocked, the page title shows below the
-          // page after every client-side navigation. This allows exactly that attribute
-          // value; if a SvelteKit update changes it, the browser console reports the new
-          // hash.
-          'style-src-attr': [
-            'unsafe-hashes',
-            'sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo='
-          ],
+          // page after every client-side navigation. A hash of that attribute would break
+          // silently whenever a SvelteKit update changes it; style attributes cannot run
+          // script, and <style> elements stay limited to 'self' above.
+          'style-src-attr': ['unsafe-inline'],
           'img-src': ['self', 'data:'],
           'font-src': ['self'],
           'connect-src': ['self'],
