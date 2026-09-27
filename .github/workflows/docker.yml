@@ -48,6 +48,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=sha
+            type=sha,format=long
       - uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.component }}
@@ -81,6 +82,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Deploy by sha-<full sha> (infra-vps image_tag): it names exactly one
+      # commit. Branch and semver tags move, short-sha tags can collide.
       - uses: docker/metadata-action@v6
         id: meta
         with:
@@ -90,6 +93,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=sha
+            type=sha,format=long
       - uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.component }}
