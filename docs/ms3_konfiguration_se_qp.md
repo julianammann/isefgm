@@ -6,7 +6,7 @@
 
 Dieses Kapitel legt fest, wie das Team den Geschenke-Manager bis MS 4 entwickelt, prüft und bereitstellt. Es beschreibt den geplanten Zielzustand. Alle Festlegungen gelten ab MS 3 verbindlich für alle Teammitglieder.
 
-Zu MS 3 besteht ein technisches Grundgerüst: ein gemeinsames Repository für Backend und Frontend, gepinnte Werkzeugversionen, Git-Hooks, CI-Workflows, Dockerfiles und ein Health-Endpunkt, der die Datenbankverbindung prüft. Alles Weitere in diesem Kapitel ist geplant und entsteht in den Sprints bis MS 4.
+Zu MS 3 besteht ein technisches Grundgerüst: ein gemeinsames Repository für Backend und Frontend, gepinnte Werkzeugversionen, Git-Hooks, CI-Workflows, Dockerfiles und Health-Endpunkte. Die übrigen technischen und fachlichen Funktionen sind geplant und entstehen bis MS 4. Der MS-3-Liefergegenstand ist dieses Dokument als PDF; das Grundgerüst und technische Probeläufe sind interne Vorarbeiten und ersetzen ihn nicht.
 
 ### Vorgehensmodell
 
@@ -21,7 +21,7 @@ Das Team arbeitet iterativ in vier Abschnitten. Jeder Abschnitt endet mit einem 
 
 Die erste Fachdomäne dient als Vorlage für alle weiteren. Erst wenn sie mit Tests und Frontend-Anbindung fertig ist, beginnen die übrigen Domänen parallel, und alle vier Entwickler schreiben ihre Modelle und Migrationen nach diesem erprobten Muster.
 
-Jeder Abschnitt beginnt mit einem Regelmeeting in Microsoft Teams. Dort verteilt das Team die Aufgaben und prüft den Fortschritt gegen den Projektstrukturplan. Kurzfristige Blocker klärt das Team über Signal. Abnahmekriterien jedes Abschnitts sind die Qualitätsziele QZ-01 bis QZ-08 und die Definition of Done am Ende dieses Kapitels.
+Jeder Abschnitt beginnt mit einem Regelmeeting in Microsoft Teams. Dort verteilt das Team die Aufgaben und prüft den Fortschritt gegen den Projektstrukturplan. Kurzfristige Blocker klärt das Team über Signal. Abnahmekriterien jedes Abschnitts sind die Qualitätsziele QZ-01 bis QZ-09 und die Definition of Done am Ende dieses Kapitels.
 
 ### Anforderungsmanagement
 
@@ -31,7 +31,7 @@ Grundlage sind die Anforderungen aus den in MS 1 festgelegten funktionalen Anfor
 
 **Konkretisierung**: Die Anforderungen aus MS 1 sind bewusst auf grober Ebene formuliert. Das Team konkretisiert sie schrittweise während der Umsetzung, jeweils zu Beginn des Abschnitts, in dem sie umgesetzt werden. Dabei werden sie in umsetzbare Aufgaben zerlegt und um prüfbare Akzeptanzkriterien ergänzt. Aus den Akzeptanzkriterien entstehen die Testfälle. Offene fachliche Fragen klärt das Team in der Planungphase. Fragen, die nur der Tutor beantworten kann, stellt die Projektleitung über Redmine.
 
-**Nachvollziehbarkeit**: Die Kennungen aus MS 1 bleiben über das gesamte Projekt hinweg erhalten. Aufgaben, Änderungen und Tests verweisen auf die betroffenen Anforderungen. Die Rückverfolgbarkeitsmatrix aus dem Testlauf (QZ-01) zeigt, ob eine Anforderung erfüllt ist. Damit ist zugleich Q-09 umgesetzt.
+**Nachvollziehbarkeit**: Die Kennungen aus MS 1 bleiben über das gesamte Projekt hinweg erhalten. Aufgaben, Änderungen und Tests verweisen auf die betroffenen Anforderungen. Anforderungen, Akzeptanzkriterien und Aufgaben werden in der vorhandenen Projektdokumentation gepflegt; jedes Arbeitspaket nennt verantwortliche Person, Zieltermin und Bearbeitungsstand. Das Product Backlog enthält alle offenen Arbeitspakete; das Sprint Backlog den für den jeweiligen Abschnitt ausgewählten Umfang. Beide führen Anforderungs-ID, Akzeptanzkriterien, Priorität, verantwortliche Person, Zieltermin und Status. Fehler und Blocker werden dort mit Reproduktionsschritten sowie Verweisen auf Anforderung und Pull Request dokumentiert. Testfälle liegen in `backend/tests/` beziehungsweise den Frontend-Tests und führen die geprüften Anforderungs-IDs. Die Rückverfolgbarkeitsmatrix aus dem Testlauf (QZ-01) zeigt, ob eine Anforderung erfüllt ist. Testprotokolle werden aus den CI-Läufen übernommen und im Testabschlussbericht dokumentiert. Wesentliche Projektentscheidungen und die Prüfungen der Liefergegenstände samt Ergebnis werden ebenfalls in der Projektdokumentation festgehalten. Damit wird Q-09 abgedeckt.
 
 **Qualitätssicherung**: Bevor eine Anforderung umgesetzt wird, wird die Konkretisierung darauf geprüft, ob sie eindeutig, testbar und widerspruchsfrei ist und ob Akzeptanzkriterien vorliegen. Nach der Umsetzung wird die fachliche Korrektheit gegen die Anforderung geprüft.
 
@@ -47,12 +47,12 @@ Ab dem Feature-Freeze am 08.10.2026 werden keine neuen Anforderungen mehr aufgen
 
 | Teammitglied | Entwicklung | Review und Prüfung |
 | --- | --- | --- |
-| Julian Ammann | Einrichtung von Repository, Werkzeugen, CI/CD, Containern und Hosting (PSP 4.1). Authentifizierung und Sitzungen (PSP 4.2). Frontend | Reviewt alle Backend-Pull-Requests. Pflicht-Reviewer für Container-, Workflow- und Deploy-Konfiguration. Führt die Deploys aus |
+| Julian Ammann | Einrichtung von Repository, Werkzeugen, CI/CD, Containern und Hosting (PSP 4.1). Authentifizierung und Sitzungen (PSP 4.2). Frontend | Reviewt Backend-Pull-Requests sowie Frontend-Pull-Requests, die er nicht selbst erstellt hat. Pflicht-Reviewer für Container-, Workflow- und Deploy-Konfiguration. Führt die Deploys aus |
 | Kevin Jordan Taghu | Backend: Personen und Anlässe (PSP 4.3), Benachrichtigungen mit Scheduler und E-Mail-Versand (PSP 4.5), Teilen-Links und HTML-Ansicht (PSP 4.6) | Reviewt die Backend-Pull-Requests von Anton Hirsch. Koordiniert als Projektleitung die Abschnitte |
 | Anton Hirsch | Backend: Geschenke, Beschenkungen, Aufgaben, Notizen und Anhänge (PSP 4.4), Geschenkvorschläge (PSP 4.7). Fachliche Testfälle | Reviewt die Backend-Pull-Requests von Kevin Jordan Taghu. Prüft die fachliche Korrektheit gegen die Anforderungen |
-| Yin Yin Wu-Hanke | Unterstützung im Frontend, Berechtigungs- und Sicherheitstests, Auswertung der Secret- und Abhängigkeitsscans | Reviewt alle Frontend-Pull-Requests. Prüft sicherheitsrelevante Änderungen (Anmeldung, Teilen-Links, Uploads) |
+| Yin Yin Wu-Hanke | Frontend, Berechtigungs- und Sicherheitstests, Auswertung der Secret- und Abhängigkeitsscans | Reviewt Frontend-Pull-Requests, die sie nicht selbst erstellt hat. Prüft sicherheitsrelevante Änderungen (Anmeldung, Teilen-Links, Uploads) |
 
-Jeder Pull Request braucht die Freigabe einer anderen Person. Backend-Code prüfen Julian Ammann und der jeweils andere Backend-Entwickler, Frontend-Code prüft Yin Yin Wu-Hanke. Die Authentifizierung prüfen Yin Yin Wu-Hanke unter Sicherheitsaspekten und ein Backend-Entwickler.
+Jeder Pull Request braucht die Freigabe einer anderen Person. Backend-Code prüft Julian Ammann oder der jeweils andere Backend-Entwickler. Frontend-Code prüft Julian Ammann oder Yin Yin Wu-Hanke, jeweils nicht die erstellende Person. Sicherheitsrelevante Änderungen an Anmeldung, Teilen-Links und Uploads prüft Yin Yin Wu-Hanke zusätzlich aus Sicherheitssicht.
 
 Die Backend-Stränge sind nach Fachdomänen getrennt. Jede Domäne erhält in jeder Schicht eine eigene Datei, etwa für Personen je ein Modul für Modell, Schema, Service und Router. Gemeinsam bearbeitet werden nur die beiden Dateien, in denen Modelle und Router registriert werden. Nur dort können Merge-Konflikte entstehen.
 
@@ -78,7 +78,7 @@ Browser ──HTTPS──▶ Traefik ──▶ Frontend (SvelteKit, Node, :3000)
 * Öffentlich erreichbar ist nur das Frontend. Backend, Scheduler und Datenbank liegen in einem internen Container-Netz.
 * Der Browser sieht nur eine Adresse. Das Session-Cookie ist deshalb ein First-Party-Cookie, und eine CORS-Freigabe entfällt.
 * Der Scheduler läuft als eigener Prozess aus dem Backend-Image, immer mit genau einer Instanz. Im API-Prozess läuft kein Scheduler.
-* Bilddateien liegen auf einem eigenen Volume und werden nur über einen angemeldeten API-Endpunkt ausgeliefert.
+* Bilddateien liegen auf einem eigenen Volume und werden über eine geschützte API-Route ausgeliefert: mit gültiger Sitzung oder, soweit ausdrücklich freigegeben, mit gültigem Freigabe-Link.
 
 ### Technologie-Stack
 
@@ -167,7 +167,7 @@ Diese Regeln prüft das Team in jedem Backend-Review.
 
 #### Authentifizierung und Sitzungen
 
-Alle fachlichen Endpunkte setzen eine Anmeldung voraus. Julian Ammann setzt die Authentifizierung in Sprint 0 um.
+Alle kontogebundenen fachlichen Endpunkte setzen eine Anmeldung voraus. Ausnahmen sind Registrierung, Anmeldung und die Nur-Lese-Ansicht über einen gültigen Freigabe-Link. Diese Ansichten geben ausschließlich die ausdrücklich freigegebenen Personen und Geschenkideen zurück; Schreibzugriffe bleiben ausgeschlossen. Julian Ammann setzt die Authentifizierung in Sprint 0 um.
 
 | Aspekt | Festlegung |
 | --- | --- |
@@ -243,7 +243,8 @@ Browser ──▶ SvelteKit (Node, :3000) ──▶ FastAPI (:8000)
 | Bereich | Zweck | Schutz |
 | --- | --- | --- |
 | Anmeldung, Registrierung | Konto anlegen und anmelden | öffentlich. Angemeldete Nutzer werden zur Übersicht weitergeleitet |
-| Übersicht, fachliche Seiten | alle Funktionen des Geschenke-Managers | nur mit Sitzung, sonst Weiterleitung zur Anmeldung mit Rücksprungziel |
+| Übersicht, fachliche Seiten | alle kontogebundenen Funktionen des Geschenke-Managers | nur mit Sitzung, sonst Weiterleitung zur Anmeldung mit Rücksprungziel |
+| Geteilte Ansicht | ausdrücklich freigegebene Personen und Geschenkideen anzeigen | öffentlich nur mit gültigem, nicht erratbarem Freigabe-Link; Nur-Lese-Zugriff |
 | Konto | Konto anzeigen und löschen (F-17) | nur mit Sitzung |
 | Abmeldung | Sitzung beenden, Cookie löschen | nur als Formularaktion |
 | `/api/*` | Weiterleitung von Browser-Aufrufen an das Backend | Cookie wird durchgereicht |
@@ -306,19 +307,19 @@ GitHub Actions führt die Prüfungen nur für die geänderte Komponente aus. Bei
 
 | Workflow | Auslöser | Prüfungen |
 | --- | --- | --- |
-| Backend | Änderungen im Backend | Lint, Typprüfung, Migrationen gegen PostgreSQL 17 einspielen und auf Vollständigkeit prüfen, Tests mit Abdeckungsmessung, OpenAPI-Spezifikation aktuell, Schwachstellenscan |
-| Frontend | Änderungen im Frontend | generierte Typen aktuell, Formatierung, Lint, Typprüfung, Unit- und Komponententests im Browser, Build, Schwachstellenscan |
+| Backend | Änderungen im Backend | Lint, Typprüfung, Migrationen gegen PostgreSQL 17 einspielen und auf Vollständigkeit prüfen, Tests und Abhängigkeitsscan |
+| Frontend | Änderungen im Frontend | generierte Typen aktuell, Formatierung, Lint, Typprüfung, Unit- und Komponententests im Browser, Build und Abhängigkeitsscan |
 | Docker | Änderungen an Backend oder Frontend | Build beider Images, Veröffentlichung in der GitHub Container Registry bei `main` und Versions-Tags |
 | Secrets | jeder Push auf `main` und jeder Pull Request | Secret-Scan über die gesamte Historie |
 
-Die Backend-CI prüft, dass die Spezifikation zum Code passt, die Frontend-CI, dass die Typen zur Spezifikation passen. Der API-Vertrag ist so von beiden Seiten abgesichert. Alle Workflows laufen mit Leserechten, nur der Docker-Workflow darf zusätzlich Images veröffentlichen. Die CI nutzt dieselben gepinnten Werkzeugversionen wie die lokale Umgebung.
+Die Frontend-CI prüft, dass die generierten Typen zur OpenAPI-Spezifikation passen. Eine automatische Prüfung der OpenAPI-Spezifikation gegen den Backend-Code ist im bestehenden Backend-Workflow noch nicht eingerichtet und wird vor MS 4 ergänzt. Der API-Vertrag ist damit erst nach dieser Ergänzung auf beiden Seiten abgesichert. Alle Workflows laufen mit Leserechten, nur der Docker-Workflow darf zusätzlich Images veröffentlichen. Die CI nutzt dieselben gepinnten Werkzeugversionen wie die lokale Umgebung.
 
 ### Abhängigkeiten
 
 * Alle Abhängigkeiten sind in Lockfiles fixiert. Die CI installiert nur aus den Lockfiles.
 * Entwicklungswerkzeuge sind von den Laufzeitabhängigkeiten getrennt und gelangen nicht in die Produktions-Images.
 * Dependabot prüft wöchentlich Python- und npm-Pakete, GitHub Actions und Docker-Basis-Images und öffnet gebündelte Pull Requests.
-* `pip-audit` und `pnpm audit` brechen den Build bei bekannten Schwachstellen ab (QZ-06).
+* `pip-audit` und `pnpm audit` laufen in den bestehenden Workflows derzeit mit `continue-on-error`; Funde blockieren einen Merge daher noch nicht. Vor MS 4 werden diese Fehlerfortsetzungen entfernt: Befunde der Schweregrade hoch und kritisch blockieren einen Merge. Begründete Ausnahmen dokumentiert die verantwortliche Person mit Risiko und Behebungsziel; Yin Yin Wu-Hanke prüft und genehmigt sie. Mittlere und niedrige Befunde werden in der Fehlerliste mit Priorität und Zieltermin erfasst (QZ-06). Der Docker-Workflow baut derzeit Images, scannt sie aber noch nicht; ein Image-Scan wird vor MS 4 ergänzt.
 
 ### Konfiguration und Geheimnisse
 
@@ -348,16 +349,16 @@ Regeln für Geheimnisse:
 | Ebene | Werkzeug | Umfang | Verantwortlich |
 | --- | --- | --- | --- |
 | Unit Backend | pytest mit Test-Uhr und Test-Postfach | Services, Planung der Benachrichtigungen, Vorschlagslogik | Entwickler der Domäne |
-| Integration Backend | pytest, httpx, testcontainers | jeder Endpunkt mit Normalfall, Validierung und Fremdzugriff → 404. Echte PostgreSQL-Datenbank, jeder Test wird danach zurückgerollt | Entwickler der Domäne |
+| Integration Backend | pytest, httpx, testcontainers | Kontogebundene Endpunkte mit Normalfall, Validierung und Fremdzugriff → 404. Freigabe-Endpunkte zusätzlich mit gültigem, ungültigem, abgelaufenem und widerrufenem Link; nur Lesen. Echte PostgreSQL-Datenbank, jeder Test wird danach zurückgerollt | Entwickler der Domäne |
 | Berechtigung | wie Integration | Mandantentrennung je Ressource, Teilen-Link zeigt nur freigegebene Personen | Yin Yin Wu-Hanke |
 | Unit Frontend | Vitest im Browser | Hilfsfunktionen und Komponenten | Julian Ammann |
-| End-to-End | Playwright gegen den kompletten Stack  | Kernabläufe: registrieren, Person anlegen, Idee → Beschenkung → verschenkt, Teilen-Link öffnen, Konto löschen. Chrome, Firefox, Safari (QZ-08) | Julian Ammann, Anton Hirsch |
+| End-to-End | Playwright gegen den kompletten Stack | Kernabläufe: registrieren, Person anlegen, Idee → Beschenkung → verschenkt, Teilen-Link ohne Anmeldung öffnen, unzulässige Änderungen über den Link abweisen und Konto löschen. Chromium, Firefox und WebKit; Safari wird zusätzlich manuell geprüft (QZ-08) | Julian Ammann, Anton Hirsch |
 | Last | Skript mit synthetischem Testbestand | Nachweis QZ-02, Messwerte gehen in den Testabschlussbericht | Anton Hirsch |
 
-* Die Testabdeckung wird bei jedem Lauf gemessen. Ziel aus QZ-07 sind mindestens 70 % Zeilenabdeckung im Backend.
-* Jeder Test nennt die Anforderungen, die er prüft. Aus jedem vollständigen Testlauf entsteht automatisch die Rückverfolgbarkeitsmatrix Anforderung ↔ Test ↔ Ergebnis als Nachweis für QZ-01.
+* Ziel aus QZ-07 sind mindestens 70 % Zeilenabdeckung im Backend. Der bestehende Backend-Workflow misst diese Abdeckung noch nicht; `pytest-cov` und der Grenzwert werden vor MS 4 in der CI eingerichtet.
+* Jeder Test nennt die Anforderungen, die er prüft. Sobald die Testkennungen in den Tests und im CI-Export verfügbar sind, entsteht aus jedem vollständigen Testlauf die Rückverfolgbarkeitsmatrix Anforderung ↔ Test ↔ Ergebnis als Nachweis für QZ-01.
 * Warnungen gelten in den Backend-Tests als Fehler.
-* End-to-End-Tests laufen nur auf `main` und vor Releases, weil sie Pull Requests sonst zu stark verlangsamen.
+* End-to-End-Tests laufen nur auf `main` und vor Releases, weil sie Pull Requests sonst zu stark verlangsamen. Playwright prüft dabei WebKit als Annäherung an Safari, nicht den markengebundenen Safari-Browser; deshalb erfolgt die zusätzliche Safari-Prüfung manuell (siehe [Playwright-Dokumentation zu Browsern](https://playwright.dev/docs/browsers)).
 
 ### Bereitstellung und Betrieb
 
@@ -401,7 +402,7 @@ Eine Funktion ist fertig, wenn alle Punkte erfüllt sind:
 * [ ] Tabelle entspricht dem verbindlichen Datenmodell, Migration erzeugt, gegengelesen und vollständig
 * [ ] jede Tabelle und Spalte hat einen Datenbankkommentar
 * [ ] Service filtert jede Abfrage nach dem Besitzer, fachliche Fehler nutzen die gemeinsame Fehlerklasse
-* [ ] Endpunkt erfordert Anmeldung, hat Operation-ID, Zusammenfassung und Beschreibung. Schema-Felder haben Beschreibung und Beispiel
+* [ ] Kontogebundener Endpunkt erfordert Anmeldung; öffentliche Freigabe-Endpunkte erlauben ausschließlich den über einen gültigen Link freigegebenen Nur-Lese-Zugriff. Jeder Endpunkt hat Operation-ID, Zusammenfassung und Beschreibung. Schema-Felder haben Beschreibung und Beispiel
 * [ ] Listen sind paginiert
 * [ ] Tests für Normalfall, Validierung und Fremdzugriff → 404, jeweils mit Anforderungs-ID
 * [ ] OpenAPI-Spezifikation und generierte Dokumentation sind aktualisiert und committet
@@ -427,7 +428,7 @@ Jeder Liefergegenstand erhält eine Kennung, eine verantwortliche und eine prüf
 | --- | --- | --- | --- | --- | --- | --- |
 | LG-01 | Konfiguration der Softwareentwicklung und Qualitätsplanung | 3 | Markdown → PDF | `docs/` | Julian Ammann | Kevin Jordan Taghu |
 | LG-02 | Programmcode Backend | 4 | Git-Repository | `backend/` | Kevin Jordan Taghu, Anton Hirsch (Anmeldung: Julian Ammann) | Julian Ammann |
-| LG-03 | Programmcode Frontend | 4 | Git-Repository | `frontend/` | Julian Ammann | Yin Yin Wu-Hanke |
+| LG-03 | Programmcode Frontend | 4 | Git-Repository | `frontend/` | Julian Ammann, Yin Yin Wu-Hanke | gegenseitiges Review |
 | LG-04 | Lauffähiges System (Link) | 4 | Container-Images, URL | GitHub Container Registry, Produktionsserver | Julian Ammann | Anton Hirsch |
 | LG-05 | Benutzerhandbuch | 4 | Markdown → PDF mit Screenshots | `docs/ms4/` | Yin Yin Wu-Hanke | Anton Hirsch |
 | LG-06 | Fachliche Dokumentation: Prozesse, Konzepte, Geschäftsregeln | 4 | Markdown → PDF | `docs/ms4/` | Anton Hirsch | Kevin Jordan Taghu |
@@ -435,7 +436,7 @@ Jeder Liefergegenstand erhält eine Kennung, eine verantwortliche und eine prüf
 | LG-08 | Betriebsdokumentation: Installation, Konfiguration, Admin-Account | 4  | Markdown, teilweise generiert | `deploy/`, `docs/generated/` | Julian Ammann | Kevin Jordan Taghu |
 | LG-09 | Testabschlussbericht mit Testfällen und Testprotokollen | 4  | Markdown → PDF, CI-Protokolle | `docs/ms4/`, `docs/generated/` | Anton Hirsch | Yin Yin Wu-Hanke |
 | LG-10 | Liste der Testkonten und Zugangsdaten | 4  | PDF | nur Redmine, nie im Repository | Yin Yin Wu-Hanke | Julian Ammann |
-| LG-11 | Ergebnispräsentation | 5  | Video oder Link | `docs/ms5/` | Kevin Jordan Taghu | Anton Hirsch |
+| LG-11 | Ergebnispräsentation: Projektablauf mit Teilergebnissen, Liefergegenständen und Reflexion ihrer Erstellung; technischer Überblick, Testabschlussbericht, Demo und Lessons Learned | 5 | Video oder Link, höchstens 20 Minuten; Demo höchstens 7 Minuten | `docs/ms5/` | Kevin Jordan Taghu | Anton Hirsch |
 | LG-12 | Gemeinsamer Projektbericht | 6  | PDF | `docs/ms6/` | Kevin Jordan Taghu | alle |
 
 ### Dokumentation aus dem Code
@@ -505,22 +506,37 @@ Das Repository ist öffentlich. Zugangsdaten, Testkonten und Produktionsgeheimni
 
 ### Qualitätsziele
 
-Die Qualitätsziele konkretisieren die Qualitätsanforderungen Q-01 bis Q-09 aus MS 1 und sind nach den Merkmalen der ISO/IEC 25010 gegliedert. Jedes Ziel ist messbar und einem Prüfverfahren, einem Zeitpunkt und einer verantwortlichen Person zugeordnet.
+Die Qualitätsziele konkretisieren die Qualitätsanforderungen Q-01 bis Q-09 aus MS 1 und sind nach den Merkmalen der ISO/IEC 25010 gegliedert. Die Kennungen QZ ergänzen die ursprünglichen Kennungen Q; sie ersetzen diese nicht. Jedes Ziel ist messbar und einem Prüfverfahren, einem Zeitpunkt und einer verantwortlichen Person zugeordnet.
+
+| Anforderung aus MS 1 | Konkretisierung in MS 3 |
+| --- | --- |
+| Q-01 Mandantentrennung | QZ-06 Sicherheit |
+| Q-02 Benachrichtigungszuverlässigkeit | QZ-05 Zuverlässigkeit |
+| Q-03 Sicherheit | QZ-06 Sicherheit |
+| Q-04 Datenschutz | QZ-06 Sicherheit |
+| Q-05 Leistung | QZ-02 Leistungseffizienz |
+| Q-06 Wartbarkeit | QZ-07 Wartbarkeit |
+| Q-07 Barrierefreiheit | QZ-04 Benutzbarkeit und Barrierefreiheit |
+| Q-08 Zeitkorrektheit | QZ-09 Zeitkorrektheit |
+| Q-09 Nachvollziehbarkeit | QZ-01 Rückverfolgbarkeit der Anforderungen sowie Dokumentations- und Freigaberegeln für Entscheidungen und Liefergegenstände |
+
+QZ-03 (API-Vertrag und HTML-Konformität) und QZ-08 (Übertragbarkeit und Browserdarstellung) ergänzen die MS-1-Ziele.
 
 | ID | Merkmal | Qualitätsziel | Prüfverfahren | Prüfer |
 | --- | --- | --- | --- | --- |
 | QZ-01 | Funktionale Eignung | Alle MUSS Anforderungen sind umgesetzt und durch mindestens einen Testfall abgedeckt; 100 % der zugehörigen Testfälle sind bestanden. Berechnungen sind korrekt, z. B. enthält die Geburtstagsübersicht des Folgemonats genau die betroffenen Personen. Die Umwandlung einer Geschenkidee in ein Geschenk erfolgt in einem Schritt. | Rückverfolgbarkeitsmatrix Anforderung <--> Testfall; Unit-, Integrations- und Systemtests | Yin Yin Wu-Hanke |
-| QZ-02 | Leistungseffizienz | Listen werden bei einem Testbestand von 100 Personen, 1.000 Geschenkideen und 1.000 Beschenkungen in höchstens 2 Sekunden angezeigt (lokale Testumgebung, Q-05). | Lasttest mit generierten Testdaten, Messung im Browser | Julian Ammann |
+| QZ-02 | Leistungseffizienz | Listen mit 100 Personen, 1.000 Geschenkideen und 1.000 Beschenkungen werden in der festgehaltenen lokalen Testumgebung innerhalb von 2 Sekunden angezeigt (Q-05). | Nach einem Aufwärmlauf 30 Messungen vom Aufruf bis zur Anzeige der Liste; der 95. Perzentilwert muss höchstens 2 Sekunden betragen. Testgerät und Laufbedingungen werden im Testprotokoll festgehalten. | Julian Ammann |
 | QZ-03 | Kompatibilität | Der Frontend-Client entspricht der OpenAPI-Spezifikation des Backends (typisierter Client, keine Typfehler). Der HTML-Export ist valides HTML. | Typprüfung in CI, W3C-Validator | Anton Hirsch, Kevin Jordan Taghu |
-| QZ-04 | Benutzbarkeit | Eine Geschenkidee kann ohne Anleitung in höchstens 3 Interaktionen und unter 30 Sekunden erfasst werden. Löschvorgänge erfordern eine Bestätigung und ungültige Eingaben erzeugen verständliche Fehlermeldungen. Lighthouse-Accessibility-Wert ≥ 90. | Usability-Test mit 3 Testpersonen außerhalb des Teams, Testfälle mit ungültigen Eingaben, Lighthouse-Audit | Anton Hirsch, Yin Yin Wu-Hanke |
+| QZ-04 | Benutzbarkeit und Barrierefreiheit | Eine Geschenkidee kann ohne Anleitung in höchstens 3 Interaktionen und unter 30 Sekunden erfasst werden. Löschvorgänge erfordern eine Bestätigung, ungültige Eingaben erzeugen verständliche Fehlermeldungen, wesentliche Abläufe funktionieren per Tastatur und Zustände werden nicht nur durch Farbe vermittelt. Lighthouse-Accessibility-Wert ≥ 90. | Drei externe Testpersonen führen dieselbe Erfassungsaufgabe aus; das Ziel gilt als erreicht, wenn alle drei die Erfassung innerhalb der vorgegebenen Zeit und Interaktionen ohne Hilfe abschließen. Zeit und Interaktionen werden einzeln protokolliert. Zusätzlich Testfälle für ungültige Eingaben und Tastaturbedienung sowie Lighthouse-Audit. | Anton Hirsch, Yin Yin Wu-Hanke |
 | QZ-05 | Zuverlässigkeit | Benachrichtigungen werden zum vorgesehenen Termin erzeugt. Wiederholte oder parallele Scheduler-Läufe erzeugen dabei keine zusätzlichen Versandaufträge. Unklare Versandergebnisse werden nicht automatisch erneut versendet, sondern protokolliert. Ein Ausfall des E-Mail-Versands beeinträchtigt die übrigen Funktionen nicht. Container starten nach einem Neustart automatisch. | Scheduler-Test mit simulierter Systemzeit, Integrationstest mit simuliertem Ausfall, Neustart-Test | Yin Yin Wu-Hanke |
-| QZ-06 | Sicherheit | Nutzende greifen ausschließlich auf eigene Daten zu. Passwörter und Tokens werden nur gehasht gespeichert. Teilen-Links sind nicht erratbar, optional befristet und jederzeit deaktivierbar. Keine Secrets im Repository. Es werden ausschließlich synthetische Daten verarbeitet, Vorschläge nutzen keine personenbezogenen Daten anderer Konten. | Autorisierungstests je Endpunkt, npm audit, pip-audit, Image-Scan, Secret-Scan, Checkliste Datenschutz | Kevin Jordan Taghu, Anton Hirsch |
+| QZ-06 | Sicherheit | Nutzende greifen ausschließlich auf eigene Daten zu; die einzige Ausnahme sind ausdrücklich freigegebene Inhalte über einen gültigen Freigabe-Link. Passwörter und Tokens werden nur gehasht gespeichert. Teilen-Links sind nicht erratbar, optional befristet und jederzeit deaktivierbar. Keine Secrets im Repository. Es werden ausschließlich synthetische Daten verarbeitet, Vorschläge nutzen keine personenbezogenen Daten anderer Konten. | Autorisierungstests je Endpunkt, pnpm audit, pip-audit, Image-Scan (vor MS 4 einzurichten), Secret-Scan, Checkliste Datenschutz | Kevin Jordan Taghu, Anton Hirsch |
 | QZ-07 | Wartbarkeit | Linter und Typprüfung laufen ohne Fehler. Jeder Merge auf main erfolgt nach Code-Review. Die Zeilenabdeckung der Backend-Unit-Tests ≥ 70 % und jeder API-Endpunkt besitzt mindestens einen automatisierten Test. Frontend und Backend sind getrennt bau- und testbar. | ESLint, svelte-check, Ruff, pytest-cov, Branch Protection, Endpunktliste gegen Testliste | Julian Ammann |
-| QZ-08 | Übertragbarkeit | Das Gesamtsystem startet aus leerem Zustand mit `docker compose up` anhand der Betriebsdokumentation. Die Kernfunktionen sind in aktuellen Versionen von Chrome, Firefox und Safari sowie auf Smartphone-Displaybreite nutzbar. | Deployment-Test auf sauberer Umgebung durch nicht beteiligte Person, Playwright mit mehreren Browser-Engines | Kevin Jordan Taghu, Yin Yin Wu-Hanke |
+| QZ-08 | Übertragbarkeit | Das Gesamtsystem startet aus leerem Zustand mit `docker compose up` anhand der Betriebsdokumentation. Die Kernfunktionen sind in aktuellen Versionen von Chrome, Firefox und Safari sowie auf Smartphone-Displaybreite nutzbar. | Deployment-Test auf sauberer Umgebung durch nicht beteiligte Person, Playwright mit Chromium, Firefox und WebKit sowie manueller Safari-Prüfung | Kevin Jordan Taghu, Yin Yin Wu-Hanke |
+| QZ-09 | Zeitkorrektheit | Technische Zeitpunkte werden in UTC gespeichert; Geburtstage, Anlasstermine und Verschenkdaten bleiben reine Kalenderdaten. Benachrichtigungen berücksichtigen `Europe/Berlin`; Zeitumstellungen verschieben keinen Anlass auf einen anderen Kalendertag. | Unit- und Integrationstests mit fester Test-Uhr, Jahreswechseln, Schaltjahren und Zeitumstellungen | Kevin Jordan Taghu |
 
 ### Qualität des Softwaresystems
 
-Die Qualitätsziele QZ-01 bis QZ-08 werden über die in der Konfiguration der
+Die Qualitätsziele QZ-01 bis QZ-09 werden über die in der Konfiguration der
 Softwareentwicklung beschriebenen Maßnahmen erreicht: Teststrategie, lokale
 Git-Hooks, Continuous Integration, Code-Review und Definition of Done. Jede
 Änderung durchläuft dieselben Prüfschritte, bevor sie auf `main` gelangt.
@@ -528,9 +544,9 @@ Git-Hooks, Continuous Integration, Code-Review und Definition of Done. Jede
 | Zeitpunkt | Prüfung | Nachweis |
 | --- | --- | --- |
 | bei jedem Commit | Formatierung, Linting und Secret-Scan über die Git-Hooks | Ausgabe der Hooks |
-| bei jedem Pull Request | Lint, Typprüfung, Unit- und Integrationstests, Build und Schwachstellen-Scan sowie mindestens eine Review-Freigabe | grüne CI und Freigabe im Pull Request |
+| bei jedem Pull Request | Lint, Typprüfung, Unit- und Integrationstests, Build, Schwachstellenscan und mindestens eine Review-Freigabe; hoch- und kritische Befunde blockieren nach Aktivierung der Richtlinie | grüne CI und Freigabe im Pull Request |
 | je Sprint | funktionale Abnahme der umgesetzten Anforderungen (QZ-01) und Messung der Testabdeckung (QZ-07) | Rückverfolgbarkeitsmatrix, Abdeckungsbericht |
-| vor MS 4 | End-to-End-Abläufe über mehrere Browser (QZ-08), Last- und Antwortzeitmessung (QZ-02) sowie Barrierefreiheits- und Sicherheitsprüfung (QZ-04, QZ-06) | Testabschlussbericht |
+| vor MS 4 | End-to-End-Abläufe über mehrere Browser (QZ-08), Last- und Antwortzeitmessung (QZ-02), Barrierefreiheit (QZ-04), Sicherheitsprüfung (QZ-06) und Zeitkorrektheit (QZ-09) | Testabschlussbericht |
 
 Zentrale Nachweise sind die Rückverfolgbarkeitsmatrix Anforderung ↔ Test ↔ Ergebnis
 (QZ-01), die bei jedem Lauf gemessene Zeilenabdeckung von mindestens 70 % im Backend (QZ-07) sowie die grüne Continuous Integration mit bestandenem Review als
