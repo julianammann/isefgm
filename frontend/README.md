@@ -42,7 +42,7 @@ src/
       login/, register/   Form Actions gegen /api/v1/auth/*
     (app)/                nur angemeldet; der Hook leitet ohne Session nach /login?next=…
       +page.svelte        Übersicht
-      account/            Konto anzeigen, Konto löschen (F-17)
+      account/            Konto anzeigen, auf allen Geräten abmelden, Konto löschen (F-17)
     logout/               nur Action: Session widerrufen, Cookie löschen
     api/[...path]/        Proxy für Browser-Requests
 ```

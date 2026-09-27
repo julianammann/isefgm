@@ -16,6 +16,22 @@
     <dd>{data.user.email}</dd>
   </dl>
 
+  <section class="mt-10 rounded border p-4" aria-labelledby="logout-all-heading">
+    <h2 id="logout-all-heading" class="font-semibold">Auf allen Geräten abmelden</h2>
+    <p class="mt-2 text-sm">
+      Beendet alle Sitzungen dieses Kontos, auch in diesem Browser. Sinnvoll, wenn ein Gerät
+      verloren gegangen ist oder jemand anderes angemeldet sein könnte.
+    </p>
+    <form method="POST" action="?/logoutAll" use:enhance class="mt-4 flex flex-col gap-3">
+      {#if form?.logoutAllMessage}
+        <p role="alert" class="text-sm text-red-800">{form.logoutAllMessage}</p>
+      {/if}
+      <button type="submit" class="self-start rounded bg-black px-4 py-2 text-white">
+        Auf allen Geräten abmelden
+      </button>
+    </form>
+  </section>
+
   <section class="mt-10 rounded border border-red-300 p-4" aria-labelledby="delete-heading">
     <h2 id="delete-heading" class="font-semibold text-red-800">Konto löschen</h2>
     <p class="mt-2 text-sm">
