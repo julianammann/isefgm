@@ -1,25 +1,44 @@
+# Base stack: services, healthchecks, app-internal network. Deployed as
+# compose.yaml + compose.<environment>.yaml by ammann-pro/infra-vps (app role).
+# Rules enforced by the deploy gate: NO ports:, NO Traefik labels, NO external
+# networks, NO bind mounts, NO build: here. Local dev adds those in
+# compose.override.yaml, which Compose loads automatically and the deploy ignores.
+#
+# Variables come from the deploy-rendered .env (IMAGE_TAG, APP_FQDN, secrets).
+# Defaults after :- exist only so `docker compose up` works locally.
+
 x-backend: &backend
-  build:
-    context: ./backend
-    args:
-      UV_VERSION: ${UV_VERSION:-0.12.9}
-  image: giftmanager-backend
+  image: ghcr.io/julianammann/isefgm/backend:${IMAGE_TAG:-main}
   environment: &backend-env
-    DATABASE_URL: postgresql+asyncpg://app:app@db:5432/app
+    APP_ENV: ${APP_ENV:-production}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@isefgm-db:5432/${POSTGRES_DB:-app}
+    DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Europe/Berlin}
+    UPLOADS_DIR: /data/uploads
+  networks: [app-net]
+  security_opt:
+    - no-new-privileges:true
 
 services:
   db:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: app
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # Project-prefixed aliases instead of bare service names: a container that is
+    # also on the shared traefik-net could otherwise resolve `db`/`api` to another
+    # stack's container. Connection strings use only these aliases.
+    networks:
+      app-net:
+        aliases: [isefgm-db]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -34,12 +53,12 @@ services:
 
   api:
     <<: *backend
-    environment:
-      <<: *backend-env
-      APP_ENV: production
-      CORS_ORIGINS: "http://localhost:3000"
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      app-net:
+        aliases: [isefgm-api]
+    volumes:
+      - uploads:/data/uploads
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/v1/health/live')"]
       interval: 15s
@@ -49,18 +68,41 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Separate process, exactly one replica. Opt-in via profile until
+  # `python -m giftmanager.scheduler` exists. Profiles survive the deploy gate:
+  # inactive services are dropped from `docker compose config`.
+  scheduler:
+    <<: *backend
+    command: ["python", "-m", "giftmanager.scheduler"]
+    profiles: [scheduler]
+    restart: unless-stopped
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   frontend:
-    build:
-      context:
-        ./frontend
+    image: ghcr.io/julianammann/isefgm/frontend:${IMAGE_TAG:-main}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
-      API_URL: http://api:8000
-      ORIGIN: http://localhost:3000
-    ports:
-      - "3000:3000"
+      API_URL: http://isefgm-api:8000
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
+    networks: [app-net]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      start_period: 10s
     depends_on:
       api:
         condition: service_healthy
 
+networks:
+  app-net: {}
+
 volumes:
   pgdata:
+  uploads:

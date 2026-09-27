@@ -1,0 +1,33 @@
+# Local development only. Compose merges this automatically on `docker compose up`;
+# the deploy uses compose.yaml + compose.production.yaml and never sees this file.
+x-dev-backend-env: &dev-backend-env
+  APP_ENV: development
+  LOG_LEVEL: DEBUG
+
+x-backend-build: &backend-build
+  context: ./backend
+  args:
+    UV_VERSION: ${UV_VERSION:-0.12.9}
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  migrate:
+    build: *backend-build
+
+  api:
+    build: *backend-build
+    environment: *dev-backend-env
+    ports:
+      - "8000:8000"
+
+  scheduler:
+    build: *backend-build
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"

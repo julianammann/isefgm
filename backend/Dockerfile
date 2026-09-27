@@ -17,7 +17,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 FROM python:3.14-slim AS runtime
-RUN groupadd --system app && useradd --system --gid app --home /app app
+# /data/uploads exists in the image and belongs to app, so the named volume mounted
+# there is initialised with that owner instead of root.
+RUN groupadd --system app && useradd --system --gid app --home /app app \
+    && mkdir -p /data/uploads && chown app:app /data/uploads
 WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
