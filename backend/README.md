@@ -147,4 +147,4 @@ Multi-Stage: uv-Builder → `python:3.14-slim`, Non-Root-User, nur Produktions-D
 | `GET /api/v1/auth/me` | Eigenes Konto (401 ohne gültige Session) |
 | `DELETE /api/v1/auth/account` | Konto mit allen Daten löschen (204) |
 | `GET /docs` | Swagger UI, nur `APP_ENV=development` |
-| `GET /openapi.json` | Schema |
+| `GET /openapi.json` | Schema, nur `APP_ENV=development`; Export in jeder Umgebung: `mise run openapi` |
