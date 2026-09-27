@@ -1,0 +1,90 @@
+# Code reference site: Sphinx (backend) and TypeDoc (frontend) write Markdown,
+# VitePress builds the site. Pull requests only build it, which fails on
+# undocumented frontend exports (typedoc.json: treatWarningsAsErrors) and on dead
+# links; pushes to main also publish it to GitHub Pages.
+# One-time setup: Settings -> Pages -> Source: "GitHub Actions".
+name: docs
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/src/**"
+      - "backend/docs/**"
+      - "backend/pyproject.toml"
+      - "backend/mise.toml"
+      - "frontend/src/**"
+      - "frontend/typedoc.json"
+      - "frontend/package.json"
+      - "frontend/mise.toml"
+      - "docs/site/**"
+      - "docs/generated/**"
+      - "mise.toml"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "backend/src/**"
+      - "backend/docs/**"
+      - "backend/pyproject.toml"
+      - "backend/mise.toml"
+      - "frontend/src/**"
+      - "frontend/typedoc.json"
+      - "frontend/package.json"
+      - "frontend/mise.toml"
+      - "docs/site/**"
+      - "docs/generated/**"
+      - "mise.toml"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: sphinx, typedoc, vitepress
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install_args: python uv node pnpm
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'docs/site/pnpm-lock.yaml') }}
+
+      - run: uv sync --frozen
+        working-directory: backend
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm install --frozen-lockfile
+        working-directory: docs/site
+
+      # GitHub Pages serves the site under /<repo>/.
+      - run: mise run apidocs
+        env:
+          DOCS_BASE: /${{ github.event.repository.name }}/
+
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: apidocs
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

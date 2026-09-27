@@ -32,3 +32,11 @@ run = "uv run alembic check"
 
 [tasks.openapi]
 run = "uv run python -m giftmanager.export_openapi > ../frontend/openapi.json"
+
+[tasks.docs]
+description = "render docs/generated/{api,database,configuration}.md from code"
+run = "uv run python -m giftmanager.export_docs ../docs/generated"
+
+[tasks.apidocs]
+description = "code reference from docstrings as Markdown into ../docs/site/backend (Sphinx, docs/conf.py)"
+run = "uv run python docs/build.py ../docs/site/backend"
