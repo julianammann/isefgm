@@ -10,7 +10,18 @@ from giftmanager.core.db import SessionDep
 from giftmanager.models import User
 from giftmanager.services import auth as auth_service
 
-SESSION_COOKIE = "session"
+# Wherever the cookie is Secure it carries the __Host- prefix: browsers then insist on
+# Path=/ and no Domain, so a sibling subdomain can neither plant nor shadow it (cookie
+# tossing). Browsers reject a __Host- cookie without Secure, hence the plain name in
+# development over http. Only the name for the current environment is read. Both
+# names must match SESSION_COOKIES in frontend/src/lib/server/session.ts.
+SESSION_COOKIE = "__Host-session"
+DEV_SESSION_COOKIE = "session"
+
+
+def session_cookie_name(settings: Settings) -> str:
+    """`__Host-session` wherever the cookie is `Secure`, `session` in development."""
+    return DEV_SESSION_COOKIE if settings.is_dev else SESSION_COOKIE
 
 
 async def get_current_user(
@@ -22,7 +33,7 @@ async def get_current_user(
         HTTPException: 401 if the cookie is missing, unknown or expired.
     """
     settings = get_settings()
-    token = request.cookies.get(SESSION_COOKIE)
+    token = request.cookies.get(session_cookie_name(settings))
     user = None
     if token:
         user = await auth_service.user_for_session_token(
@@ -49,7 +60,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 def set_session_cookie(response: Response, token: str, settings: Settings) -> None:
     """Set the HttpOnly session cookie; `Secure` everywhere except development."""
     response.set_cookie(
-        SESSION_COOKIE,
+        session_cookie_name(settings),
         token,
         max_age=int(settings.session_ttl.total_seconds()),
         path="/",
@@ -62,5 +73,9 @@ def set_session_cookie(response: Response, token: str, settings: Settings) -> No
 def clear_session_cookie(response: Response, settings: Settings) -> None:
     """Delete the session cookie with the attributes it was set with."""
     response.delete_cookie(
-        SESSION_COOKIE, path="/", httponly=True, secure=not settings.is_dev, samesite="lax"
+        session_cookie_name(settings),
+        path="/",
+        httponly=True,
+        secure=not settings.is_dev,
+        samesite="lax",
     )

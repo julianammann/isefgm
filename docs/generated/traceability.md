@@ -20,6 +20,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | Q-03 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
+| Q-03 | `tests/test_auth.py::test_session_cookie_is_host_prefixed_outside_development[test]` | passed |
+| Q-03 | `tests/test_auth.py::test_session_cookie_is_host_prefixed_outside_development[production]` | passed |
+| Q-03 | `tests/test_auth.py::test_plain_session_cookie_is_ignored_outside_development` | passed |
+| Q-03 | `tests/test_auth.py::test_session_cookie_is_plain_in_development` | passed |
 | Q-03 | `tests/test_auth.py::test_logout_revokes_the_session` | passed |
 | Q-03 | `tests/test_auth.py::test_logout_all_revokes_every_session_of_the_user` | passed |
 | Q-03 | `tests/test_auth.py::test_logout_all_leaves_other_users_logged_in` | passed |

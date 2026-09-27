@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,9 @@ LOGOUT_ALL = "/api/v1/auth/logout-all"
 ME = "/api/v1/auth/me"
 ACCOUNT = "/api/v1/auth/account"
 
+# Tests run as APP_ENV=test, where the session cookie is Secure and __Host- prefixed.
+COOKIE = "__Host-session"
+
 ANNA = {"email": "Anna@Example.org", "password": "correct-horse-battery", "display_name": "Anna"}
 ANNA_LOGIN = {"email": ANNA["email"], "password": ANNA["password"]}
 BOB = {"email": "bob@example.org", "password": "correct-horse-battery", "display_name": "Bob"}
@@ -30,7 +33,7 @@ async def test_register_logs_in_and_normalizes_email(client: AsyncClient) -> Non
     assert body["email"] == "anna@example.org"
     assert body["display_name"] == "Anna"
     assert "password" not in body and "password_hash" not in body
-    assert "session" in r.cookies
+    assert COOKIE in r.cookies
     assert "HttpOnly" in r.headers["set-cookie"]
     assert "Secure" in r.headers["set-cookie"]
 
@@ -62,7 +65,7 @@ async def test_login_rejects_wrong_password_and_unknown_user(client: AsyncClient
 
     wrong = await client.post(LOGIN, json={"email": ANNA["email"], "password": "nope-nope-nope"})
     assert wrong.status_code == 401
-    assert "session" not in wrong.cookies
+    assert COOKIE not in wrong.cookies
 
     unknown = await client.post(
         LOGIN, json={"email": "nobody@example.org", "password": "whatever1"}
@@ -81,16 +84,76 @@ async def test_login_sets_session(client: AsyncClient) -> None:
     assert (await client.get(ME)).status_code == 200
 
 
+def _set_cookie(r: Response) -> tuple[str, set[str]]:
+    """Name and attributes of the single Set-Cookie header of `r`."""
+    pair, *attrs = r.headers["set-cookie"].split("; ")
+    return pair.split("=", 1)[0], set(attrs)
+
+
+@pytest.mark.requirement("Q-03")
+@pytest.mark.parametrize("app_env", ["test", "production"])
+async def test_session_cookie_is_host_prefixed_outside_development(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, app_env: str
+) -> None:
+    monkeypatch.setattr(get_settings(), "app_env", app_env)
+    register = await client.post(REGISTER, json=ANNA)
+    client.cookies.clear()
+    login = await client.post(LOGIN, json=ANNA_LOGIN)
+
+    for r in (register, login):
+        name, attrs = _set_cookie(r)
+        # __Host- makes the browser insist on Secure, Path=/ and no Domain.
+        assert name == "__Host-session"
+        assert {"HttpOnly", "Path=/", "SameSite=lax", "Secure"} <= attrs
+        assert not any(a.lower().startswith("domain=") for a in attrs)
+
+    client.cookies.clear()
+    client.cookies.set("__Host-session", login.cookies["__Host-session"])
+    assert (await client.get(ME)).status_code == 200
+
+
+@pytest.mark.requirement("Q-03")
+async def test_plain_session_cookie_is_ignored_outside_development(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(get_settings(), "app_env", "production")
+    await client.post(REGISTER, json=ANNA)
+    token = client.cookies["__Host-session"]
+    client.cookies.clear()
+
+    # What a sibling subdomain can plant: a valid token under the unprefixed name.
+    client.cookies.set("session", token)
+    assert (await client.get(ME)).status_code == 401
+
+
+@pytest.mark.requirement("Q-03")
+async def test_session_cookie_is_plain_in_development(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Development runs on plain http, and browsers reject a __Host- cookie without Secure.
+    monkeypatch.setattr(get_settings(), "app_env", "development")
+    r = await client.post(REGISTER, json=ANNA)
+    name, attrs = _set_cookie(r)
+    assert name == "session"
+    assert {"HttpOnly", "Path=/", "SameSite=lax"} <= attrs
+    assert "Secure" not in attrs
+    assert (await client.get(ME)).status_code == 200
+
+    logout = await client.post(LOGOUT)
+    assert _set_cookie(logout)[0] == "session"
+    assert "session" not in client.cookies
+
+
 @pytest.mark.requirement("F-01", "Q-03")
 async def test_logout_revokes_the_session(client: AsyncClient, session: AsyncSession) -> None:
     await client.post(REGISTER, json=ANNA)
-    token = client.cookies["session"]
+    token = client.cookies[COOKIE]
 
     r = await client.post(LOGOUT)
     assert r.status_code == 204
     assert (await client.get(ME)).status_code == 401
     # The cookie is gone client-side and the row is gone server-side.
-    client.cookies.set("session", token)
+    client.cookies.set(COOKIE, token)
     assert (await client.get(ME)).status_code == 401
     assert await session.scalar(select(func.count()).select_from(UserSession)) == 0
 
@@ -100,13 +163,13 @@ async def test_logout_all_revokes_every_session_of_the_user(
     client: AsyncClient, session: AsyncSession
 ) -> None:
     await client.post(REGISTER, json=ANNA)
-    other_device = client.cookies["session"]
+    other_device = client.cookies[COOKIE]
     await client.post(LOGIN, json=ANNA_LOGIN)
 
     r = await client.post(LOGOUT_ALL)
     assert r.status_code == 204
     assert (await client.get(ME)).status_code == 401
-    client.cookies.set("session", other_device)
+    client.cookies.set(COOKIE, other_device)
     assert (await client.get(ME)).status_code == 401
     assert await session.scalar(select(func.count()).select_from(UserSession)) == 0
 
@@ -114,11 +177,11 @@ async def test_logout_all_revokes_every_session_of_the_user(
 @pytest.mark.requirement("Q-01", "Q-03")
 async def test_logout_all_leaves_other_users_logged_in(client: AsyncClient) -> None:
     await client.post(REGISTER, json=BOB)
-    bob = client.cookies["session"]
+    bob = client.cookies[COOKIE]
     await client.post(REGISTER, json=ANNA)
 
     assert (await client.post(LOGOUT_ALL)).status_code == 204
-    client.cookies.set("session", bob)
+    client.cookies.set(COOKIE, bob)
     me = await client.get(ME)
     assert me.status_code == 200
     assert me.json()["email"] == BOB["email"]
@@ -215,13 +278,13 @@ async def test_login_purges_the_users_dead_sessions(
     client: AsyncClient, session: AsyncSession, clock: FixedClock
 ) -> None:
     await client.post(REGISTER, json=BOB)
-    bob = hash_session_token(client.cookies["session"])
+    bob = hash_session_token(client.cookies[COOKIE])
     await client.post(REGISTER, json=ANNA)
-    expired = hash_session_token(client.cookies["session"])
+    expired = hash_session_token(client.cookies[COOKIE])
     await client.post(LOGIN, json=ANNA_LOGIN)
-    too_old = hash_session_token(client.cookies["session"])
+    too_old = hash_session_token(client.cookies[COOKIE])
     await client.post(LOGIN, json=ANNA_LOGIN)
-    alive = hash_session_token(client.cookies["session"])
+    alive = hash_session_token(client.cookies[COOKIE])
 
     now = clock.now()
     dead_by_expiry = UserSession.token_hash.in_([bob, expired])
@@ -235,7 +298,7 @@ async def test_login_purges_the_users_dead_sessions(
     await client.post(LOGIN, json=ANNA_LOGIN)
     remaining = set(await session.scalars(select(UserSession.token_hash)))
     # Only Anna's dead sessions go: her live one stays, Bob's expired one waits for his login.
-    assert remaining == {bob, alive, hash_session_token(client.cookies["session"])}
+    assert remaining == {bob, alive, hash_session_token(client.cookies[COOKIE])}
 
 
 @pytest.mark.requirement("F-17")

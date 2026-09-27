@@ -61,7 +61,7 @@ Import-Pfade sind immer absolut: `from giftmanager.core.config import get_settin
 
 **Docstrings.** Jedes öffentliche Modul, jede Klasse und jede Funktion hat einen Docstring im Google-Stil, Englisch; Ruff (`D1`) prüft das. Klassen-Docstrings in `schemas/` landen zusätzlich in OpenAPI. Daraus erzeugt `mise run apidocs` die Code-Referenz.
 
-**Auth.** Geschützte Router bekommen `dependencies=[Depends(get_current_user)]` oder nehmen `user: CurrentUser` als Parameter. Das Cookie heißt `session`, `HttpOnly`, `SameSite=Lax`, `Secure` außerhalb `development`, Lebensdauer 14 Tage, verlängert bei jeder Nutzung, aber nie über 30 Tage ab der Anmeldung hinaus. Danach ist eine neue Anmeldung nötig. Jede Anmeldung löscht die abgelaufenen Sessions des Kontos.
+**Auth.** Geschützte Router bekommen `dependencies=[Depends(get_current_user)]` oder nehmen `user: CurrentUser` als Parameter. Das Cookie heißt `__Host-session`, `HttpOnly`, `SameSite=Lax`, `Secure`, `Path=/`, ohne `Domain`. Ein `__Host-`-Cookie nimmt der Browser nur mit `Secure`, `Path=/` und ohne `Domain` an, deshalb kann eine Nachbar-Subdomain es weder setzen noch überdecken (Cookie Tossing); ein untergeschobenes `session` liest das Backend nicht. In `development` heißt es `session` und ist nicht `Secure`, weil Browser ein `__Host-`-Cookie ohne `Secure` über http ablehnen. Die Namen stehen in `core/auth.py` und müssen zu `SESSION_COOKIES` in `frontend/src/lib/server/session.ts` passen. Lebensdauer 14 Tage, verlängert bei jeder Nutzung, aber nie über 30 Tage ab der Anmeldung hinaus. Danach ist eine neue Anmeldung nötig. Jede Anmeldung löscht die abgelaufenen Sessions des Kontos.
 
 ## Kommandos
 
@@ -90,7 +90,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | Variable | Default | Bedeutung |
 |---|---|---|
 | `DATABASE_URL` | `postgresql+asyncpg://app:app@localhost:5432/app` | asyncpg-Treiber erforderlich |
-| `APP_ENV` | `production` | `development` aktiviert `/docs`, `/openapi.json` und Console-Logs, Cookie ohne `Secure`; `production`/`test` → JSON-Logs. `mise run dev` und `compose.override.yaml` setzen `development` |
+| `APP_ENV` | `production` | `development` aktiviert `/docs`, `/openapi.json` und Console-Logs, Cookie `session` ohne `Secure` statt `__Host-session`; `production`/`test` → JSON-Logs. `mise run dev` und `compose.override.yaml` setzen `development` |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `DEFAULT_TIMEZONE` | `Europe/Berlin` | Zeitzone für die Auswertung von Kalenderdaten (Scheduler) |
 | `UPLOADS_DIR` | `data/uploads` | Ablage für Bild-Uploads, in Produktion ein Volume |

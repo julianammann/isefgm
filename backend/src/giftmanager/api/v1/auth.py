@@ -3,9 +3,9 @@
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from giftmanager.core.auth import (
-    SESSION_COOKIE,
     CurrentUser,
     clear_session_cookie,
+    session_cookie_name,
     set_session_cookie,
 )
 from giftmanager.core.clock import ClockDep
@@ -92,10 +92,11 @@ async def login(body: LoginIn, response: Response, session: SessionDep, clock: C
 )
 async def logout(request: Request, response: Response, session: SessionDep) -> None:
     """Revoke the current session, if any, and clear the cookie. Idempotent."""
-    token = request.cookies.get(SESSION_COOKIE)
+    settings = get_settings()
+    token = request.cookies.get(session_cookie_name(settings))
     if token:
         await auth_service.revoke_session(session, token)
-    clear_session_cookie(response, get_settings())
+    clear_session_cookie(response, settings)
 
 
 @router.post(

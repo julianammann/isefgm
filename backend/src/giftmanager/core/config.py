@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     )
     app_env: Literal["development", "test", "production"] = Field(
         default="production",
-        description="`development` enables `/docs`, `/openapi.json` and console logs; "
-        "`production` and `test` write JSON logs and set `Secure` on the session cookie. "
+        description="`development` enables `/docs`, `/openapi.json` and console logs and sends "
+        "the session cookie as `session` without `Secure`; `production` and `test` write JSON "
+        "logs and send it as `__Host-session` with `Secure`. "
         "Unset means `production`; `mise run dev` and `compose.override.yaml` set `development`.",
     )
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(

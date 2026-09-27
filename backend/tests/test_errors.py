@@ -19,7 +19,7 @@ async def test_unhandled_error_uses_problem_details() -> None:
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            r = await client.get("/api/v1/auth/me", cookies={"session": "anything"})
+            r = await client.get("/api/v1/auth/me", cookies={"__Host-session": "anything"})
     finally:
         app.dependency_overrides.clear()
 
