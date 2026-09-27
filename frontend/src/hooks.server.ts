@@ -5,9 +5,10 @@
  * @module
  */
 import { env } from '$env/dynamic/private';
-import { error, redirect, type Handle, type HandleFetch } from '@sveltejs/kit';
+import { error, json, redirect, type Handle, type HandleFetch } from '@sveltejs/kit';
 
 import { createApiClient } from '$lib/api/client';
+import { isCrossSiteApiWrite } from '$lib/server/csrf';
 import { guard, SERVICE_UNAVAILABLE, type Auth } from '$lib/server/guard';
 import { forwardSessionCookie, SESSION_COOKIE } from '$lib/server/session';
 
@@ -29,10 +30,18 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 };
 
 /**
- * Runs for every request: attaches a request-scoped API client and the current user
- * to `event.locals`, applies {@link guard}, then adds security headers.
+ * Runs for every request: rejects cross-site writes to the `/api` proxy, attaches a
+ * request-scoped API client and the current user to `event.locals`, applies
+ * {@link guard}, then adds security headers.
  */
 export const handle: Handle = async ({ event, resolve }) => {
+  // Server-side event.fetch calls never get here: handleFetch sends them to API_URL.
+  const origin = event.request.headers.get('origin');
+  if (isCrossSiteApiWrite(event.route.id, event.request.method, origin, event.url)) {
+    const detail = 'Cross-site requests to the API are forbidden';
+    return json({ title: 'Forbidden', status: 403, detail }, { status: 403 });
+  }
+
   // One typed client per request, bound to event.fetch so handleFetch above applies.
   // The base URL must be absolute: openapi-fetch builds a `Request` before calling
   // fetch, and on the server a relative URL throws. Same origin keeps handleFetch
@@ -70,9 +79,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     : { state: event.locals.authUnavailable ? 'unknown' : 'anonymous' };
   const decision = guard(event.route.id, auth, event.url);
   if (decision.action === 'redirect') redirect(303, decision.location);
-  if (decision.action === 'unavailable' && !['GET', 'HEAD'].includes(event.request.method)) {
-    // Actions never run without a known user. Page views get the 503 from the
-    // (app) layout load instead, which renders the regular +error.svelte.
+  if (decision.action === 'unavailable') {
+    // Every method: no load function and no action of an (app) route runs without a
+    // known user. Page views get src/error.html (an error thrown in handle never
+    // reaches +error.svelte), __data.json and use:enhance requests get JSON.
     error(503, SERVICE_UNAVAILABLE);
   }
 

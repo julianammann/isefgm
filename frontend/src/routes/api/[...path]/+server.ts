@@ -6,23 +6,21 @@
  * @module
  */
 import { env } from '$env/dynamic/private';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+
+import { HOP_BY_HOP, proxyTarget, upstreamHeaders } from '$lib/server/proxy';
 
 const API_URL = env.API_URL ?? 'http://localhost:8000';
 
-const HOP_BY_HOP = [
-  'connection',
-  'content-length',
-  'content-encoding',
-  'host',
-  'transfer-encoding'
-];
-
 const proxy: RequestHandler = async ({ request, params, url }) => {
-  const target = new URL(`/api/${params.path}${url.search}`, API_URL);
+  const target = proxyTarget(params.path, url.search, API_URL);
+  if (!target) {
+    // Outside /api/ on the backend: answer like a backend 404 without asking it.
+    return json({ title: 'Not Found', status: 404, detail: 'Not Found' }, { status: 404 });
+  }
 
-  const headers = new Headers(request.headers);
-  for (const h of HOP_BY_HOP) headers.delete(h);
+  const headers = upstreamHeaders(request.headers);
 
   const hasBody = !['GET', 'HEAD'].includes(request.method);
   const upstream = await fetch(target, {

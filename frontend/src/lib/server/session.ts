@@ -64,12 +64,19 @@ export function forwardSessionCookie(upstream: Headers, cookies: Cookies): void 
  *
  * Resolved with the WHATWG URL parser, like the browser does with the `Location`
  * header: `/\evil.example` or `/<tab>/evil.example` turn into `//evil.example` there,
- * so a prefix check on the raw string is not enough.
+ * so a prefix check on the raw string is not enough. Dot segments such as
+ * `/.//evil.example` keep the origin but normalise to the protocol-relative path
+ * `//evil.example`, so the resolved path is checked as well.
  */
 export function safeNext(next: string | null, fallback = '/'): string {
   if (!next?.startsWith('/')) return fallback;
   const base = 'http://same-origin.invalid';
-  const url = new URL(next, base);
-  if (url.origin !== base) return fallback;
+  let url: URL;
+  try {
+    url = new URL(next, base);
+  } catch {
+    return fallback; // e.g. `//[`: an invalid host
+  }
+  if (url.origin !== base || url.pathname.startsWith('//')) return fallback;
   return url.pathname + url.search + url.hash;
 }
