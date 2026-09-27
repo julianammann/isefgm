@@ -1,0 +1,44 @@
+<!doctype html>
+<!--
+  Static fallback page for errors thrown in hooks.server.ts `handle`, e.g. the 503 while
+  the backend cannot tell who is logged in. SvelteKit renders it without the app, so it
+  mirrors +error.svelte with plain CSS.
+-->
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>%sveltekit.status% – Geschenke-Manager</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.875rem;
+      }
+      p {
+        margin: 1rem 0 0;
+      }
+      a {
+        display: inline-block;
+        margin-top: 1rem;
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>%sveltekit.status%</h1>
+      <p>%sveltekit.error.message%</p>
+      <a href="/">Zur Startseite</a>
+    </main>
+  </body>
+</html>

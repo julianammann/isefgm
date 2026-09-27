@@ -27,7 +27,8 @@ export type GuardDecision =
  * Decides per route group:
  *
  * - `(app)` requires a login: anonymous users go to `/login?next=<path>`; if the
- *   login state is unknown, the request is answered with 503 instead.
+ *   login state is unknown, the request is answered with 503 instead, whatever the
+ *   method, so no page load runs with `locals.user === null`.
  * - `(auth)` is login and registration: a logged-in user goes to `/`.
  * - Everything else passes.
  *

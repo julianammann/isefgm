@@ -79,9 +79,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     : { state: event.locals.authUnavailable ? 'unknown' : 'anonymous' };
   const decision = guard(event.route.id, auth, event.url);
   if (decision.action === 'redirect') redirect(303, decision.location);
-  if (decision.action === 'unavailable' && !['GET', 'HEAD'].includes(event.request.method)) {
-    // Actions never run without a known user. Page views get the 503 from the
-    // (app) layout load instead, which renders the regular +error.svelte.
+  if (decision.action === 'unavailable') {
+    // Every method: no load function and no action of an (app) route runs without a
+    // known user. Page views get src/error.html (an error thrown in handle never
+    // reaches +error.svelte), __data.json and use:enhance requests get JSON.
     error(503, SERVICE_UNAVAILABLE);
   }
 

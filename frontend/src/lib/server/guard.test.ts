@@ -29,6 +29,11 @@ describe('guard', () => {
 
   it('answers (app) with 503 when the login state is unknown, not with the login page', () => {
     expect(guard('/(app)', unknown, url('/'))).toEqual({ action: 'unavailable' });
+    // Nested pages and their actions alike; the hook applies this to every method.
+    expect(guard('/(app)/account', unknown, url('/account'))).toEqual({ action: 'unavailable' });
+    expect(guard('/(app)/account', unknown, url('/account?/delete'))).toEqual({
+      action: 'unavailable'
+    });
   });
 
   it('sends logged-in users away from login and registration', () => {
