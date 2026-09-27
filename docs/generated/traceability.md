@@ -21,6 +21,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_auth.py::test_expired_session_is_rejected` | passed |
 | Q-03 | `tests/test_auth.py::test_session_expiry_slides_with_use` | passed |
 | Q-03 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
+| Q-03 | `tests/test_config.py::test_app_env_defaults_to_production` | passed |
 | Q-03 | `tests/test_main.py::test_schema_and_swagger_ui_are_served_only_in_development[development-200]` | passed |
 | Q-03 | `tests/test_main.py::test_schema_and_swagger_ui_are_served_only_in_development[production-404]` | passed |
 | Q-03 | `tests/test_security.py::test_argon2_calls_are_bounded_to_fit_the_memory_budget` | passed |

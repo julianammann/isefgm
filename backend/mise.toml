@@ -2,6 +2,8 @@
 run = "uv sync"
 
 [tasks.dev]
+# APP_ENV defaults to production (Secure cookie, no /docs); the dev server opts out.
+env = { APP_ENV = "development" }
 run = "uv run fastapi dev src/giftmanager/main.py"
 
 [tasks.lint]
