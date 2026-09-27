@@ -1,10 +1,12 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from anyio import CapacityLimiter
 from httpx import AsyncClient, Response
-from sqlalchemy import func, select, update
+from sqlalchemy import Engine, event, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from giftmanager.core import security
 from giftmanager.core.config import get_settings
 from giftmanager.core.security import hash_session_token
 from giftmanager.models import UserSession
@@ -82,6 +84,43 @@ async def test_login_sets_session(client: AsyncClient) -> None:
     r = await client.post(LOGIN, json={"email": ANNA["email"], "password": ANNA["password"]})
     assert r.status_code == 200
     assert (await client.get(ME)).status_code == 200
+
+
+@pytest.mark.requirement("F-01", "Q-03")
+@pytest.mark.parametrize(("path", "body"), [(LOGIN, ANNA_LOGIN), (REGISTER, ANNA)])
+async def test_busy_password_checks_are_rejected_before_the_database(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, path: str, body: dict[str, str]
+) -> None:
+    # Every admission slot is taken, as by a flood of slow logins.
+    full = CapacityLimiter(1)
+    full.acquire_on_behalf_of_nowait("flood")
+    monkeypatch.setattr(security, "_admission_limiter", full)
+    statements: list[str] = []
+
+    def _record(_conn: object, _cursor: object, statement: str, *_: object) -> None:
+        statements.append(statement)
+
+    event.listen(Engine, "before_cursor_execute", _record)
+    try:
+        busy = await client.post(path, json=body)
+        busy_statements = list(statements)
+        full.release_on_behalf_of("flood")
+        admitted = await client.post(path, json=body)
+    finally:
+        event.remove(Engine, "before_cursor_execute", _record)
+
+    assert busy.status_code == 503
+    assert busy.headers["retry-after"] == "5"
+    assert busy.json() == {
+        "type": "about:blank",
+        "title": "Service Unavailable",
+        "status": 503,
+        "detail": "Too many logins and registrations at once; try again in a few seconds",
+    }
+    assert busy_statements == []
+    # The spy does see a request that gets in, so the empty list above is no blind spot.
+    assert admitted.status_code != 503
+    assert statements
 
 
 def _set_cookie(r: Response) -> tuple[str, set[str]]:

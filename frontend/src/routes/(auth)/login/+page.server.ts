@@ -26,7 +26,9 @@ export const actions: Actions = {
       const message =
         response.status === 401
           ? 'E-Mail-Adresse oder Passwort ist falsch.'
-          : problemMessage(error, 'Anmeldung fehlgeschlagen.');
+          : response.status === 503
+            ? 'Gerade laufen zu viele Anmeldungen. Bitte versuche es in ein paar Sekunden erneut.'
+            : problemMessage(error, 'Anmeldung fehlgeschlagen.');
       return fail(response.status >= 400 && response.status < 600 ? response.status : 400, {
         email,
         message

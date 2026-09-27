@@ -3,6 +3,8 @@
 The frontend needs exactly one mapper for API errors.
 """
 
+from typing import ClassVar
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -20,6 +22,7 @@ class DomainError(Exception):
 
     status_code = 400
     title = "Bad Request"
+    headers: ClassVar[dict[str, str]] = {}
 
     def __init__(self, detail: str) -> None:
         super().__init__(detail)
@@ -40,6 +43,15 @@ class ConflictError(DomainError):
     title = "Conflict"
 
 
+class ServiceUnavailableError(DomainError):
+    """Too much work is already queued; the client should retry shortly."""
+
+    status_code = 503
+    title = "Service Unavailable"
+    # About how long the full login queue (11 checks at ~2/s on one CPU) takes to drain.
+    headers: ClassVar[dict[str, str]] = {"Retry-After": "5"}
+
+
 def problem(
     status: int, title: str, detail: str, errors: list[ValidationIssue] | None = None
 ) -> JSONResponse:
@@ -50,7 +62,9 @@ def problem(
 
 async def _domain_error(_: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, DomainError)  # noqa: S101 - handler is registered for this type
-    return problem(exc.status_code, exc.title, exc.detail)
+    response = problem(exc.status_code, exc.title, exc.detail)
+    response.headers.update(exc.headers)
+    return response
 
 
 async def _http_error(_: Request, exc: Exception) -> JSONResponse:

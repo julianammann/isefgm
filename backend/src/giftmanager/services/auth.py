@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from giftmanager.core.errors import ConflictError
 from giftmanager.core.security import (
     UNKNOWN_USER_HASH,
+    admit_password_check,
     hash_password,
     hash_session_token,
     new_session_token,
@@ -31,10 +32,13 @@ async def register(session: AsyncSession, *, email: str, password: str, display_
 
     Raises:
         ConflictError: The e-mail address is already registered.
+        ServiceUnavailableError: Too many password checks are already running.
     """
+    async with admit_password_check():
+        password_hash = await hash_password(password)
     user = User(
         email=normalize_email(email),
-        password_hash=await hash_password(password),
+        password_hash=password_hash,
         display_name=display_name.strip(),
     )
     session.add(user)
@@ -53,14 +57,22 @@ async def authenticate(session: AsyncSession, *, email: str, password: str) -> U
     """Return the active user for the credentials, or None.
 
     Takes the same time for an unknown address as for a wrong password.
+
+    Raises:
+        ServiceUnavailableError: Too many password checks are already running.
     """
-    user = await session.scalar(
-        select(User).where(User.email == normalize_email(email), User.status == UserStatus.ACTIVE)
-    )
-    if user is None:
-        await verify_password(password, UNKNOWN_USER_HASH)
-        return None
-    return user if await verify_password(password, user.password_hash) else None
+    # Before the query: the query checks out a pooled connection, which then waits
+    # through the verify.
+    async with admit_password_check():
+        user = await session.scalar(
+            select(User).where(
+                User.email == normalize_email(email), User.status == UserStatus.ACTIVE
+            )
+        )
+        if user is None:
+            await verify_password(password, UNKNOWN_USER_HASH)
+            return None
+        return user if await verify_password(password, user.password_hash) else None
 
 
 async def create_session(
