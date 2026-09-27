@@ -34,6 +34,8 @@ mise -C backend run migrate  # Schema anlegen
 mise -C backend run dev      # http://localhost:8000/docs
 ```
 
+`.env` muss `POSTGRES_PASSWORD` setzen, sonst verweigert Compose den Start (kein Fallback-Passwort mehr). Ein bestehendes `pgdata`-Volume behält das Passwort, mit dem es angelegt wurde (bisher `app`): dann `POSTGRES_PASSWORD=app` setzen oder die Volumes mit `docker compose down -v` neu anlegen (löscht alle lokalen Daten).
+
 ## Tasks
 
 | Task (Root) | Beschreibung |
