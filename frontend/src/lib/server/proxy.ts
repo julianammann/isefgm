@@ -4,6 +4,35 @@
  * @module
  */
 
+/** Headers that describe one connection and are not passed on in either direction. */
+export const HOP_BY_HOP = [
+  'connection',
+  'content-length',
+  'content-encoding',
+  'host',
+  'transfer-encoding'
+];
+
+/**
+ * Forwarding headers as sent by the browser. They would let a client claim another IP,
+ * host or scheme towards the backend, so the proxy never passes them on.
+ */
+const FORWARDING = [
+  'forwarded',
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-forwarded-port',
+  'x-real-ip'
+];
+
+/** Copy of the browser's request headers without hop-by-hop and forwarding headers. */
+export function upstreamHeaders(incoming: Headers): Headers {
+  const headers = new Headers(incoming);
+  for (const h of [...HOP_BY_HOP, ...FORWARDING]) headers.delete(h);
+  return headers;
+}
+
 /**
  * Backend URL for a proxied request, or `null` if it would leave `/api/` on the backend.
  *
