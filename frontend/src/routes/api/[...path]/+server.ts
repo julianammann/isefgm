@@ -1,3 +1,10 @@
+/**
+ * Public proxy `/api/*` -> backend, for calls made from the browser.
+ * Server-side code does not come through here: `handleFetch` in `hooks.server.ts`
+ * sends those requests to the backend directly.
+ *
+ * @module
+ */
 import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
@@ -30,9 +37,15 @@ const proxy: RequestHandler = async ({ request, params, url }) => {
   return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
 };
 
+/** Forwards `GET /api/*` to the backend. */
 export const GET = proxy;
+/** Forwards `POST /api/*` to the backend. */
 export const POST = proxy;
+/** Forwards `PUT /api/*` to the backend. */
 export const PUT = proxy;
+/** Forwards `PATCH /api/*` to the backend. */
 export const PATCH = proxy;
+/** Forwards `DELETE /api/*` to the backend. */
 export const DELETE = proxy;
+/** Forwards `OPTIONS /api/*` to the backend. */
 export const OPTIONS = proxy;
