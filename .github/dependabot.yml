@@ -29,3 +29,15 @@ updates:
       - /frontend
     schedule:
       interval: weekly
+
+  # Scans compose*.yaml in the repo root. Only the postgres image has a literal
+  # tag; the app images use ${IMAGE_TAG} and are skipped.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # A new Postgres major can't open the existing pgdata volume; that
+      # upgrade needs a dump/restore, not a merged PR.
+      - dependency-name: "*postgres"
+        update-types: ["version-update:semver-major"]
