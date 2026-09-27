@@ -30,7 +30,7 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:17-alpine
+        image: docker.io/library/postgres:17-alpine
         env:
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
@@ -54,7 +54,7 @@ jobs:
         run: |
           uv run ruff check --output-format=github .
           uv run ruff format --check .
-          
+
       - name: Pyright
         run: uv run pyright
 
@@ -66,8 +66,16 @@ jobs:
       - name: Tests
         run: uv run pytest -q
 
+      # Closes the gap where frontend CI only checks types against the committed
+      # openapi.json: here we check that openapi.json itself matches the backend.
+      - name: OpenAPI schema in frontend is up to date
+        run: |
+          uv run python -m giftmanager.export_openapi > ../frontend/openapi.json
+          git diff --exit-code -- ../frontend/openapi.json
+
+      # Audit the locked production dependencies. Plain `uvx pip-audit` would audit
+      # its own isolated tool environment instead of this project.
       - name: Dependency audit
-        run: uvx pip-audit --strict
-        continue-on-error: true
-
-
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit --strict --disable-pip --require-hashes -r "$RUNNER_TEMP/requirements.txt"

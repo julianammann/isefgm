@@ -53,4 +53,3 @@ jobs:
 
       - run: pnpm run build
       - run: pnpm audit --audit-level=high
-        continue-on-error: true

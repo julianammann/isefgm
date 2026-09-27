@@ -1,0 +1,9 @@
+# Files that decide what runs on the production host need Julian's review.
+# Enable "Require review from Code Owners" in the main branch protection.
+/compose.yaml            @julianammann
+/compose.override.yaml   @julianammann
+/compose.production.yaml @julianammann
+/backend/Dockerfile      @julianammann
+/frontend/Dockerfile     @julianammann
+/.github/                @julianammann
+/deploy/                 @julianammann
