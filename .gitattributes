@@ -1,0 +1,8 @@
+# LF everywhere: Prettier, Ruff and the Linux CI expect it, and Windows checkouts
+# with core.autocrlf=true would otherwise turn every file into CRLF.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
