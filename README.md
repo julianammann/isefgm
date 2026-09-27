@@ -6,9 +6,9 @@ Monorepo für den Geschenke-Manager: FastAPI-Backend, TypeScript-Frontend und Pr
 ```
 backend/     FastAPI & SQLAlchemy 2.0 async & Alembic & Python 3.14 → backend/README.md
 frontend/    TypeScript & Node 26 & pnpm                            → frontend/README.md
-docs/        ER-Modell, Milestone-Dokumente, LaTeX-Quellen, Präsentationen
+docs/        Datenmodell, Milestone-Dokumente, LaTeX-Quellen, Präsentationen
 .github/     CI-Workflows (pfadgefiltert pro Komponente), Dependabot
-compose.yaml Postgres, Migrationen, API für die lokale Entwicklung
+compose.yaml Basis-Stack (Deploy und Dev), compose.override.yaml lokale Ports/Builds, compose.production.yaml Overlay für vps-prod-01
 mise.toml    Toolversionen und Tasks für das gesamte Projekt
 lefthook.yml Git-Hooks (Lint, Format, Secret-Scan, Typecheck, Migrationsprüfung)
 ```
@@ -18,6 +18,8 @@ lefthook.yml Git-Hooks (Lint, Format, Secret-Scan, Typecheck, Migrationsprüfung
 - Docker (Desktop oder Engine) mit Compose
 
 Kein lokales Postgres auf Port 5432 – falls eins läuft, stoppen oder den Port in `compose.yaml` ändern.
+
+Windows: alle Tasks laufen aus PowerShell (mise führt sie über `cmd` aus, keine Bash-Syntax in `run`). `.gitattributes` erzwingt LF, `core.autocrlf` spielt damit keine Rolle.
  
 ## Setup
 
@@ -40,6 +42,9 @@ mise -C backend run dev      # http://localhost:8000/docs
 | `mise run db` | Postgres-Container starten |
 | `mise run check` | Lint, Typecheck und Tests für Backend und Frontend |
 | `mise run openapi` | OpenAPI-Schema exportieren und TypeScript-Typen generieren |
+| `mise run docs` | MS-4-Dokumente aus dem Code nach `docs/generated/` (Markdown) |
+| `mise run apidocs` | Code-Referenz-Seite nach `apidocs/` (VitePress aus Sphinx + TypeDoc) |
+| `mise run apidocs:serve` | dasselbe, danach Vorschau unter http://localhost:4173 |
 | `mise run docker` | Images bauen (uv-Version aus `mise.toml`) |
 
 Komponenten-Tasks: `mise -C backend run <task>` bzw. `mise -C frontend run <task>` oder `mise run <task>` im jeweiligen Ordner. Übersicht mit `mise tasks`.
@@ -49,7 +54,9 @@ Komponenten-Tasks: `mise -C backend run <task>` bzw. `mise -C frontend run <task
 1. Feature-Branch von `main`, Namensschema `feature/<thema>`
 2. Commits im [Conventional-Commits](https://www.conventionalcommits.org)-Stil: `feat(backend): …`, `fix(frontend): …`, `docs: …`
 3. `pre-commit`-Hook formatiert und lintet automatisch, `pre-push` prüft Typen und Migrationen
-4. Pull Request gegen `main`; CI muss grün seinDie Hooks überspringen bei Bedarf: `LEFTHOOK_EXCLUDE=alembic-check git push` (z. B. ohne laufende DB).
+4. Pull Request gegen `main`; CI muss grün sein
+
+Die Hooks überspringen bei Bedarf: `LEFTHOOK_EXCLUDE=alembic-check git push` (z. B. ohne laufende DB).
 
 ## CI
 
@@ -61,16 +68,26 @@ Workflows laufen nur für die geänderte Komponente:
 | `frontend.yml` | ESLint, tsc, Vitest, Build, Aktualität der generierten API-Typen |
 | `docker.yml` | Image-Build und Push nach GHCR bei `main` und Tags `v*` |
 | `gitleaks.yml` | Secret-Scan über die gesamte Historie |
+| `docs.yml` | Code-Referenz bauen (PR), auf GitHub Pages veröffentlichen (`main`) |
 
 ## Docker
 
 ```sh
 mise run docker
-docker compose up -d
+docker compose up -d          # lädt compose.yaml + compose.override.yaml
 curl localhost:8000/api/v1/health/ready
 ```
 
+Produktion: `compose.yaml` + `compose.production.yaml`, deployt über `ammann-pro/infra-vps`. Die Deployment-Notizen liegen außerhalb dieses Repos.
+
 `migrate` führt `alembic upgrade head` als Init-Container aus; `api` startet erst danach.
+
+## Architektur
+
+- Datenmodell: `docs/datenmodell.md` (verbindlich für `backend/src/giftmanager/models/`)
+- Betrieb: `compose.production.yaml`
+- Dokumentation aus dem Code: `docs/dokumentation.md` (Regeln), `docs/generated/` (erzeugt mit `mise run docs`, nicht von Hand bearbeiten)
+- Code-Referenz: GitHub Pages des Repos, lokal `mise run apidocs:serve` (Quellen der Seite: `docs/site/`)
 
 ## Team
 Anton, Jordan, Julian, Yin – Projekt im Rahmen des Moduls ISEF. Milestone-Dokumente unter `docs/`.
