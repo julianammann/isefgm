@@ -11,6 +11,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-01 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | F-01 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
 | F-01 | `tests/test_auth.py::test_login_sets_session` | passed |
+| F-01 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/login-body0]` | passed |
+| F-01 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/register-body1]` | passed |
 | F-01 | `tests/test_auth.py::test_logout_revokes_the_session` | passed |
 | F-01 | `tests/test_auth.py::test_logout_all_revokes_every_session_of_the_user` | passed |
 | F-01 | `tests/test_auth.py::test_session_expiry_slides_with_use` | passed |
@@ -20,6 +22,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | Q-03 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
+| Q-03 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/login-body0]` | passed |
+| Q-03 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/register-body1]` | passed |
 | Q-03 | `tests/test_auth.py::test_session_cookie_is_host_prefixed_outside_development[test]` | passed |
 | Q-03 | `tests/test_auth.py::test_session_cookie_is_host_prefixed_outside_development[production]` | passed |
 | Q-03 | `tests/test_auth.py::test_plain_session_cookie_is_ignored_outside_development` | passed |
@@ -45,6 +49,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_main.py::test_schema_and_swagger_ui_are_served_only_in_development[development-200]` | passed |
 | Q-03 | `tests/test_main.py::test_schema_and_swagger_ui_are_served_only_in_development[production-404]` | passed |
 | Q-03 | `tests/test_security.py::test_argon2_calls_are_bounded_to_fit_the_memory_budget` | passed |
+| Q-03 | `tests/test_security.py::test_password_checks_beyond_the_queue_are_turned_away_at_once` | passed |
 | Q-06 | `tests/test_auth.py::test_unknown_route_and_method_use_problem_details` | passed |
 | Q-06 | `tests/test_errors.py::test_unhandled_error_uses_problem_details` | passed |
 | Q-06 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |

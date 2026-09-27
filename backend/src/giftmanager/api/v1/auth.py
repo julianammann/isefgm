@@ -27,8 +27,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     summary="Create account",
     description="Creates an account and logs it in right away: the response sets the "
     "session cookie. The e-mail address is stored lowercased; "
-    "an address that is already registered returns 409.",
-    responses=problem_responses(409),
+    "an address that is already registered returns 409. When too many logins and "
+    "registrations are already being checked, returns 503 at once with a Retry-After "
+    "header; retry a few seconds later.",
+    responses=problem_responses(409, 503),
 )
 async def register(
     body: RegisterIn, response: Response, session: SessionDep, clock: ClockDep
@@ -37,6 +39,7 @@ async def register(
 
     Raises:
         ConflictError: The e-mail address is already registered (409).
+        ServiceUnavailableError: Too many password checks are already running (503).
     """
     settings = get_settings()
     user = await auth_service.register(
@@ -58,14 +61,17 @@ async def register(
     operation_id="authLogin",
     summary="Log in",
     description="Checks e-mail and password and sets the session cookie on success. "
-    "Wrong credentials and unknown addresses get the same 401 response in the same time.",
-    responses=problem_responses(401),
+    "Wrong credentials and unknown addresses get the same 401 response in the same time. "
+    "When too many logins and registrations are already being checked, returns 503 at "
+    "once with a Retry-After header; retry a few seconds later.",
+    responses=problem_responses(401, 503),
 )
 async def login(body: LoginIn, response: Response, session: SessionDep, clock: ClockDep) -> UserOut:
     """Verify the credentials and set the session cookie.
 
     Raises:
         HTTPException: 401, identical for wrong passwords and unknown addresses.
+        ServiceUnavailableError: Too many password checks are already running (503).
     """
     settings = get_settings()
     user = await auth_service.authenticate(session, email=body.email, password=body.password)
