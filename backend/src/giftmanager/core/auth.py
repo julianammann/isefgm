@@ -26,7 +26,11 @@ async def get_current_user(
     user = None
     if token:
         user = await auth_service.user_for_session_token(
-            session, token, now=clock.now(), ttl=settings.session_ttl
+            session,
+            token,
+            now=clock.now(),
+            ttl=settings.session_ttl,
+            max_lifetime=settings.session_max_lifetime,
         )
     if token is None or user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")

@@ -61,7 +61,7 @@ Import-Pfade sind immer absolut: `from giftmanager.core.config import get_settin
 
 **Docstrings.** Jedes öffentliche Modul, jede Klasse und jede Funktion hat einen Docstring im Google-Stil, Englisch; Ruff (`D1`) prüft das. Klassen-Docstrings in `schemas/` landen zusätzlich in OpenAPI. Daraus erzeugt `mise run apidocs` die Code-Referenz.
 
-**Auth.** Geschützte Router bekommen `dependencies=[Depends(get_current_user)]` oder nehmen `user: CurrentUser` als Parameter. Das Cookie heißt `session`, `HttpOnly`, `SameSite=Lax`, `Secure` außerhalb `development`, Lebensdauer 14 Tage, verlängert bei jeder Nutzung.
+**Auth.** Geschützte Router bekommen `dependencies=[Depends(get_current_user)]` oder nehmen `user: CurrentUser` als Parameter. Das Cookie heißt `session`, `HttpOnly`, `SameSite=Lax`, `Secure` außerhalb `development`, Lebensdauer 14 Tage, verlängert bei jeder Nutzung, aber nie über 30 Tage ab der Anmeldung hinaus. Danach ist eine neue Anmeldung nötig. Jede Anmeldung löscht die abgelaufenen Sessions des Kontos.
 
 ## Kommandos
 
@@ -94,7 +94,8 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `DEFAULT_TIMEZONE` | `Europe/Berlin` | Zeitzone für die Auswertung von Kalenderdaten (Scheduler) |
 | `UPLOADS_DIR` | `data/uploads` | Ablage für Bild-Uploads, in Produktion ein Volume |
-| `SESSION_TTL_DAYS` | `14` | Lebensdauer einer Session |
+| `SESSION_TTL_DAYS` | `14` | Lebensdauer einer Session, verlängert bei jeder Nutzung |
+| `SESSION_MAX_LIFETIME_DAYS` | `30` | Höchstalter einer Session ab der Anmeldung, unabhängig von der Nutzung |
 
 ## Datenbank und Migrationen
 
@@ -144,6 +145,7 @@ Multi-Stage: uv-Builder → `python:3.14-slim`, Non-Root-User, nur Produktions-D
 | `POST /api/v1/auth/register` | Konto anlegen, setzt Session-Cookie (201, 409 bei bekannter E-Mail) |
 | `POST /api/v1/auth/login` | Anmelden, setzt Session-Cookie (401 bei falschen Daten) |
 | `POST /api/v1/auth/logout` | Session widerrufen, Cookie löschen (204, idempotent) |
+| `POST /api/v1/auth/logout-all` | Alle Sessions des Kontos auf allen Geräten widerrufen, Cookie löschen (204) |
 | `GET /api/v1/auth/me` | Eigenes Konto (401 ohne gültige Session) |
 | `DELETE /api/v1/auth/account` | Konto mit allen Daten löschen (204) |
 | `GET /docs` | Swagger UI, nur `APP_ENV=development` |

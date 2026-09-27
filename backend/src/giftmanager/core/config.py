@@ -52,13 +52,24 @@ class Settings(BaseSettings):
     )
     session_ttl_days: int = Field(
         default=14,
-        description="Session lifetime in days; extended on every use.",
+        description="Session lifetime in days; extended on every use, "
+        "up to `SESSION_MAX_LIFETIME_DAYS`.",
+    )
+    session_max_lifetime_days: int = Field(
+        default=30,
+        description="Hard upper bound on a session's age in days, counted from login, "
+        "however often the session is used. After that the user must log in again.",
     )
 
     @property
     def session_ttl(self) -> timedelta:
         """Session lifetime as a `timedelta`."""
         return timedelta(days=self.session_ttl_days)
+
+    @property
+    def session_max_lifetime(self) -> timedelta:
+        """Absolute session lifetime as a `timedelta`."""
+        return timedelta(days=self.session_max_lifetime_days)
 
     @property
     def is_dev(self) -> bool:

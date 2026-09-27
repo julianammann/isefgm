@@ -353,6 +353,31 @@
         ]
       }
     },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "description": "Revokes every session of the account on every device, this one included, and clears the cookie. For a lost device or a cookie that may have been stolen.",
+        "operationId": "authLogoutAll",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "summary": "Log out everywhere",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/auth/me": {
       "get": {
         "description": "Returns the account of the current session. The frontend calls it on every page request to determine the login state.",

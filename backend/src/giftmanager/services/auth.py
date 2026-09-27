@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -64,15 +64,28 @@ async def authenticate(session: AsyncSession, *, email: str, password: str) -> U
 
 
 async def create_session(
-    session: AsyncSession, user: User, *, now: datetime, ttl: timedelta
+    session: AsyncSession, user: User, *, now: datetime, ttl: timedelta, max_lifetime: timedelta
 ) -> str:
-    """Returns the raw token for the cookie; the database only sees its hash."""
+    """Returns the raw token for the cookie; the database only sees its hash.
+
+    Also deletes the user's sessions that are expired or past `max_lifetime`, so
+    the table does not grow without bound.
+    """
+    await session.execute(
+        delete(UserSession).where(
+            UserSession.user_id == user.id,
+            or_(UserSession.expires_at <= now, UserSession.created_at <= now - max_lifetime),
+        )
+    )
     token = new_session_token()
     session.add(
         UserSession(
             user_id=user.id,
             token_hash=hash_session_token(token),
-            expires_at=now + ttl,
+            # From the injected clock, not the database default: the absolute
+            # lifetime is checked against the same clock.
+            created_at=now,
+            expires_at=now + min(ttl, max_lifetime),
             last_seen_at=now,
         )
     )
@@ -81,23 +94,29 @@ async def create_session(
 
 
 async def user_for_session_token(
-    session: AsyncSession, token: str, *, now: datetime, ttl: timedelta
+    session: AsyncSession, token: str, *, now: datetime, ttl: timedelta, max_lifetime: timedelta
 ) -> User | None:
     """Return the active user for a valid, unexpired session token, or None.
 
     Sliding expiry: at most every five minutes, `last_seen_at` is
-    refreshed and `expires_at` moves to `now + ttl`.
+    refreshed and `expires_at` moves to `now + ttl`, but never past
+    `created_at + max_lifetime`. After that the session is rejected, however
+    often it is used, so a stolen cookie does not live forever.
     """
     user_session = await session.scalar(
         select(UserSession)
-        .where(UserSession.token_hash == hash_session_token(token), UserSession.expires_at > now)
+        .where(
+            UserSession.token_hash == hash_session_token(token),
+            UserSession.expires_at > now,
+            UserSession.created_at > now - max_lifetime,
+        )
         .options(selectinload(UserSession.user))
     )
     if user_session is None or user_session.user.status != UserStatus.ACTIVE:
         return None
     if now - user_session.last_seen_at >= _LAST_SEEN_GRANULARITY:
         user_session.last_seen_at = now
-        user_session.expires_at = now + ttl
+        user_session.expires_at = min(now + ttl, user_session.created_at + max_lifetime)
     return user_session.user
 
 
@@ -106,6 +125,11 @@ async def revoke_session(session: AsyncSession, token: str) -> None:
     await session.execute(
         delete(UserSession).where(UserSession.token_hash == hash_session_token(token))
     )
+
+
+async def revoke_all_sessions(session: AsyncSession, user: User) -> None:
+    """Delete every session of the user on every device, the current one included."""
+    await session.execute(delete(UserSession).where(UserSession.user_id == user.id))
 
 
 async def delete_account(session: AsyncSession, user: User) -> None:

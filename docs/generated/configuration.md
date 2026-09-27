@@ -12,4 +12,5 @@ Environment variables, read from `.env` in the repo root (template `.env.example
 | `DATABASE_URL` | `postgresql+asyncpg://app:app@localhost:5432/app` | PostgreSQL connection. The `asyncpg` driver is required. |
 | `DEFAULT_TIMEZONE` | `Europe/Berlin` | Time zone in which the scheduler evaluates calendar dates (birthdays, occasions). Storage is in UTC (Q-08). |
 | `UPLOADS_DIR` | `data/uploads` | Storage for image uploads; a volume in production. The database only holds metadata. |
-| `SESSION_TTL_DAYS` | `14` | Session lifetime in days; extended on every use. |
+| `SESSION_TTL_DAYS` | `14` | Session lifetime in days; extended on every use, up to `SESSION_MAX_LIFETIME_DAYS`. |
+| `SESSION_MAX_LIFETIME_DAYS` | `30` | Hard upper bound on a session's age in days, counted from login, however often the session is used. After that the user must log in again. |

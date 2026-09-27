@@ -5,15 +5,21 @@ from httpx import AsyncClient
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from giftmanager.core.config import get_settings
+from giftmanager.core.security import hash_session_token
 from giftmanager.models import UserSession
+from tests.conftest import FixedClock
 
 REGISTER = "/api/v1/auth/register"
 LOGIN = "/api/v1/auth/login"
 LOGOUT = "/api/v1/auth/logout"
+LOGOUT_ALL = "/api/v1/auth/logout-all"
 ME = "/api/v1/auth/me"
 ACCOUNT = "/api/v1/auth/account"
 
 ANNA = {"email": "Anna@Example.org", "password": "correct-horse-battery", "display_name": "Anna"}
+ANNA_LOGIN = {"email": ANNA["email"], "password": ANNA["password"]}
+BOB = {"email": "bob@example.org", "password": "correct-horse-battery", "display_name": "Bob"}
 
 
 @pytest.mark.requirement("F-01")
@@ -88,6 +94,42 @@ async def test_logout_revokes_the_session(client: AsyncClient, session: AsyncSes
     assert await session.scalar(select(func.count()).select_from(UserSession)) == 0
 
 
+@pytest.mark.requirement("F-01", "Q-03")
+async def test_logout_all_revokes_every_session_of_the_user(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await client.post(REGISTER, json=ANNA)
+    other_device = client.cookies["session"]
+    await client.post(LOGIN, json=ANNA_LOGIN)
+
+    r = await client.post(LOGOUT_ALL)
+    assert r.status_code == 204
+    assert (await client.get(ME)).status_code == 401
+    client.cookies.set("session", other_device)
+    assert (await client.get(ME)).status_code == 401
+    assert await session.scalar(select(func.count()).select_from(UserSession)) == 0
+
+
+@pytest.mark.requirement("Q-01", "Q-03")
+async def test_logout_all_leaves_other_users_logged_in(client: AsyncClient) -> None:
+    await client.post(REGISTER, json=BOB)
+    bob = client.cookies["session"]
+    await client.post(REGISTER, json=ANNA)
+
+    assert (await client.post(LOGOUT_ALL)).status_code == 204
+    client.cookies.set("session", bob)
+    me = await client.get(ME)
+    assert me.status_code == 200
+    assert me.json()["email"] == BOB["email"]
+
+
+@pytest.mark.requirement("Q-01", "Q-03")
+async def test_logout_all_without_session_is_unauthorized(client: AsyncClient) -> None:
+    r = await client.post(LOGOUT_ALL)
+    assert r.status_code == 401
+    assert r.json()["status"] == 401
+
+
 @pytest.mark.requirement("Q-03")
 async def test_expired_session_is_rejected(client: AsyncClient, session: AsyncSession) -> None:
     await client.post(REGISTER, json=ANNA)
@@ -113,6 +155,86 @@ async def test_session_expiry_slides_with_use(client: AsyncClient, session: Asyn
     assert expires_at is not None
     assert expires_at > now + timedelta(days=13)
     assert "Max-Age=1209600" in r.headers["set-cookie"]
+
+
+@pytest.mark.requirement("Q-03")
+async def test_session_ends_after_max_lifetime_despite_use(
+    client: AsyncClient, clock: FixedClock
+) -> None:
+    await client.post(REGISTER, json=ANNA)
+    # Used every day, so sliding expiry alone would keep it alive forever.
+    for _ in range(29):
+        clock.advance(timedelta(days=1))
+        assert (await client.get(ME)).status_code == 200
+
+    clock.advance(timedelta(days=1))
+    assert (await client.get(ME)).status_code == 401
+
+
+@pytest.mark.requirement("Q-03")
+async def test_renewal_never_moves_expiry_past_max_lifetime(
+    client: AsyncClient, session: AsyncSession, clock: FixedClock
+) -> None:
+    await client.post(REGISTER, json=ANNA)
+    login = clock.now()
+
+    for _ in range(2):
+        clock.advance(timedelta(days=10))
+        assert (await client.get(ME)).status_code == 200
+    # now + 14 days would be day 34; the cap is day 30 after login.
+    assert await session.scalar(select(UserSession.expires_at)) == login + timedelta(days=30)
+
+
+@pytest.mark.requirement("Q-03")
+async def test_initial_expiry_respects_max_lifetime(
+    client: AsyncClient,
+    session: AsyncSession,
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(get_settings(), "session_ttl_days", 60)
+    await client.post(REGISTER, json=ANNA)
+    assert await session.scalar(select(UserSession.expires_at)) == clock.now() + timedelta(days=30)
+
+
+@pytest.mark.requirement("Q-03")
+async def test_session_older_than_max_lifetime_is_rejected(
+    client: AsyncClient, session: AsyncSession, clock: FixedClock
+) -> None:
+    await client.post(REGISTER, json=ANNA)
+    clock.advance(timedelta(days=30))
+    # A row from before the cap existed, or one created under a longer setting:
+    # expires_at alone would still let it in.
+    await session.execute(update(UserSession).values(expires_at=clock.now() + timedelta(days=1)))
+    assert (await client.get(ME)).status_code == 401
+
+
+@pytest.mark.requirement("Q-03")
+async def test_login_purges_the_users_dead_sessions(
+    client: AsyncClient, session: AsyncSession, clock: FixedClock
+) -> None:
+    await client.post(REGISTER, json=BOB)
+    bob = hash_session_token(client.cookies["session"])
+    await client.post(REGISTER, json=ANNA)
+    expired = hash_session_token(client.cookies["session"])
+    await client.post(LOGIN, json=ANNA_LOGIN)
+    too_old = hash_session_token(client.cookies["session"])
+    await client.post(LOGIN, json=ANNA_LOGIN)
+    alive = hash_session_token(client.cookies["session"])
+
+    now = clock.now()
+    dead_by_expiry = UserSession.token_hash.in_([bob, expired])
+    await session.execute(update(UserSession).where(dead_by_expiry).values(expires_at=now))
+    await session.execute(
+        update(UserSession)
+        .where(UserSession.token_hash == too_old)
+        .values(created_at=now - timedelta(days=30))
+    )
+
+    await client.post(LOGIN, json=ANNA_LOGIN)
+    remaining = set(await session.scalars(select(UserSession.token_hash)))
+    # Only Anna's dead sessions go: her live one stays, Bob's expired one waits for his login.
+    assert remaining == {bob, alive, hash_session_token(client.cookies["session"])}
 
 
 @pytest.mark.requirement("F-17")

@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator, Iterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
+from giftmanager.core.clock import get_clock
 from giftmanager.core.db import get_session
 from giftmanager.main import app
 
@@ -45,6 +47,27 @@ async def client(session: AsyncSession) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
     app.dependency_overrides.clear()
+
+
+class FixedClock:
+    """Pinned `now` for the app; a test moves it forward with `advance`."""
+
+    def __init__(self, now: datetime) -> None:
+        self.current = now
+
+    def now(self) -> datetime:
+        return self.current
+
+    def advance(self, delta: timedelta) -> None:
+        self.current += delta
+
+
+@pytest.fixture
+def clock() -> Iterator[FixedClock]:
+    fixed = FixedClock(datetime(2026, 1, 1, 12, 0, tzinfo=UTC))
+    app.dependency_overrides[get_clock] = lambda: fixed
+    yield fixed
+    app.dependency_overrides.pop(get_clock, None)
 
 
 # --- Requirement traceability (QZ-01, Q-09) -----------------------------------

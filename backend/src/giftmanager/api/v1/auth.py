@@ -1,4 +1,4 @@
-"""Account endpoints: register, log in, log out, current account, delete account."""
+"""Account endpoints: register, log in, log out (everywhere), current account, delete account."""
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
@@ -43,7 +43,11 @@ async def register(
         session, email=body.email, password=body.password, display_name=body.display_name
     )
     token = await auth_service.create_session(
-        session, user, now=clock.now(), ttl=settings.session_ttl
+        session,
+        user,
+        now=clock.now(),
+        ttl=settings.session_ttl,
+        max_lifetime=settings.session_max_lifetime,
     )
     set_session_cookie(response, token, settings)
     return UserOut.model_validate(user)
@@ -68,7 +72,11 @@ async def login(body: LoginIn, response: Response, session: SessionDep, clock: C
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid e-mail or password")
     token = await auth_service.create_session(
-        session, user, now=clock.now(), ttl=settings.session_ttl
+        session,
+        user,
+        now=clock.now(),
+        ttl=settings.session_ttl,
+        max_lifetime=settings.session_max_lifetime,
     )
     set_session_cookie(response, token, settings)
     return UserOut.model_validate(user)
@@ -87,6 +95,22 @@ async def logout(request: Request, response: Response, session: SessionDep) -> N
     token = request.cookies.get(SESSION_COOKIE)
     if token:
         await auth_service.revoke_session(session, token)
+    clear_session_cookie(response, get_settings())
+
+
+@router.post(
+    "/logout-all",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="authLogoutAll",
+    summary="Log out everywhere",
+    description="Revokes every session of the account on every device, this one "
+    "included, and clears the cookie. For a lost device or a cookie that may have "
+    "been stolen.",
+    responses=problem_responses(401),
+)
+async def logout_all(user: CurrentUser, response: Response, session: SessionDep) -> None:
+    """Revoke every session of the account and clear the cookie."""
+    await auth_service.revoke_all_sessions(session, user)
     clear_session_cookie(response, get_settings())
 
 
