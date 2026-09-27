@@ -21,6 +21,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_auth.py::test_expired_session_is_rejected` | passed |
 | Q-03 | `tests/test_auth.py::test_session_expiry_slides_with_use` | passed |
 | Q-03 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
+| Q-03 | `tests/test_security.py::test_argon2_calls_are_bounded_to_fit_the_memory_budget` | passed |
 | Q-06 | `tests/test_auth.py::test_unknown_route_and_method_use_problem_details` | passed |
 | Q-06 | `tests/test_errors.py::test_unhandled_error_uses_problem_details` | passed |
 
