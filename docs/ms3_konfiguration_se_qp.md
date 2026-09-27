@@ -6,7 +6,7 @@
 
 Dieses Kapitel legt fest, wie das Team den Geschenke-Manager bis MS 4 entwickelt, prüft und bereitstellt. Es beschreibt den geplanten Zielzustand. Alle Festlegungen gelten ab MS 3 verbindlich für alle Teammitglieder.
 
-Zu MS 3 besteht ein technisches Grundgerüst: ein gemeinsames Repository für Backend und Frontend, gepinnte Werkzeugversionen, Git-Hooks, CI-Workflows, Dockerfiles und Health-Endpunkte. Die übrigen technischen und fachlichen Funktionen sind geplant und entstehen bis MS 4. Der MS-3-Liefergegenstand ist dieses Dokument als PDF; das Grundgerüst und technische Probeläufe sind interne Vorarbeiten und ersetzen ihn nicht.
+Zu MS 3 besteht ein technisches Grundgerüst: ein gemeinsames Repository für Backend und Frontend, gepinnte Werkzeugversionen, Git-Hooks, CI-Workflows, Dockerfiles und Health-Endpunkte. Die übrigen technischen und fachlichen Funktionen sind geplant und entstehen bis MS 4.
 
 ### Vorgehensmodell
 
