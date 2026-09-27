@@ -40,4 +40,15 @@ describe('safeNext', () => {
     expect(safeNext('/\t/evil.example')).toBe('/');
     expect(safeNext('/\n/evil.example')).toBe('/');
   });
+
+  it('rejects dot segments that normalise to a protocol-relative URL', () => {
+    expect(safeNext('/.//evil.example')).toBe('/');
+    expect(safeNext('/%2e//evil.example')).toBe('/');
+    expect(safeNext('/a/..//evil.example')).toBe('/');
+    expect(safeNext('/./\\evil.example')).toBe('/');
+  });
+
+  it('falls back instead of throwing on unparsable input', () => {
+    expect(safeNext('//[')).toBe('/');
+  });
 });
