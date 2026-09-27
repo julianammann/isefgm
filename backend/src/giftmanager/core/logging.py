@@ -1,6 +1,7 @@
 """Structured logging via structlog for the app and third-party loggers."""
 
 import logging
+import re
 import sys
 import uuid
 from collections.abc import Awaitable, Callable
@@ -9,6 +10,10 @@ import structlog
 from fastapi import Request, Response
 
 _FOREIGN_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access", "sqlalchemy.engine", "alembic")
+
+# The header is client-controlled and lands in every log line of the request, so only
+# plain IDs are reused.
+_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{1,64}")
 
 
 def configure_logging(level: str, *, json: bool) -> None:
@@ -63,9 +68,12 @@ async def request_id_middleware(
 ) -> Response:
     """Bind a request ID to every log line of the request and echo it as `x-request-id`.
 
-    An incoming `x-request-id` header is reused; otherwise a random UUID is generated.
+    An incoming `x-request-id` header is reused if it matches `[A-Za-z0-9._-]{1,64}`;
+    otherwise a random UUID is generated.
     """
-    request_id = request.headers.get("x-request-id", str(uuid.uuid4()))
+    incoming = request.headers.get("x-request-id", "")
+    # fullmatch, not ^…$: `$` also matches before a trailing newline.
+    request_id = incoming if _REQUEST_ID.fullmatch(incoming) else str(uuid.uuid4())
     structlog.contextvars.clear_contextvars()
     structlog.contextvars.bind_contextvars(
         request_id=request_id, path=request.url.path, method=request.method

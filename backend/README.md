@@ -126,7 +126,7 @@ log = structlog.get_logger()
 log.info("gift created", gift_id=gift.id)
 ```
 
-Immer Key-Value statt f-Strings – im JSON-Modus werden daraus filterbare Felder. Die `request_id` aus dem Header `x-request-id` (oder generiert) hängt automatisch an jeder Zeile eines Requests. Uvicorn-, SQLAlchemy- und Alembic-Logs laufen durch denselben Renderer.
+Immer Key-Value statt f-Strings – im JSON-Modus werden daraus filterbare Felder. Die `request_id` aus dem Header `x-request-id` (übernommen, wenn er `[A-Za-z0-9._-]{1,64}` entspricht, sonst eine neue UUID) hängt automatisch an jeder Zeile eines Requests. Uvicorn-, SQLAlchemy- und Alembic-Logs laufen durch denselben Renderer.
 
 ## Docker
 ```sh
