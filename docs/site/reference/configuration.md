@@ -1,0 +1,1 @@
+<!--@include: ../../generated/configuration.md-->

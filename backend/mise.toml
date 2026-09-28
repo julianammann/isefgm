@@ -2,6 +2,8 @@
 run = "uv sync"
 
 [tasks.dev]
+# APP_ENV defaults to production (Secure cookie, no /docs); the dev server opts out.
+env = { APP_ENV = "development" }
 run = "uv run fastapi dev src/giftmanager/main.py"
 
 [tasks.lint]
@@ -32,3 +34,11 @@ run = "uv run alembic check"
 
 [tasks.openapi]
 run = "uv run python -m giftmanager.export_openapi > ../frontend/openapi.json"
+
+[tasks.docs]
+description = "render docs/generated/{api,database,configuration}.md from code"
+run = "uv run python -m giftmanager.export_docs ../docs/generated"
+
+[tasks.apidocs]
+description = "code reference from docstrings as Markdown into ../docs/site/backend (Sphinx, docs/conf.py)"
+run = "uv run python docs/build.py ../docs/site/backend"

@@ -4,6 +4,126 @@
  */
 
 export interface paths {
+    "/api/v1/auth/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete account
+         * @description Deletes the account with all of its data (F-17) and ends the session. Cannot be undone.
+         */
+        delete: operations["authDeleteAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Log in
+         * @description Checks e-mail and password and sets the session cookie on success. Wrong credentials and unknown addresses get the same 401 response in the same time. When too many logins and registrations are already being checked, returns 503 at once with a Retry-After header; retry a few seconds later.
+         */
+        post: operations["authLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Log out
+         * @description Revokes the session on the server and clears the cookie. Idempotent: also works without a cookie or with one that is no longer valid.
+         */
+        post: operations["authLogout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Log out everywhere
+         * @description Revokes every session of the account on every device, this one included, and clears the cookie. For a lost device or a cookie that may have been stolen.
+         */
+        post: operations["authLogoutAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current account
+         * @description Returns the account of the current session. The frontend calls it on every page request to determine the login state.
+         */
+        get: operations["authMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create account
+         * @description Creates an account and logs it in right away: the response sets the session cookie. The e-mail address is stored lowercased; an address that is already registered returns 409. When too many logins and registrations are already being checked, returns 503 at once with a Retry-After header; retry a few seconds later.
+         */
+        post: operations["authRegister"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -11,7 +131,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Live */
+        /**
+         * Process is up
+         * @description Answers as soon as the process accepts requests; does not touch the database. Target of the container healthcheck.
+         */
         get: operations["healthLive"];
         put?: never;
         post?: never;
@@ -28,7 +151,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Ready */
+        /**
+         * Database reachable
+         * @description Runs `SELECT 1`. Without a database it returns `status: degraded` with HTTP 200, so that Traefik keeps the container in rotation while it is still starting.
+         */
         get: operations["healthReady"];
         put?: never;
         post?: never;
@@ -42,7 +168,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** HealthOut */
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HealthOut
+         * @description State of the service and its database connection.
+         */
         HealthOut: {
             /** Database */
             database: boolean;
@@ -51,6 +185,122 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "degraded";
+        };
+        /**
+         * LoginIn
+         * @description Login credentials.
+         */
+        LoginIn: {
+            /**
+             * Email
+             * Format: email
+             * @description Login name.
+             * @example anna@example.org
+             */
+            email: string;
+            /**
+             * Password
+             * @description Password.
+             * @example correct-horse-battery
+             */
+            password: string;
+        };
+        /**
+         * Problem
+         * @description Error body for every status outside 2xx (RFC 9457).
+         */
+        Problem: {
+            /** Detail */
+            detail: string;
+            /** Errors */
+            errors?: components["schemas"]["ValidationIssue"][] | null;
+            /** Status */
+            status: number;
+            /** Title */
+            title: string;
+            /**
+             * Type
+             * @default about:blank
+             */
+            type: string;
+        };
+        /**
+         * RegisterIn
+         * @description Data for a new account.
+         */
+        RegisterIn: {
+            /**
+             * Display Name
+             * @description Display name in the UI and in notifications.
+             * @example Anna
+             */
+            display_name: string;
+            /**
+             * Email
+             * Format: email
+             * @description Login name. Case is ignored.
+             * @example anna@example.org
+             */
+            email: string;
+            /**
+             * Password
+             * @description At least 8 characters. Only stored as an Argon2id hash (Q-03).
+             * @example correct-horse-battery
+             */
+            password: string;
+        };
+        /**
+         * UserOut
+         * @description Account as the frontend sees it, without the password hash.
+         */
+        UserOut: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description Account creation time (UTC).
+             */
+            created_at: string;
+            /**
+             * Display Name
+             * @description Display name.
+             */
+            display_name: string;
+            /**
+             * Email
+             * @description Login name, lowercased.
+             */
+            email: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Account ID (UUIDv7).
+             */
+            id: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /**
+         * ValidationIssue
+         * @description One invalid field of a request.
+         */
+        ValidationIssue: {
+            /** Loc */
+            loc: string[];
+            /** Msg */
+            msg: string;
+            /** Type */
+            type: string;
         };
     };
     responses: never;
@@ -61,6 +311,209 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    authDeleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    authLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    authLogout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    authLogoutAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    authMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    authRegister: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     healthLive: {
         parameters: {
             query?: never;

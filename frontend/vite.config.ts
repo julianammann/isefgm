@@ -18,7 +18,33 @@ export default defineConfig({
       // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
       // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
       // See https://svelte.dev/docs/kit/adapters for more information about adapters.
-      adapter: adapter()
+      adapter: adapter(),
+
+      // Defence in depth against XSS: SvelteKit adds a nonce (hash when prerendered) to
+      // the inline scripts it generates, everything else must come from the app itself.
+      // No inline styles either, hence class="contents" instead of a style attribute in
+      // app.html. In dev, SvelteKit adds 'unsafe-inline' for Vite's injected styles.
+      csp: {
+        mode: 'auto',
+        directives: {
+          'default-src': ['self'],
+          'script-src': ['self'],
+          'style-src': ['self'],
+          // The one exception: SvelteKit's generated route announcer (#svelte-announcer)
+          // hides itself with a style attribute. Blocked, the page title shows below the
+          // page after every client-side navigation. A hash of that attribute would break
+          // silently whenever a SvelteKit update changes it; style attributes cannot run
+          // script, and <style> elements stay limited to 'self' above.
+          'style-src-attr': ['unsafe-inline'],
+          'img-src': ['self', 'data:'],
+          'font-src': ['self'],
+          'connect-src': ['self'],
+          'object-src': ['none'],
+          'base-uri': ['self'],
+          'form-action': ['self'],
+          'frame-ancestors': ['none']
+        }
+      }
     })
   ],
   test: {

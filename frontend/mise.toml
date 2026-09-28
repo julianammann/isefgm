@@ -21,3 +21,7 @@ depends = ["lint", "typecheck", "test"]
 
 [tasks.generate]
 run = "pnpm run generate"
+
+[tasks.apidocs]
+description = "code reference from JSDoc as Markdown into ../docs/site/frontend (typedoc.json)"
+run = "pnpm run docs"

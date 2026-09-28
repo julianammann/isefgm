@@ -14,6 +14,7 @@ description = "setup complete project"
 run = """
 mise -C backend run install
 mise -C frontend run install
+pnpm --dir docs/site install --frozen-lockfile
 lefthook install
 """
 
@@ -30,4 +31,22 @@ run = ["mise -C backend run openapi", "mise -C frontend run generate"]
 
 [tasks.docker]
 description = "build image with pinned uv version"
-run = "UV_VERSION=$(mise current uv) docker compose build"
+env = { UV_VERSION = "{{ exec(command='mise current uv') }}" }
+run = "docker compose build"
+
+[tasks.docs]
+description = "regenerate code-derived documentation (docs/generated/)"
+run = ["mise -C backend run docs", "mise -C backend run test"]
+
+[tasks.apidocs]
+description = "code reference site: Sphinx (backend) + TypeDoc (frontend) as Markdown, built with VitePress into apidocs/"
+run = [
+  "mise -C backend run apidocs",
+  "mise -C frontend run apidocs",
+  "pnpm --dir docs/site run build",
+]
+
+[tasks."apidocs:serve"]
+description = "build the code reference and serve it on http://localhost:4173"
+depends = ["apidocs"]
+run = "pnpm --dir docs/site run preview"

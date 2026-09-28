@@ -2,10 +2,11 @@
 .env
 .env.*
 !.env.example
-!.env.test
 lefthook-local.yml
 mise.local.toml
 .mise.local.toml
+# Deployment notes are kept locally, not in the repo
+deploy/
 
 # --- Python ---
 __pycache__/
@@ -20,6 +21,7 @@ dist/
 build/
 .coverage
 htmlcov/
+backend/data/
 
 # --- Node ---
 node_modules/
@@ -27,6 +29,12 @@ node_modules/
 frontend/dist/
 frontend/coverage/
 *.tsbuildinfo
+
+# --- Generated code reference (mise run apidocs, published by .github/workflows/docs.yml) ---
+apidocs/
+docs/site/backend/
+docs/site/frontend/
+docs/site/.vitepress/cache/
 
 # --- Docker ---
 pgdata/
@@ -49,3 +57,4 @@ Thumbs.db
 *.out
 *.synctex.gz
 *.toc
+.claude/settings.local.json

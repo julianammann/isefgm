@@ -1,0 +1,21 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Frontend",
+  "entryPointStrategy": "expand",
+  "entryPoints": ["src/lib", "src/routes", "src/hooks.server.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "src/lib/api/schema.d.ts"],
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "out": "../docs/site/frontend",
+  "docsRoot": "../docs/site",
+  "readme": "none",
+  "sourceLinkTemplate": "https://github.com/julianammann/isefgm/blob/{gitRevision}/{path}#L{line}",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "validation": {
+    "notExported": false,
+    "invalidLink": true,
+    "notDocumented": true
+  },
+  "requiredToBeDocumented": ["Module", "Function", "Class", "Interface", "TypeAlias", "Variable"],
+  "treatWarningsAsErrors": true
+}

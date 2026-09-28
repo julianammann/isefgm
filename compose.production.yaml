@@ -1,0 +1,46 @@
+# Production overlay for vps-prod-01 (ammann-pro/infra-vps). Adds what the base
+# file must not contain: the shared Traefik network + router labels on the one
+# public service and resource limits (gate: every traefik.enable=true service
+# needs mem_limit + cpus). APP_FQDN, IMAGE_TAG and all secrets arrive via the
+# deploy-rendered .env.
+#
+# Deliberately NO stack-back sidecar and NO backup-proxy-net: this
+# repo has committers outside the org, and the BACKUP__* credentials are shared
+# across every stack on the host. Test data is synthetic; a loss is a re-seed.
+services:
+  db:
+    mem_limit: 512m
+    cpus: 1.0
+
+  migrate:
+    mem_limit: 256m
+    cpus: 0.5
+
+  api:
+    mem_limit: 512m
+    cpus: 1.0
+
+  scheduler:
+    mem_limit: 256m
+    cpus: 0.5
+
+  frontend:
+    mem_limit: 256m
+    cpus: 0.5
+    environment:
+      ORIGIN: https://${APP_FQDN}
+    networks:
+      - app-net
+      - traefik-net
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-net"
+      traefik.http.routers.isefgm.rule: "Host(`${APP_FQDN}`)"
+      traefik.http.routers.isefgm.entrypoints: "websecure"
+      traefik.http.services.isefgm.loadbalancer.server.port: "3000"
+      # TLS (letsencrypt), HSTS/nosniff headers and the edge rate limit are
+      # entrypoint defaults on websecure; nothing to declare here.
+
+networks:
+  traefik-net:
+    external: true
