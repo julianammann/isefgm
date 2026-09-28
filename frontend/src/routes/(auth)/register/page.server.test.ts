@@ -17,6 +17,7 @@ function fakeEvent(status: number) {
 
 describe('default', () => {
   it.each([
+    [403, 'Die Registrierung ist derzeit geschlossen.'],
     [409, 'Diese E-Mail-Adresse ist bereits registriert.'],
     [503, 'Gerade laufen zu viele Registrierungen. Bitte versuche es in ein paar Sekunden erneut.']
   ])('explains a %i in German and keeps the form values', async (status, message) => {

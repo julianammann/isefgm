@@ -17,6 +17,7 @@ x-backend: &backend
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@isefgm-db:5432/${POSTGRES_DB:-app}
     DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Europe/Berlin}
+    REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-false}
     UPLOADS_DIR: /data/uploads
   networks: [app-net]
   security_opt:
@@ -93,6 +94,8 @@ services:
     environment:
       API_URL: http://isefgm-api:8000
       ORIGIN: ${ORIGIN:-http://localhost:3000}
+      # Same value as the api: the api enforces it, the frontend only hides the link.
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-false}
     networks: [app-net]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]

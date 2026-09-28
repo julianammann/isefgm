@@ -26,11 +26,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     operation_id="authRegister",
     summary="Create account",
     description="Creates an account and logs it in right away: the response sets the "
-    "session cookie. The e-mail address is stored lowercased; "
+    "session cookie. Returns 403 while registration is closed (`REGISTRATION_ENABLED`). "
+    "The e-mail address is stored lowercased; "
     "an address that is already registered returns 409. When too many logins and "
     "registrations are already being checked, returns 503 at once with a Retry-After "
     "header; retry a few seconds later.",
-    responses=problem_responses(409, 503),
+    responses=problem_responses(403, 409, 503),
 )
 async def register(
     body: RegisterIn, response: Response, session: SessionDep, clock: ClockDep
@@ -38,10 +39,13 @@ async def register(
     """Create an account and log it in immediately.
 
     Raises:
+        HTTPException: 403 while registration is closed.
         ConflictError: The e-mail address is already registered (409).
         ServiceUnavailableError: Too many password checks are already running (503).
     """
     settings = get_settings()
+    if not settings.registration_enabled:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Registration is closed")
     user = await auth_service.register(
         session, email=body.email, password=body.password, display_name=body.display_name
     )

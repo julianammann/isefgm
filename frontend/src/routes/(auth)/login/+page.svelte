@@ -3,7 +3,7 @@
   import { resolve } from '$app/paths';
   import type { PageProps } from './$types';
 
-  let { form }: PageProps = $props();
+  let { data, form }: PageProps = $props();
 </script>
 
 <svelte:head><title>Anmelden – Geschenke-Manager</title></svelte:head>
@@ -53,7 +53,9 @@
     <button type="submit" class="rounded bg-black px-4 py-2 text-white">Anmelden</button>
   </form>
 
-  <p class="mt-6 text-sm">
-    Noch kein Konto? <a class="underline" href={resolve('/register')}>Registrieren</a>
-  </p>
+  {#if data.registrationEnabled}
+    <p class="mt-6 text-sm">
+      Noch kein Konto? <a class="underline" href={resolve('/register')}>Registrieren</a>
+    </p>
+  {/if}
 </main>

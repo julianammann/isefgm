@@ -79,6 +79,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `migrate` | `uv run alembic upgrade head` | |
 | `migration` | `uv run alembic revision --autogenerate -m "…"` | `mise run migration -- "create gifts"` |
 | `migrate:check` | `uv run alembic check` | fehlende Migration erkennen |
+| `create-user` | `uv run python -m giftmanager.create_user` | Konto anlegen, auch bei geschlossener Registrierung; fragt das Passwort ab. `mise run create-user -- --email anna@example.org --display-name Anna`, auf dem Server `docker compose exec api python -m giftmanager.create_user …` |
 | `openapi` | `uv run python -m giftmanager.export_openapi > ../frontend/openapi.json` | |
 | `docs` | `uv run python -m giftmanager.export_docs ../docs/generated` | API-, Datenbank- und Konfigurationsdoku aus dem Code (MS 4) |
 | `apidocs` | `uv run python docs/build.py ../docs/site/backend` | Code-Referenz als Markdown für die VitePress-Seite; ganze Seite: `mise run apidocs:serve` im Root |
@@ -96,6 +97,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `UPLOADS_DIR` | `data/uploads` | Ablage für Bild-Uploads, in Produktion ein Volume |
 | `SESSION_TTL_DAYS` | `14` | Lebensdauer einer Session, verlängert bei jeder Nutzung |
 | `SESSION_MAX_LIFETIME_DAYS` | `30` | Höchstalter einer Session ab der Anmeldung, unabhängig von der Nutzung |
+| `REGISTRATION_ENABLED` | `false` | `true` öffnet `POST /api/v1/auth/register` und die Seite `/register`; sonst 403 und kein Link im Frontend, das dieselbe Variable liest. Konten dann per `create-user` |
 
 ## Datenbank und Migrationen
 
@@ -142,7 +144,7 @@ Multi-Stage: uv-Builder → `python:3.14-slim`, Non-Root-User, nur Produktions-D
 |---|---|
 | `GET /api/v1/health/live` | Prozess läuft |
 | `GET /api/v1/health/ready` | DB erreichbar (`database: true`) |
-| `POST /api/v1/auth/register` | Konto anlegen, setzt Session-Cookie (201, 409 bei bekannter E-Mail) |
+| `POST /api/v1/auth/register` | Konto anlegen, setzt Session-Cookie (201, 403 bei geschlossener Registrierung, 409 bei bekannter E-Mail) |
 | `POST /api/v1/auth/login` | Anmelden, setzt Session-Cookie (401 bei falschen Daten) |
 | `POST /api/v1/auth/logout` | Session widerrufen, Cookie löschen (204, idempotent) |
 | `POST /api/v1/auth/logout-all` | Alle Sessions des Kontos auf allen Geräten widerrufen, Cookie löschen (204) |
