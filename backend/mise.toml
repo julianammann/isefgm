@@ -32,6 +32,10 @@ run = "uv run alembic revision --autogenerate -m"
 [tasks."migrate:check"]
 run = "uv run alembic check"
 
+[tasks.create-user]
+description = "mise run create-user -- --email anna@example.org --display-name Anna"
+run = "uv run python -m giftmanager.create_user"
+
 [tasks.openapi]
 run = "uv run python -m giftmanager.export_openapi > ../frontend/openapi.json"
 

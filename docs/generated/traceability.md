@@ -8,6 +8,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | --- | --- | --- |
 | F-01 | `tests/test_auth.py::test_register_logs_in_and_normalizes_email` | passed |
 | F-01 | `tests/test_auth.py::test_register_duplicate_email_is_a_conflict` | passed |
+| F-01 | `tests/test_auth.py::test_register_is_forbidden_while_registration_is_closed` | passed |
 | F-01 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | F-01 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
 | F-01 | `tests/test_auth.py::test_login_sets_session` | passed |
@@ -16,6 +17,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-01 | `tests/test_auth.py::test_logout_revokes_the_session` | passed |
 | F-01 | `tests/test_auth.py::test_logout_all_revokes_every_session_of_the_user` | passed |
 | F-01 | `tests/test_auth.py::test_session_expiry_slides_with_use` | passed |
+| F-01 | `tests/test_config.py::test_registration_is_closed_by_default` | passed |
+| F-01 | `tests/test_create_user.py::test_creates_the_account_once_while_registration_is_closed` | passed |
+| F-01 | `tests/test_create_user.py::test_rejects_mismatched_passwords` | passed |
+| F-01 | `tests/test_create_user.py::test_validates_like_the_registration_endpoint` | passed |
 | F-17 | `tests/test_auth.py::test_delete_account_removes_user_and_sessions` | passed |
 | Q-01 | `tests/test_auth.py::test_logout_all_leaves_other_users_logged_in` | passed |
 | Q-01 | `tests/test_auth.py::test_logout_all_without_session_is_unauthorized` | passed |
@@ -41,6 +46,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_auth.py::test_login_purges_the_users_dead_sessions` | passed |
 | Q-03 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
 | Q-03 | `tests/test_config.py::test_app_env_defaults_to_production` | passed |
+| Q-03 | `tests/test_config.py::test_registration_is_closed_by_default` | passed |
+| Q-03 | `tests/test_create_user.py::test_validates_like_the_registration_endpoint` | passed |
 | Q-03 | `tests/test_logging.py::test_valid_request_id_is_reused[uuid]` | passed |
 | Q-03 | `tests/test_logging.py::test_valid_request_id_is_reused[64-chars]` | passed |
 | Q-03 | `tests/test_logging.py::test_invalid_request_id_is_replaced[too-long]` | passed |

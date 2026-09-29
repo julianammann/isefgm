@@ -25,11 +25,13 @@ export const actions: Actions = {
     });
     if (!data) {
       const message =
-        response.status === 409
-          ? 'Diese E-Mail-Adresse ist bereits registriert.'
-          : response.status === 503
-            ? 'Gerade laufen zu viele Registrierungen. Bitte versuche es in ein paar Sekunden erneut.'
-            : problemMessage(error, 'Registrierung fehlgeschlagen.');
+        response.status === 403
+          ? 'Die Registrierung ist derzeit geschlossen.'
+          : response.status === 409
+            ? 'Diese E-Mail-Adresse ist bereits registriert.'
+            : response.status === 503
+              ? 'Gerade laufen zu viele Registrierungen. Bitte versuche es in ein paar Sekunden erneut.'
+              : problemMessage(error, 'Registrierung fehlgeschlagen.');
       return fail(response.status >= 400 && response.status < 600 ? response.status : 400, {
         email,
         display_name,

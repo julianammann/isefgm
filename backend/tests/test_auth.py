@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from giftmanager.core import security
 from giftmanager.core.config import get_settings
 from giftmanager.core.security import hash_session_token
-from giftmanager.models import UserSession
+from giftmanager.models import User, UserSession
 from tests.conftest import FixedClock
 
 REGISTER = "/api/v1/auth/register"
@@ -25,6 +25,12 @@ COOKIE = "__Host-session"
 ANNA = {"email": "Anna@Example.org", "password": "correct-horse-battery", "display_name": "Anna"}
 ANNA_LOGIN = {"email": ANNA["email"], "password": ANNA["password"]}
 BOB = {"email": "bob@example.org", "password": "correct-horse-battery", "display_name": "Bob"}
+
+
+@pytest.fixture(autouse=True)
+def _registration_open(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Most tests create their accounts through the endpoint; closed is tested explicitly.
+    monkeypatch.setattr(get_settings(), "registration_enabled", True)
 
 
 @pytest.mark.requirement("F-01")
@@ -51,6 +57,24 @@ async def test_register_duplicate_email_is_a_conflict(client: AsyncClient) -> No
     assert r.status_code == 409
     assert r.json()["status"] == 409
     assert r.json()["title"] == "Conflict"
+
+
+@pytest.mark.requirement("F-01")
+async def test_register_is_forbidden_while_registration_is_closed(
+    client: AsyncClient, session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(get_settings(), "registration_enabled", False)
+    r = await client.post(REGISTER, json=ANNA)
+    assert r.status_code == 403
+    assert r.json() == {
+        "type": "about:blank",
+        "title": "Registration is closed",
+        "status": 403,
+        "detail": "Registration is closed",
+    }
+    assert COOKIE not in r.cookies
+    anna = select(func.count()).select_from(User).where(User.email == "anna@example.org")
+    assert await session.scalar(anna) == 0
 
 
 @pytest.mark.requirement("F-01", "Q-03")

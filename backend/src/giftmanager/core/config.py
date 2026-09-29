@@ -62,6 +62,12 @@ class Settings(BaseSettings):
         description="Hard upper bound on a session's age in days, counted from login, "
         "however often the session is used. After that the user must log in again.",
     )
+    registration_enabled: bool = Field(
+        default=False,
+        description="`true` opens `POST /api/v1/auth/register` and the sign-up page; "
+        "otherwise the endpoint returns 403 and the frontend hides the link (it reads the "
+        "same variable). Accounts can always be created with `mise run create-user`.",
+    )
 
     @property
     def session_ttl(self) -> timedelta:
