@@ -25,3 +25,15 @@ Liveness and readiness for container healthchecks and Traefik.
 | --- | --- | --- | --- | --- |
 | `GET /api/v1/health/live` | `healthLive` | Process is up | Answers as soon as the process accepts requests; does not touch the database. Target of the container healthcheck. | 200 |
 | `GET /api/v1/health/ready` | `healthReady` | Database reachable | Runs `SELECT 1`. Without a database it returns `status: degraded` with HTTP 200, so that Traefik keeps the container in rotation while it is still starting. | 200 |
+
+## persons
+
+Persons the account gives gifts to (F-02). Every account sees only its own persons (Q-01).
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/persons` | `listPersons` | List persons | Returns the persons of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all persons of the account. | 200, 401, 422 |
+| `POST /api/v1/persons` | `createPerson` | Create person | Creates a person for the current account. Only the name is required; empty optional fields are stored as null. | 201, 401, 422 |
+| `GET /api/v1/persons/{person_id}` | `getPerson` | Show person | Returns one person of the current account. A person of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/persons/{person_id}` | `updatePerson` | Update person | Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `DELETE /api/v1/persons/{person_id}` | `deletePerson` | Delete person | Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one. | 204, 401, 404, 422 |

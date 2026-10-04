@@ -164,6 +164,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/persons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List persons
+         * @description Returns the persons of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all persons of the account.
+         */
+        get: operations["listPersons"];
+        put?: never;
+        /**
+         * Create person
+         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null.
+         */
+        post: operations["createPerson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/persons/{person_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show person
+         * @description Returns one person of the current account. A person of another account returns 404, like a missing one.
+         */
+        get: operations["getPerson"];
+        /**
+         * Update person
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one.
+         */
+        put: operations["updatePerson"];
+        post?: never;
+        /**
+         * Delete person
+         * @description Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.
+         */
+        delete: operations["deletePerson"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -204,6 +256,91 @@ export interface components {
              * @example correct-horse-battery
              */
             password: string;
+        };
+        /** Page[PersonOut] */
+        Page_PersonOut_: {
+            /** Items */
+            items: components["schemas"]["PersonOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * PersonIn
+         * @description Data of a person; used for create and for full update (PUT).
+         */
+        PersonIn: {
+            /**
+             * Birthday
+             * @description Birthday as a plain date (YYYY-MM-DD), without time or time zone.
+             * @example 1994-03-17
+             */
+            birthday?: string | null;
+            /**
+             * Name
+             * @description Name, 1 to 100 characters.
+             * @example Lena
+             */
+            name: string;
+            /**
+             * Notes
+             * @description Free-text notes, up to 2000 characters. Empty means not set.
+             * @example Mag Bouldern und Kaffee, Kleidergröße M
+             */
+            notes?: string | null;
+            /**
+             * Relationship
+             * @description Relationship to the person, up to 100 characters. Empty means not set.
+             * @example Schwester
+             */
+            relationship?: string | null;
+        };
+        /**
+         * PersonOut
+         * @description A person as the frontend sees it.
+         */
+        PersonOut: {
+            /**
+             * Birthday
+             * @description Birthday as a plain date, or null.
+             * @example 1994-03-17
+             */
+            birthday: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC).
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Person ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            id: string;
+            /**
+             * Name
+             * @description Name.
+             * @example Lena
+             */
+            name: string;
+            /**
+             * Notes
+             * @description Free-text notes, or null.
+             * @example Mag Bouldern und Kaffee, Kleidergröße M
+             */
+            notes: string | null;
+            /**
+             * Relationship
+             * @description Relationship to the person, or null.
+             * @example Schwester
+             */
+            relationship: string | null;
         };
         /**
          * Problem
@@ -559,6 +696,238 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+        };
+    };
+    listPersons: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PersonOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updatePerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PersonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deletePerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
