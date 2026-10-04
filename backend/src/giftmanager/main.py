@@ -37,6 +37,12 @@ OPENAPI_TAGS = [
         "description": "People the account gives gifts to (F-02). Every account sees only "
         "its own people (Q-01).",
     },
+    {
+        "name": "occasions",
+        "description": "Occasion types and occasions (F-03). The types Geburtstag and "
+        "Weihnachten are system-wide and read-only; occasions are one-off or yearly and "
+        "visible only to their account (Q-01).",
+    },
 ]
 
 

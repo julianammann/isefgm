@@ -1,0 +1,264 @@
+import datetime as dt
+import uuid
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from giftmanager.models import (
+    BIRTHDAY_TYPE_ID,
+    CHRISTMAS_TYPE_ID,
+    Occasion,
+    OccasionType,
+    Recurrence,
+    User,
+)
+from giftmanager.services.occasion import next_occurrence
+from tests.accounts import log_in_new_user
+
+TYPES = "/api/v1/occasion-types"
+OCCASIONS = "/api/v1/occasions"
+ACCOUNT = "/api/v1/auth/account"
+
+WEDDING = {"name": "Hochzeitstag", "date": "2019-06-21", "recurrence": "yearly"}
+
+
+@pytest.fixture
+async def anna(client: AsyncClient, session: AsyncSession) -> User:
+    return await log_in_new_user(client, session, "anna@example.org")
+
+
+@pytest.mark.requirement("F-03")
+async def test_fixed_types_are_available_to_every_account(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    for next_user in ["bob@example.org", "carla@example.org"]:
+        r = await client.get(TYPES)
+        assert r.status_code == 200
+        body = r.json()
+        assert body["total"] == 2
+        assert body["items"] == [
+            {
+                "id": str(BIRTHDAY_TYPE_ID),
+                "name": "Geburtstag",
+                "default_recurrence": "yearly",
+                "system": True,
+            },
+            {
+                "id": str(CHRISTMAS_TYPE_ID),
+                "name": "Weihnachten",
+                "default_recurrence": "yearly",
+                "system": True,
+            },
+        ]
+        await log_in_new_user(client, session, next_user)
+
+
+@pytest.mark.requirement("F-03")
+async def test_fixed_types_cannot_be_changed_or_deleted(client: AsyncClient, anna: User) -> None:
+    url = f"{TYPES}/{BIRTHDAY_TYPE_ID}"
+    assert (await client.put(url, json={"name": "Party"})).status_code == 405
+    assert (await client.patch(url, json={"name": "Party"})).status_code == 405
+    assert (await client.delete(url)).status_code == 405
+    assert (await client.post(TYPES, json={"name": "Party"})).status_code == 405
+
+    r = await client.get(url)
+    assert r.status_code == 200
+    assert r.json()["name"] == "Geburtstag"
+
+
+@pytest.mark.requirement("F-03", "Q-08")
+async def test_create_and_show_own_yearly_occasion(client: AsyncClient, anna: User) -> None:
+    r = await client.post(OCCASIONS, json=WEDDING)
+    assert r.status_code == 201
+    created = r.json()
+    assert created["name"] == "Hochzeitstag"
+    assert created["date"] == "2019-06-21"
+    assert created["recurrence"] == "yearly"
+    assert created["occasion_type_id"] is None
+
+    shown = await client.get(f"{OCCASIONS}/{created['id']}")
+    assert shown.status_code == 200
+    assert shown.json() == created
+
+
+@pytest.mark.requirement("F-03")
+async def test_one_off_is_the_default_and_fixed_types_can_be_used(
+    client: AsyncClient, anna: User
+) -> None:
+    r = await client.post(
+        OCCASIONS,
+        json={
+            "name": "Weihnachten 2026",
+            "date": "2026-12-24",
+            "occasion_type_id": str(CHRISTMAS_TYPE_ID),
+        },
+    )
+    assert r.status_code == 201
+    assert r.json()["recurrence"] == "none"
+    assert r.json()["occasion_type_id"] == str(CHRISTMAS_TYPE_ID)
+
+
+@pytest.mark.requirement("F-03", "Q-08")
+@pytest.mark.parametrize(
+    ("body", "field"),
+    [
+        ({"date": "2019-06-21"}, "name"),
+        ({"name": "  ", "date": "2019-06-21"}, "name"),
+        ({"name": "x" * 101, "date": "2019-06-21"}, "name"),
+        ({"name": "Jahrestag"}, "date"),
+        ({"name": "Jahrestag", "date": "21.06.2019"}, "date"),
+        ({"name": "Jahrestag", "date": "2019-06-21T10:00:00Z"}, "date"),
+        ({"name": "Jahrestag", "date": "2019-02-30"}, "date"),
+        ({"name": "Jahrestag", "date": "2019-06-21", "recurrence": "monthly"}, "recurrence"),
+        ({"name": "Jahrestag", "date": "2019-06-21", "occasion_type_id": "x"}, "occasion_type_id"),
+    ],
+)
+async def test_invalid_occasion_is_rejected(
+    client: AsyncClient, anna: User, body: dict[str, str], field: str
+) -> None:
+    r = await client.post(OCCASIONS, json=body)
+    assert r.status_code == 422
+    assert r.json()["errors"][0]["loc"] == ["body", field]
+
+
+@pytest.mark.requirement("F-03")
+async def test_unknown_type_is_not_found(client: AsyncClient, anna: User) -> None:
+    r = await client.post(
+        OCCASIONS, json={**WEDDING, "occasion_type_id": "0192f6a0-0000-7000-8000-000000000000"}
+    )
+    assert r.status_code == 404
+    assert (await client.get(OCCASIONS)).json()["total"] == 0
+
+
+@pytest.mark.requirement("F-03")
+async def test_update_replaces_all_fields(client: AsyncClient, anna: User) -> None:
+    created = (await client.post(OCCASIONS, json=WEDDING)).json()
+
+    r = await client.put(
+        f"{OCCASIONS}/{created['id']}", json={"name": "Jahrestag", "date": "2020-07-01"}
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["id"] == created["id"]
+    assert body["name"] == "Jahrestag"
+    assert body["date"] == "2020-07-01"
+    assert body["recurrence"] == "none"
+
+
+@pytest.mark.requirement("F-03")
+async def test_delete_occasion(client: AsyncClient, anna: User) -> None:
+    created = (await client.post(OCCASIONS, json=WEDDING)).json()
+
+    assert (await client.delete(f"{OCCASIONS}/{created['id']}")).status_code == 204
+    assert (await client.get(f"{OCCASIONS}/{created['id']}")).status_code == 404
+    assert (await client.delete(f"{OCCASIONS}/{created['id']}")).status_code == 404
+
+
+@pytest.mark.requirement("F-03", "Q-05")
+async def test_list_is_sorted_by_date_and_paginated(client: AsyncClient, anna: User) -> None:
+    for name, date in [("C", "2021-03-01"), ("A", "2019-01-01"), ("B", "2020-02-01")]:
+        await client.post(OCCASIONS, json={"name": name, "date": date})
+
+    first = await client.get(OCCASIONS, params={"limit": 2, "offset": 0})
+    assert first.status_code == 200
+    assert [o["name"] for o in first.json()["items"]] == ["A", "B"]
+    assert first.json()["total"] == 3
+
+    second = await client.get(OCCASIONS, params={"limit": 2, "offset": 2})
+    assert [o["name"] for o in second.json()["items"]] == ["C"]
+
+
+@pytest.mark.requirement("F-03", "Q-01")
+async def test_occasions_of_another_account_are_invisible(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    wedding = (await client.post(OCCASIONS, json=WEDDING)).json()
+
+    await log_in_new_user(client, session, "bob@example.org")
+    url = f"{OCCASIONS}/{wedding['id']}"
+    for r in [
+        await client.get(url),
+        await client.put(url, json={"name": "Hacked", "date": "2020-01-01"}),
+        await client.delete(url),
+    ]:
+        assert r.status_code == 404
+        assert r.json()["title"] == "Not Found"
+
+    listed = await client.get(OCCASIONS)
+    assert listed.json() == {"items": [], "total": 0, "limit": 50, "offset": 0}
+
+    occasion = await session.get(Occasion, uuid.UUID(wedding["id"]))
+    assert occasion is not None
+    assert occasion.name == "Hochzeitstag"
+
+
+@pytest.mark.requirement("F-03", "Q-01")
+async def test_type_of_another_account_cannot_be_used(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    bob = User(email="bob@example.org", password_hash="not-a-real-hash", display_name="Bob")
+    session.add(bob)
+    await session.flush()
+    bobs_type = OccasionType(owner_id=bob.id, name="Bobs Typ", default_recurrence=Recurrence.NONE)
+    session.add(bobs_type)
+    await session.flush()
+
+    assert (await client.get(f"{TYPES}/{bobs_type.id}")).status_code == 404
+    assert (await client.get(TYPES)).json()["total"] == 2
+
+    r = await client.post(OCCASIONS, json={**WEDDING, "occasion_type_id": str(bobs_type.id)})
+    assert r.status_code == 404
+
+    created = (await client.post(OCCASIONS, json=WEDDING)).json()
+    r = await client.put(
+        f"{OCCASIONS}/{created['id']}", json={**WEDDING, "occasion_type_id": str(bobs_type.id)}
+    )
+    assert r.status_code == 404
+
+
+@pytest.mark.requirement("F-03", "Q-01")
+async def test_occasions_require_login(client: AsyncClient) -> None:
+    assert (await client.get(TYPES)).status_code == 401
+    assert (await client.get(OCCASIONS)).status_code == 401
+    assert (await client.post(OCCASIONS, json=WEDDING)).status_code == 401
+
+
+@pytest.mark.requirement("F-03", "F-17")
+async def test_deleting_the_account_deletes_its_occasions(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    await client.post(OCCASIONS, json=WEDDING)
+
+    assert (await client.delete(ACCOUNT)).status_code == 204
+    count = select(func.count()).select_from(Occasion).where(Occasion.owner_id == anna.id)
+    assert await session.scalar(count) == 0
+    assert await session.get(OccasionType, BIRTHDAY_TYPE_ID) is not None
+
+
+@pytest.mark.requirement("F-03", "Q-08")
+@pytest.mark.parametrize(
+    ("start", "recurrence", "today", "expected"),
+    [
+        ("2026-12-24", Recurrence.NONE, "2026-10-04", "2026-12-24"),
+        ("2026-10-04", Recurrence.NONE, "2026-10-04", "2026-10-04"),
+        ("2026-10-03", Recurrence.NONE, "2026-10-04", None),
+        ("2019-06-21", Recurrence.YEARLY, "2026-03-01", "2026-06-21"),
+        ("2019-06-21", Recurrence.YEARLY, "2026-06-21", "2026-06-21"),
+        ("2019-06-21", Recurrence.YEARLY, "2026-06-22", "2027-06-21"),
+        ("2020-01-05", Recurrence.YEARLY, "2026-12-30", "2027-01-05"),
+        ("2019-12-31", Recurrence.YEARLY, "2026-12-31", "2026-12-31"),
+        ("2019-12-31", Recurrence.YEARLY, "2027-01-01", "2027-12-31"),
+        ("2030-05-01", Recurrence.YEARLY, "2026-10-04", "2030-05-01"),
+        ("2020-02-29", Recurrence.YEARLY, "2026-01-10", "2026-02-28"),
+        ("2020-02-29", Recurrence.YEARLY, "2027-03-01", "2028-02-29"),
+        ("2020-02-29", Recurrence.YEARLY, "2028-02-29", "2028-02-29"),
+        ("2020-02-29", Recurrence.YEARLY, "2028-03-01", "2029-02-28"),
+    ],
+)
+def test_next_occurrence(
+    start: str, recurrence: Recurrence, today: str, expected: str | None
+) -> None:
+    result = next_occurrence(dt.date.fromisoformat(start), recurrence, dt.date.fromisoformat(today))
+    assert result == (dt.date.fromisoformat(expected) if expected else None)

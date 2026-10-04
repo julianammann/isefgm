@@ -164,6 +164,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/occasion-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List occasion types
+         * @description Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
+         */
+        get: operations["listOccasionTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/occasion-types/{occasion_type_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show occasion type
+         * @description Returns one system-wide type or one of the account's own types. A type of another account returns 404.
+         */
+        get: operations["getOccasionType"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/occasions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List occasions
+         * @description Returns the occasions of the current account, sorted by date, one page at a time. `total` counts all occasions of the account.
+         */
+        get: operations["listOccasions"];
+        put?: never;
+        /**
+         * Create occasion
+         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.
+         */
+        post: operations["createOccasion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/occasions/{occasion_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show occasion
+         * @description Returns one occasion of the current account. An occasion of another account returns 404, like a missing one.
+         */
+        get: operations["getOccasion"];
+        /**
+         * Update occasion
+         * @description Replaces all fields of the occasion: a field left out is reset to its default. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.
+         */
+        put: operations["updateOccasion"];
+        post?: never;
+        /**
+         * Delete occasion
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteOccasion"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/people": {
         parameters: {
             query?: never;
@@ -256,6 +348,126 @@ export interface components {
              * @example correct-horse-battery
              */
             password: string;
+        };
+        /**
+         * OccasionIn
+         * @description Data of an occasion; used for create and for full update (PUT).
+         */
+        OccasionIn: {
+            /**
+             * Date
+             * Format: date
+             * @description Date as a plain date (YYYY-MM-DD). First occurrence for yearly occasions.
+             * @example 2019-06-21
+             */
+            date: string;
+            /**
+             * Name
+             * @description Title, 1 to 100 characters.
+             * @example Hochzeitstag
+             */
+            name: string;
+            /**
+             * Occasion Type Id
+             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type.
+             * @example null
+             */
+            occasion_type_id?: string | null;
+            /**
+             * @description `none` for a one-off occasion, `yearly` for every year on the same day.
+             * @default none
+             * @example yearly
+             */
+            recurrence: components["schemas"]["Recurrence"];
+        };
+        /**
+         * OccasionOut
+         * @description An occasion as the frontend sees it.
+         */
+        OccasionOut: {
+            /**
+             * Date
+             * Format: date
+             * @description Date as a plain date.
+             * @example 2019-06-21
+             */
+            date: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Occasion ID (UUIDv7).
+             * @example 01a10a3c-7d2e-7c41-9b0e-3f5a8d2c1e94
+             */
+            id: string;
+            /**
+             * Name
+             * @description Title.
+             * @example Hochzeitstag
+             */
+            name: string;
+            /**
+             * Occasion Type Id
+             * @description Occasion type, or null.
+             * @example null
+             */
+            occasion_type_id: string | null;
+            /**
+             * @description `none` or `yearly`.
+             * @example yearly
+             */
+            recurrence: components["schemas"]["Recurrence"];
+        };
+        /**
+         * OccasionTypeOut
+         * @description An occasion type. System-wide types are read-only.
+         */
+        OccasionTypeOut: {
+            /**
+             * @description Suggested recurrence for occasions of this type.
+             * @example yearly
+             */
+            default_recurrence: components["schemas"]["Recurrence"];
+            /**
+             * Id
+             * Format: uuid
+             * @description Occasion type ID (UUIDv7).
+             * @example 01a107a9-211b-7486-a304-d5d673618f5b
+             */
+            id: string;
+            /**
+             * Name
+             * @description Display name.
+             * @example Geburtstag
+             */
+            name: string;
+            /**
+             * System
+             * @description True for the system-wide types, which nobody can change or delete.
+             * @example true
+             */
+            system: boolean;
+        };
+        /** Page[OccasionOut] */
+        Page_OccasionOut_: {
+            /** Items */
+            items: components["schemas"]["OccasionOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[OccasionTypeOut] */
+        Page_OccasionTypeOut_: {
+            /** Items */
+            items: components["schemas"]["OccasionTypeOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
         };
         /** Page[PersonOut] */
         Page_PersonOut_: {
@@ -361,6 +573,12 @@ export interface components {
              */
             type: string;
         };
+        /**
+         * Recurrence
+         * @description How often an occasion repeats.
+         * @enum {string}
+         */
+        Recurrence: "none" | "yearly";
         /**
          * RegisterIn
          * @description Data for a new account.
@@ -696,6 +914,337 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+        };
+    };
+    listOccasionTypes: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_OccasionTypeOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getOccasionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                occasion_type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OccasionTypeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listOccasions: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_OccasionOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createOccasion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OccasionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OccasionOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getOccasion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                occasion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OccasionOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateOccasion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                occasion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OccasionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OccasionOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteOccasion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                occasion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

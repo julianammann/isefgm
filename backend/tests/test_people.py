@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -7,11 +6,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.models import Person, User
-from giftmanager.services import auth as auth_service
+from tests.accounts import log_in_new_user
 
 PEOPLE = "/api/v1/people"
 ACCOUNT = "/api/v1/auth/account"
-COOKIE = "__Host-session"
 
 LENA = {
     "name": "Lena",
@@ -21,26 +19,9 @@ LENA = {
 }
 
 
-async def _log_in_new_user(client: AsyncClient, session: AsyncSession, email: str) -> User:
-    """Create an account directly and put its session cookie on the client."""
-    user = User(email=email, password_hash="not-a-real-hash", display_name=email)
-    session.add(user)
-    await session.flush()
-    token = await auth_service.create_session(
-        session,
-        user,
-        now=datetime.now(UTC),
-        ttl=timedelta(hours=1),
-        max_lifetime=timedelta(days=1),
-    )
-    client.cookies.clear()
-    client.cookies.set(COOKIE, token)
-    return user
-
-
 @pytest.fixture
 async def anna(client: AsyncClient, session: AsyncSession) -> User:
-    return await _log_in_new_user(client, session, "anna@example.org")
+    return await log_in_new_user(client, session, "anna@example.org")
 
 
 @pytest.mark.requirement("F-02")
@@ -147,7 +128,7 @@ async def test_people_of_another_account_are_invisible(
 ) -> None:
     lena = (await client.post(PEOPLE, json=LENA)).json()
 
-    await _log_in_new_user(client, session, "bob@example.org")
+    await log_in_new_user(client, session, "bob@example.org")
     url = f"{PEOPLE}/{lena['id']}"
     for r in [
         await client.get(url),
