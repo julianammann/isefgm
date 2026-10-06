@@ -17,6 +17,20 @@ User account (F-01). Every domain table belongs to exactly one account via owner
 | `status` | VARCHAR(16) | no | `active` or `deleted`. `deleted` only marks an account while it is being deleted. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## person
+
+Person the account owner gives gifts to (F-02). Visible only to its owner (Q-01); deleted together with the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | no | Account the person belongs to. Deleted together with the account. (FK → user_account.id) |
+| `name` | VARCHAR(100) | no | Name as the owner calls the person. |
+| `birthday` | DATE | yes | Birthday as a plain date, optional. Source for birthday reminders. |
+| `relationship` | VARCHAR(100) | yes | Free-text relationship, e.g. sister or colleague. Optional. |
+| `notes` | TEXT | yes | Free-text notes, e.g. hobbies or sizes. Optional. |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
 ## user_session
 
 Server-side session. One cookie token maps to exactly one row; logging out deletes the row.

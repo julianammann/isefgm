@@ -32,6 +32,11 @@ OPENAPI_TAGS = [
         "description": "Create, log in to, log out of and delete an account (F-01, F-17). "
         "The session lives on the server; the browser only holds a cookie.",
     },
+    {
+        "name": "people",
+        "description": "People the account gives gifts to (F-02). Every account sees only "
+        "its own people (Q-01).",
+    },
 ]
 
 
