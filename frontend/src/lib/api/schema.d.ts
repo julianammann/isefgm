@@ -164,7 +164,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/persons": {
+    "/api/v1/people": {
         parameters: {
             query?: never;
             header?: never;
@@ -172,10 +172,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List persons
-         * @description Returns the persons of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all persons of the account.
+         * List people
+         * @description Returns the people of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all people of the account.
          */
-        get: operations["listPersons"];
+        get: operations["listPeople"];
         put?: never;
         /**
          * Create person
@@ -188,7 +188,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/persons/{person_id}": {
+    "/api/v1/people/{person_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -700,7 +700,7 @@ export interface operations {
             };
         };
     };
-    listPersons: {
+    listPeople: {
         parameters: {
             query?: {
                 limit?: number;

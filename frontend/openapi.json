@@ -722,10 +722,10 @@
         ]
       }
     },
-    "/api/v1/persons": {
+    "/api/v1/people": {
       "get": {
-        "description": "Returns the persons of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all persons of the account.",
-        "operationId": "listPersons",
+        "description": "Returns the people of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all people of the account.",
+        "operationId": "listPeople",
         "parameters": [
           {
             "in": "query",
@@ -783,9 +783,9 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List persons",
+        "summary": "List people",
         "tags": [
-          "persons"
+          "people"
         ]
       },
       "post": {
@@ -835,11 +835,11 @@
         },
         "summary": "Create person",
         "tags": [
-          "persons"
+          "people"
         ]
       }
     },
-    "/api/v1/persons/{person_id}": {
+    "/api/v1/people/{person_id}": {
       "delete": {
         "description": "Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.",
         "operationId": "deletePerson",
@@ -892,7 +892,7 @@
         },
         "summary": "Delete person",
         "tags": [
-          "persons"
+          "people"
         ]
       },
       "get": {
@@ -954,7 +954,7 @@
         },
         "summary": "Show person",
         "tags": [
-          "persons"
+          "people"
         ]
       },
       "put": {
@@ -1026,7 +1026,7 @@
         },
         "summary": "Update person",
         "tags": [
-          "persons"
+          "people"
         ]
       }
     }
@@ -1041,8 +1041,8 @@
       "name": "auth"
     },
     {
-      "description": "Persons the account gives gifts to (F-02). Every account sees only its own persons (Q-01).",
-      "name": "persons"
+      "description": "People the account gives gifts to (F-02). Every account sees only its own people (Q-01).",
+      "name": "people"
     }
   ]
 }
