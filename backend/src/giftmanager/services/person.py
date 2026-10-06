@@ -13,18 +13,18 @@ from giftmanager.models import Person
 async def list_persons(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Person], int]:
-    """Return one page of the owner's persons, sorted by name, and the total count."""
+    """Return one page of the owner's people, sorted by name, and the total count."""
     total = await session.scalar(
         select(func.count()).select_from(Person).where(Person.owner_id == owner_id)
     )
-    persons = await session.scalars(
+    people = await session.scalars(
         select(Person)
         .where(Person.owner_id == owner_id)
         .order_by(func.lower(Person.name), Person.id)
         .limit(limit)
         .offset(offset)
     )
-    return list(persons), total or 0
+    return list(people), total or 0
 
 
 async def get_person(session: AsyncSession, owner_id: uuid.UUID, person_id: uuid.UUID) -> Person:

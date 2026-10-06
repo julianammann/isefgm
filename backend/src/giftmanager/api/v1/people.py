@@ -11,7 +11,7 @@ from giftmanager.schemas.common import Page, PageParams, problem_responses
 from giftmanager.schemas.person import PersonIn, PersonOut
 from giftmanager.services import person as person_service
 
-router = APIRouter(prefix="/persons", tags=["persons"])
+router = APIRouter(prefix="/people", tags=["people"])
 
 _NOT_FOUND_NOTE = " A person of another account returns 404, like a missing one."
 
@@ -19,20 +19,20 @@ _NOT_FOUND_NOTE = " A person of another account returns 404, like a missing one.
 @router.get(
     "",
     operation_id="listPersons",
-    summary="List persons",
-    description="Returns the persons of the current account, sorted by name "
-    "(case-insensitive), one page at a time. `total` counts all persons of the account.",
+    summary="List people",
+    description="Returns the people of the current account, sorted by name "
+    "(case-insensitive), one page at a time. `total` counts all people of the account.",
     responses=problem_responses(401),
 )
 async def list_persons(
     user: CurrentUser, session: SessionDep, page: Annotated[PageParams, Query()]
 ) -> Page[PersonOut]:
-    """Return one page of the current account's persons."""
-    persons, total = await person_service.list_persons(
+    """Return one page of the current account's people."""
+    people, total = await person_service.list_persons(
         session, user.id, limit=page.limit, offset=page.offset
     )
     return Page[PersonOut](
-        items=[PersonOut.model_validate(p) for p in persons],
+        items=[PersonOut.model_validate(p) for p in people],
         total=total,
         limit=page.limit,
         offset=page.offset,

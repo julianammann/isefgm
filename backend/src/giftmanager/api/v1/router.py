@@ -2,9 +2,9 @@
 
 from fastapi import APIRouter
 
-from giftmanager.api.v1 import auth, health, persons
+from giftmanager.api.v1 import auth, health, people
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(health.router)
 router.include_router(auth.router)
-router.include_router(persons.router)
+router.include_router(people.router)
