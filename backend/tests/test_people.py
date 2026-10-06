@@ -142,7 +142,7 @@ async def test_list_rejects_oversized_page(client: AsyncClient, anna: User) -> N
 
 
 @pytest.mark.requirement("F-02", "Q-01")
-async def test_persons_of_another_account_are_invisible(
+async def test_people_of_another_account_are_invisible(
     client: AsyncClient, session: AsyncSession, anna: User
 ) -> None:
     lena = (await client.post(PEOPLE, json=LENA)).json()
@@ -172,13 +172,13 @@ async def test_unknown_or_malformed_id(client: AsyncClient, anna: User) -> None:
 
 
 @pytest.mark.requirement("F-02", "Q-01")
-async def test_persons_require_login(client: AsyncClient) -> None:
+async def test_people_require_login(client: AsyncClient) -> None:
     assert (await client.get(PEOPLE)).status_code == 401
     assert (await client.post(PEOPLE, json=LENA)).status_code == 401
 
 
 @pytest.mark.requirement("F-02", "F-17")
-async def test_deleting_the_account_deletes_its_persons(
+async def test_deleting_the_account_deletes_its_people(
     client: AsyncClient, session: AsyncSession, anna: User
 ) -> None:
     await client.post(PEOPLE, json=LENA)

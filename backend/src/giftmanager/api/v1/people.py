@@ -18,17 +18,17 @@ _NOT_FOUND_NOTE = " A person of another account returns 404, like a missing one.
 
 @router.get(
     "",
-    operation_id="listPersons",
+    operation_id="listPeople",
     summary="List people",
     description="Returns the people of the current account, sorted by name "
     "(case-insensitive), one page at a time. `total` counts all people of the account.",
     responses=problem_responses(401),
 )
-async def list_persons(
+async def list_people(
     user: CurrentUser, session: SessionDep, page: Annotated[PageParams, Query()]
 ) -> Page[PersonOut]:
     """Return one page of the current account's people."""
-    people, total = await person_service.list_persons(
+    people, total = await person_service.list_people(
         session, user.id, limit=page.limit, offset=page.offset
     )
     return Page[PersonOut](

@@ -10,7 +10,7 @@ from giftmanager.core.errors import NotFoundError
 from giftmanager.models import Person
 
 
-async def list_persons(
+async def list_people(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Person], int]:
     """Return one page of the owner's people, sorted by name, and the total count."""

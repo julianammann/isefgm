@@ -33,9 +33,9 @@ OPENAPI_TAGS = [
         "The session lives on the server; the browser only holds a cookie.",
     },
     {
-        "name": "persons",
-        "description": "Persons the account gives gifts to (F-02). Every account sees only "
-        "its own persons (Q-01).",
+        "name": "people",
+        "description": "People the account gives gifts to (F-02). Every account sees only "
+        "its own people (Q-01).",
     },
 ]
 
