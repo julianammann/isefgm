@@ -63,8 +63,19 @@ jobs:
           uv run alembic upgrade head
           uv run alembic check
 
+      # QZ-07: at least 70 % line coverage. pytest-cov measures it via addopts in
+      # pyproject.toml; the threshold lives here so a local run of a single test
+      # file does not fail on total coverage.
       - name: Tests
-        run: uv run pytest -q
+        run: uv run pytest -q --cov-fail-under=70 --cov-report=html
+
+      # Also on failure: a missed threshold is when the report is needed most.
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-coverage
+          path: backend/htmlcov/
 
       # Closes the gap where frontend CI only checks types against the committed
       # openapi.json: here we check that openapi.json itself matches the backend.
