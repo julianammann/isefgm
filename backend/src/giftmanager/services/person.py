@@ -3,38 +3,28 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.core.errors import NotFoundError
 from giftmanager.models import Person
+from giftmanager.services.ownership import get_owned, owned, paginate
 
 
 async def list_people(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Person], int]:
     """Return one page of the owner's people, sorted by name, and the total count."""
-    total = await session.scalar(
-        select(func.count()).select_from(Person).where(Person.owner_id == owner_id)
+    return await paginate(
+        session,
+        owned(Person, owner_id).order_by(func.lower(Person.name), Person.id),
+        limit=limit,
+        offset=offset,
     )
-    people = await session.scalars(
-        select(Person)
-        .where(Person.owner_id == owner_id)
-        .order_by(func.lower(Person.name), Person.id)
-        .limit(limit)
-        .offset(offset)
-    )
-    return list(people), total or 0
 
 
 async def get_person(session: AsyncSession, owner_id: uuid.UUID, person_id: uuid.UUID) -> Person:
     """Return the owner's person."""
-    person = await session.scalar(
-        select(Person).where(Person.id == person_id, Person.owner_id == owner_id)
-    )
-    if person is None:
-        raise NotFoundError("Person not found")
-    return person
+    return await get_owned(session, Person, owner_id, person_id)
 
 
 async def create_person(
