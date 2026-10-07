@@ -34,8 +34,11 @@ FastAPI-Backend des Geschenke-Managers. Python 3.14, vollständig async, strikt 
   models/            SQLAlchemy-Modelle; base.py mit Naming Conventions und TimestampMixin, user.py als Vorlage. Schema: docs/datenmodell.md
   schemas/           Pydantic-Schemas (Request/Response); common.py mit Page[T] und PageParams
   services/          Geschäftslogik, keine HTTP-Abhängigkeit; auth.py als Vorlage. Erster Parameter ist immer die Session, dann owner_id
+    ownership.py     owned(), get_owned(), paginate(): Besitzerfilter für kontogebundene Tabellen (Q-01)
 alembic/             env.py (async), versions/
 tests/               conftest.py (Postgres-Container, Savepoint-Rollback pro Test), test_*.py
+  accounts.py        log_in_new_user(): Konto anlegen und auf dem Client anmelden
+  ownership.py       assert_invisible_to_other_account(), ITEM_METHODS: Fremdzugriff-Test (Q-01)
 ```
 
 Import-Pfade sind immer absolut: `from giftmanager.core.config import get_settings`.
@@ -44,12 +47,50 @@ Import-Pfade sind immer absolut: `from giftmanager.core.config import get_settin
 
 **Transaktion.** `get_session` öffnet eine Transaktion pro Request und committet beim Rückgabewert des Endpoints, bei einer Exception wird zurückgerollt. Services rufen nur `await session.flush()`, nie `commit()`.
 
-**Mandantentrennung (Q-01).**
+**Mandantentrennung (Q-01).** Ein Konto sieht und ändert nur seine eigenen Datensätze.
 1. Jede kontogebundene Tabelle hat `owner_id` mit `ForeignKey("user_account.id", ondelete="CASCADE")` und Index.
-2. Services bekommen `owner_id` als ersten Parameter und filtern jede Query damit. Nie `session.get(Model, id)` ohne Besitzerfilter.
-3. Fremde IDs liefern `NotFoundError` (404), nicht 403.
-4. Beim Verknüpfen zweier Datensätze prüft der Service, dass beide demselben Konto gehören. Systemweite Anlasstypen (`owner_id IS NULL`) sind ausgenommen.
-5. Zu jeder Ressource gehört ein Test „Nutzer B greift auf Ressource von Nutzer A zu → 404“. Ohne diesen Test ist der Endpoint nicht fertig.
+2. Services bekommen nach der Session `owner_id` und lesen kontogebundene Tabellen nur über `services/ownership.py`:
+   - `owned(Model, owner_id)` liefert das nach Besitzer gefilterte `SELECT`. Sortierung und weitere Bedingungen hängt der Service an.
+   - `get_owned(session, Model, owner_id, id)` liefert den Datensatz oder wirft `NotFoundError`. `update_*` und `delete_*` holen den Datensatz darüber.
+   - `paginate(session, stmt, limit=…, offset=…)` liefert Seite und Gesamtzahl aus demselben Statement. So kann die Zählung den Besitzerfilter nicht verlieren.
+
+   Nie `session.get(Model, id)` und kein `select(Model)` ohne `owned()`. Das Modell muss `id` und ein nicht-nullbares `owner_id` haben (Protocol `Owned`), sonst lehnt Pyright den Aufruf ab.
+3. Fremde IDs liefern `NotFoundError` (404), nicht 403. Ein 403 würde verraten, dass die ID in einem anderen Konto existiert ([RFC 9110, 15.5.4](https://www.rfc-editor.org/rfc/rfc9110#section-15.5.4), [OWASP API1:2023](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/)). `get_owned` unterscheidet „gibt es nicht“ und „gehört jemand anderem“ deshalb nicht.
+4. Beim Verknüpfen zweier Datensätze prüft der Service, dass beide demselben Konto gehören. Systemweite Anlasstypen (`owner_id IS NULL`) sind ausgenommen: Sie passen nicht zu `Owned`, `services/occasion.py` filtert sie mit `_visible_types()` und nutzt nur `paginate()`.
+5. Zu jeder Ressource gehört ein Test „Nutzer B greift auf Ressource von Nutzer A zu → 404“ mit `assert_invisible_to_other_account` aus `tests/ownership.py`, parametrisiert mit `ITEM_METHODS`. So ist jeder Endpunkt ein eigener Testfall (QZ-06). Der Helfer prüft 404 für die Methode, dass die Liste des fremden Kontos den Datensatz weder zeigt noch mitzählt und dass er danach unverändert ist. `replacement` muss ein gültiger PUT-Body sein, sonst antwortet die Validierung mit 422, bevor der Besitzer geprüft wird. Ohne diesen Test ist der Endpoint nicht fertig.
+
+Neue Ressource, am Beispiel `Person`:
+
+```python
+# services/person.py
+async def list_people(session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int):
+    return await paginate(
+        session,
+        owned(Person, owner_id).order_by(func.lower(Person.name), Person.id),
+        limit=limit,
+        offset=offset,
+    )
+
+
+async def get_person(session: AsyncSession, owner_id: uuid.UUID, person_id: uuid.UUID) -> Person:
+    return await get_owned(session, Person, owner_id, person_id)
+
+
+# tests/test_people.py
+@pytest.mark.requirement("F-02", "Q-01")
+@pytest.mark.parametrize("method", ITEM_METHODS)
+async def test_people_of_another_account_are_invisible(
+    client: AsyncClient, session: AsyncSession, anna: User, method: str
+) -> None:
+    lena = (await client.post(PEOPLE, json=LENA)).json()
+
+    await assert_invisible_to_other_account(
+        client, session, method=method, collection=PEOPLE, item_id=lena["id"],
+        replacement={"name": "Hacked"},
+    )
+```
+
+Bietet eine Ressource nicht alle Methoden, bekommt `parametrize` eine Teilmenge, etwa `("GET",)`.
 
 **Fehler.** Fachfehler als `DomainError`-Unterklasse aus `core/errors.py` werfen. Kein `HTTPException` in Services.
 
