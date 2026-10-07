@@ -32,6 +32,17 @@ OPENAPI_TAGS = [
         "description": "Create, log in to, log out of and delete an account (F-01, F-17). "
         "The session lives on the server; the browser only holds a cookie.",
     },
+    {
+        "name": "people",
+        "description": "People the account gives gifts to (F-02). Every account sees only "
+        "its own people (Q-01).",
+    },
+    {
+        "name": "occasions",
+        "description": "Occasion types and occasions (F-03). The types Geburtstag and "
+        "Weihnachten are system-wide and read-only; occasions are one-off or yearly and "
+        "visible only to their account (Q-01).",
+    },
 ]
 
 
