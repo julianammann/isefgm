@@ -1,5 +1,4 @@
 import datetime as dt
-import uuid
 
 import pytest
 from httpx import AsyncClient
@@ -16,6 +15,7 @@ from giftmanager.models import (
 )
 from giftmanager.services.occasion import next_occurrence
 from tests.accounts import log_in_new_user
+from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 TYPES = "/api/v1/occasion-types"
 OCCASIONS = "/api/v1/occasions"
@@ -171,27 +171,20 @@ async def test_list_is_sorted_by_date_and_paginated(client: AsyncClient, anna: U
 
 
 @pytest.mark.requirement("F-03", "Q-01")
+@pytest.mark.parametrize("method", ITEM_METHODS)
 async def test_occasions_of_another_account_are_invisible(
-    client: AsyncClient, session: AsyncSession, anna: User
+    client: AsyncClient, session: AsyncSession, anna: User, method: str
 ) -> None:
     wedding = (await client.post(OCCASIONS, json=WEDDING)).json()
 
-    await log_in_new_user(client, session, "bob@example.org")
-    url = f"{OCCASIONS}/{wedding['id']}"
-    for r in [
-        await client.get(url),
-        await client.put(url, json={"name": "Hacked", "date": "2020-01-01"}),
-        await client.delete(url),
-    ]:
-        assert r.status_code == 404
-        assert r.json()["title"] == "Not Found"
-
-    listed = await client.get(OCCASIONS)
-    assert listed.json() == {"items": [], "total": 0, "limit": 50, "offset": 0}
-
-    occasion = await session.get(Occasion, uuid.UUID(wedding["id"]))
-    assert occasion is not None
-    assert occasion.name == "Hochzeitstag"
+    await assert_invisible_to_other_account(
+        client,
+        session,
+        method=method,
+        collection=OCCASIONS,
+        item_id=wedding["id"],
+        replacement={"name": "Hacked", "date": "2020-01-01"},
+    )
 
 
 @pytest.mark.requirement("F-03", "Q-01")

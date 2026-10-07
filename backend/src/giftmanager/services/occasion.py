@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import NotFoundError
 from giftmanager.models import Occasion, OccasionType, Recurrence
+from giftmanager.services.ownership import get_owned, owned, paginate
 
 
 def _visible_types(owner_id: uuid.UUID) -> ColumnElement[bool]:
@@ -20,17 +21,14 @@ async def list_occasion_types(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[OccasionType], int]:
     """Return one page of the types the owner can use, system-wide ones first."""
-    total = await session.scalar(
-        select(func.count()).select_from(OccasionType).where(_visible_types(owner_id))
-    )
-    types = await session.scalars(
+    return await paginate(
+        session,
         select(OccasionType)
         .where(_visible_types(owner_id))
-        .order_by(OccasionType.owner_id.is_not(None), func.lower(OccasionType.name))
-        .limit(limit)
-        .offset(offset)
+        .order_by(OccasionType.owner_id.is_not(None), func.lower(OccasionType.name)),
+        limit=limit,
+        offset=offset,
     )
-    return list(types), total or 0
 
 
 async def get_occasion_type(
@@ -49,29 +47,19 @@ async def list_occasions(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Occasion], int]:
     """Return one page of the owner's occasions, sorted by date, and the total count."""
-    total = await session.scalar(
-        select(func.count()).select_from(Occasion).where(Occasion.owner_id == owner_id)
+    return await paginate(
+        session,
+        owned(Occasion, owner_id).order_by(Occasion.date, func.lower(Occasion.name), Occasion.id),
+        limit=limit,
+        offset=offset,
     )
-    occasions = await session.scalars(
-        select(Occasion)
-        .where(Occasion.owner_id == owner_id)
-        .order_by(Occasion.date, func.lower(Occasion.name), Occasion.id)
-        .limit(limit)
-        .offset(offset)
-    )
-    return list(occasions), total or 0
 
 
 async def get_occasion(
     session: AsyncSession, owner_id: uuid.UUID, occasion_id: uuid.UUID
 ) -> Occasion:
     """Return the owner's occasion."""
-    occasion = await session.scalar(
-        select(Occasion).where(Occasion.id == occasion_id, Occasion.owner_id == owner_id)
-    )
-    if occasion is None:
-        raise NotFoundError("Occasion not found")
-    return occasion
+    return await get_owned(session, Occasion, owner_id, occasion_id)
 
 
 async def create_occasion(
