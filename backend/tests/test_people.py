@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select
@@ -7,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.models import Person, User
 from tests.accounts import log_in_new_user
+from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 PEOPLE = "/api/v1/people"
 ACCOUNT = "/api/v1/auth/account"
@@ -123,27 +122,20 @@ async def test_list_rejects_oversized_page(client: AsyncClient, anna: User) -> N
 
 
 @pytest.mark.requirement("F-02", "Q-01")
+@pytest.mark.parametrize("method", ITEM_METHODS)
 async def test_people_of_another_account_are_invisible(
-    client: AsyncClient, session: AsyncSession, anna: User
+    client: AsyncClient, session: AsyncSession, anna: User, method: str
 ) -> None:
     lena = (await client.post(PEOPLE, json=LENA)).json()
 
-    await log_in_new_user(client, session, "bob@example.org")
-    url = f"{PEOPLE}/{lena['id']}"
-    for r in [
-        await client.get(url),
-        await client.put(url, json={"name": "Hacked"}),
-        await client.delete(url),
-    ]:
-        assert r.status_code == 404
-        assert r.json()["title"] == "Not Found"
-
-    listed = await client.get(PEOPLE)
-    assert listed.json() == {"items": [], "total": 0, "limit": 50, "offset": 0}
-
-    person = await session.get(Person, uuid.UUID(lena["id"]))
-    assert person is not None
-    assert person.name == "Lena"
+    await assert_invisible_to_other_account(
+        client,
+        session,
+        method=method,
+        collection=PEOPLE,
+        item_id=lena["id"],
+        replacement={"name": "Hacked"},
+    )
 
 
 @pytest.mark.requirement("F-02")
