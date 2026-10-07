@@ -17,6 +17,17 @@ User account (F-01). Every domain table belongs to exactly one account via owner
 | `status` | VARCHAR(16) | no | `active` or `deleted`. `deleted` only marks an account while it is being deleted. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## occasion_type
+
+Kind of occasion (F-03). owner_id NULL marks the system-wide types Geburtstag and Weihnachten, created by a migration and read-only for users.
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | yes | Account that defined the type. NULL for system-wide types. (FK → user_account.id) (Index) |
+| `name` | VARCHAR(100) | no | Display name, e.g. Geburtstag. |
+| `default_recurrence` | VARCHAR(16) | no | `none` or `yearly`. Suggested recurrence for occasions of this type. |
+
 ## person
 
 Person the account owner gives gifts to (F-02). Visible only to its owner (Q-01); deleted together with the account (F-17).
@@ -43,3 +54,16 @@ Server-side session. One cookie token maps to exactly one row; logging out delet
 | `expires_at` | TIMESTAMP WITH TIME ZONE | no | Expiry time (UTC). The session is rejected afterwards. |
 | `last_seen_at` | TIMESTAMP WITH TIME ZONE | no | Last use (UTC), updated at most every five minutes. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
+## occasion
+
+Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete year is stored where the occasion is used. Visible only to its owner (Q-01).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | no | Account the occasion belongs to. Deleted together with the account. (FK → user_account.id) (Index) |
+| `occasion_type_id` | UUID | yes | Type of the occasion. NULL for an own occasion without a type. (FK → occasion_type.id) (Index) |
+| `name` | VARCHAR(100) | no | Title, e.g. Hochzeitstag. |
+| `date` | DATE | no | Date as a plain calendar date (Q-08). First occurrence for yearly ones. |
+| `recurrence` | VARCHAR(16) | no | `none` (once) or `yearly` (every year on the same day). |

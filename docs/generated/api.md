@@ -26,6 +26,20 @@ Liveness and readiness for container healthchecks and Traefik.
 | `GET /api/v1/health/live` | `healthLive` | Process is up | Answers as soon as the process accepts requests; does not touch the database. Target of the container healthcheck. | 200 |
 | `GET /api/v1/health/ready` | `healthReady` | Database reachable | Runs `SELECT 1`. Without a database it returns `status: degraded` with HTTP 200, so that Traefik keeps the container in rotation while it is still starting. | 200 |
 
+## occasions
+
+Occasion types and occasions (F-03). The types Geburtstag and Weihnachten are system-wide and read-only; occasions are one-off or yearly and visible only to their account (Q-01).
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/occasion-types` | `listOccasionTypes` | List occasion types | Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them. | 200, 401, 422 |
+| `GET /api/v1/occasion-types/{occasion_type_id}` | `getOccasionType` | Show occasion type | Returns one system-wide type or one of the account's own types. A type of another account returns 404. | 200, 401, 404, 422 |
+| `GET /api/v1/occasions` | `listOccasions` | List occasions | Returns the occasions of the current account, sorted by date, one page at a time. `total` counts all occasions of the account. | 200, 401, 422 |
+| `POST /api/v1/occasions` | `createOccasion` | Create occasion | Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. | 201, 401, 404, 422 |
+| `GET /api/v1/occasions/{occasion_id}` | `getOccasion` | Show occasion | Returns one occasion of the current account. An occasion of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/occasions/{occasion_id}` | `updateOccasion` | Update occasion | Replaces all fields of the occasion: a field left out is reset to its default. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. | 200, 401, 404, 422 |
+| `DELETE /api/v1/occasions/{occasion_id}` | `deleteOccasion` | Delete occasion | Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+
 ## people
 
 People the account gives gifts to (F-02). Every account sees only its own people (Q-01).

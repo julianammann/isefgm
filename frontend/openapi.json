@@ -67,6 +67,230 @@
         "title": "LoginIn",
         "type": "object"
       },
+      "OccasionIn": {
+        "description": "Data of an occasion; used for create and for full update (PUT).",
+        "properties": {
+          "date": {
+            "description": "Date as a plain date (YYYY-MM-DD). First occurrence for yearly occasions.",
+            "examples": [
+              "2019-06-21"
+            ],
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "name": {
+            "description": "Title, 1 to 100 characters.",
+            "examples": [
+              "Hochzeitstag"
+            ],
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "occasion_type_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occasion type, a system-wide one or one of the account. Null for an own occasion without a type.",
+            "examples": [
+              null
+            ],
+            "title": "Occasion Type Id"
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/Recurrence",
+            "default": "none",
+            "description": "`none` for a one-off occasion, `yearly` for every year on the same day.",
+            "examples": [
+              "yearly"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "date"
+        ],
+        "title": "OccasionIn",
+        "type": "object"
+      },
+      "OccasionOut": {
+        "description": "An occasion as the frontend sees it.",
+        "properties": {
+          "date": {
+            "description": "Date as a plain date.",
+            "examples": [
+              "2019-06-21"
+            ],
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Occasion ID (UUIDv7).",
+            "examples": [
+              "01a10a3c-7d2e-7c41-9b0e-3f5a8d2c1e94"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Title.",
+            "examples": [
+              "Hochzeitstag"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "occasion_type_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occasion type, or null.",
+            "examples": [
+              null
+            ],
+            "title": "Occasion Type Id"
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/Recurrence",
+            "description": "`none` or `yearly`.",
+            "examples": [
+              "yearly"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "date",
+          "recurrence",
+          "occasion_type_id"
+        ],
+        "title": "OccasionOut",
+        "type": "object"
+      },
+      "OccasionTypeOut": {
+        "description": "An occasion type. System-wide types are read-only.",
+        "properties": {
+          "default_recurrence": {
+            "$ref": "#/components/schemas/Recurrence",
+            "description": "Suggested recurrence for occasions of this type.",
+            "examples": [
+              "yearly"
+            ]
+          },
+          "id": {
+            "description": "Occasion type ID (UUIDv7).",
+            "examples": [
+              "01a107a9-211b-7486-a304-d5d673618f5b"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name.",
+            "examples": [
+              "Geburtstag"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "system": {
+            "description": "True for the system-wide types, which nobody can change or delete.",
+            "examples": [
+              true
+            ],
+            "title": "System",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "default_recurrence",
+          "system"
+        ],
+        "title": "OccasionTypeOut",
+        "type": "object"
+      },
+      "Page_OccasionOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OccasionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[OccasionOut]",
+        "type": "object"
+      },
+      "Page_OccasionTypeOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OccasionTypeOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[OccasionTypeOut]",
+        "type": "object"
+      },
       "Page_PersonOut_": {
         "properties": {
           "items": {
@@ -295,6 +519,15 @@
         ],
         "title": "Problem",
         "type": "object"
+      },
+      "Recurrence": {
+        "description": "How often an occasion repeats.",
+        "enum": [
+          "none",
+          "yearly"
+        ],
+        "title": "Recurrence",
+        "type": "string"
       },
       "RegisterIn": {
         "description": "Data for a new account.",
@@ -722,6 +955,455 @@
         ]
       }
     },
+    "/api/v1/occasion-types": {
+      "get": {
+        "description": "Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.",
+        "operationId": "listOccasionTypes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_OccasionTypeOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List occasion types",
+        "tags": [
+          "occasions"
+        ]
+      }
+    },
+    "/api/v1/occasion-types/{occasion_type_id}": {
+      "get": {
+        "description": "Returns one system-wide type or one of the account's own types. A type of another account returns 404.",
+        "operationId": "getOccasionType",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "occasion_type_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Occasion Type Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccasionTypeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show occasion type",
+        "tags": [
+          "occasions"
+        ]
+      }
+    },
+    "/api/v1/occasions": {
+      "get": {
+        "description": "Returns the occasions of the current account, sorted by date, one page at a time. `total` counts all occasions of the account.",
+        "operationId": "listOccasions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_OccasionOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List occasions",
+        "tags": [
+          "occasions"
+        ]
+      },
+      "post": {
+        "description": "Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.",
+        "operationId": "createOccasion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccasionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccasionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create occasion",
+        "tags": [
+          "occasions"
+        ]
+      }
+    },
+    "/api/v1/occasions/{occasion_id}": {
+      "delete": {
+        "description": "Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one.",
+        "operationId": "deleteOccasion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "occasion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Occasion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete occasion",
+        "tags": [
+          "occasions"
+        ]
+      },
+      "get": {
+        "description": "Returns one occasion of the current account. An occasion of another account returns 404, like a missing one.",
+        "operationId": "getOccasion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "occasion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Occasion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccasionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show occasion",
+        "tags": [
+          "occasions"
+        ]
+      },
+      "put": {
+        "description": "Replaces all fields of the occasion: a field left out is reset to its default. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.",
+        "operationId": "updateOccasion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "occasion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Occasion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccasionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccasionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update occasion",
+        "tags": [
+          "occasions"
+        ]
+      }
+    },
     "/api/v1/people": {
       "get": {
         "description": "Returns the people of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all people of the account.",
@@ -1043,6 +1725,10 @@
     {
       "description": "People the account gives gifts to (F-02). Every account sees only its own people (Q-01).",
       "name": "people"
+    },
+    {
+      "description": "Occasion types and occasions (F-03). The types Geburtstag and Weihnachten are system-wide and read-only; occasions are one-off or yearly and visible only to their account (Q-01).",
+      "name": "occasions"
     }
   ]
 }
