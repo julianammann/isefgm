@@ -85,7 +85,11 @@ async def test_people_of_another_account_are_invisible(
     lena = (await client.post(PEOPLE, json=LENA)).json()
 
     await assert_invisible_to_other_account(
-        client, session, method=method, collection=PEOPLE, item_id=lena["id"],
+        client,
+        session,
+        method=method,
+        collection=PEOPLE,
+        item_id=lena["id"],
         replacement={"name": "Hacked"},
     )
 ```
