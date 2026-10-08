@@ -1,0 +1,88 @@
+"""Request and response bodies of the gift idea endpoints (F-05)."""
+
+import uuid
+from datetime import datetime
+from decimal import Decimal
+from typing import Annotated, Self
+
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    model_validator,
+)
+
+from giftmanager.schemas.common import OptionalLongText
+
+
+def _to_cents(value: Decimal) -> Decimal:
+    """Store 20 as 20.00, so a response right after a write looks like a later read."""
+    return value.quantize(Decimal("0.01"))
+
+
+Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+# Matches the Numeric(10, 2) column: at most 8 digits before and 2 after the point.
+Price = Annotated[Decimal, Field(ge=0, max_digits=10, decimal_places=2), AfterValidator(_to_cents)]
+
+
+class GiftIn(BaseModel):
+    """Data of a gift idea; used for create and for full update (PUT)."""
+
+    title: Title = Field(
+        description="Title, 1 to 200 characters. The only required field.",
+        examples=["Raspberry Pi"],
+    )
+    description: OptionalLongText = Field(
+        default=None,
+        description="Free-text description, up to 2000 characters. Empty means not set.",
+        examples=["Technik, für IT-Begeisterte"],
+    )
+    price_from: Price | None = Field(
+        default=None,
+        description="Lower end of the price range in euros, at most 2 decimal places.",
+        examples=["10.00"],
+    )
+    price_to: Price | None = Field(
+        default=None,
+        description="Upper end of the price range in euros, at most 2 decimal places. "
+        "Must not be below `price_from`.",
+        examples=["100.00"],
+    )
+
+    @model_validator(mode="after")
+    def check_price_range(self) -> Self:
+        """Reject a price range whose lower end is above its upper end."""
+        if (
+            self.price_from is not None
+            and self.price_to is not None
+            and self.price_from > self.price_to
+        ):
+            raise ValueError("price_from must not be greater than price_to")
+        return self
+
+
+class GiftOut(BaseModel):
+    """A gift idea as the frontend sees it."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID = Field(
+        description="Gift idea ID (UUIDv7).", examples=["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"]
+    )
+    title: str = Field(description="Title.", examples=["Raspberry Pi"])
+    description: str | None = Field(
+        description="Free-text description, or null.", examples=["Technik, für IT-Begeisterte"]
+    )
+    price_from: Decimal | None = Field(
+        description="Lower end of the price range in euros, as a string, or null.",
+        examples=["10.00"],
+    )
+    price_to: Decimal | None = Field(
+        description="Upper end of the price range in euros, as a string, or null.",
+        examples=["100.00"],
+    )
+    created_at: datetime = Field(
+        description="Creation time (UTC), set by the server.", examples=["2026-10-04T09:30:00Z"]
+    )

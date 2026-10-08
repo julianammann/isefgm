@@ -1,8 +1,19 @@
-"""Shared schemas: pagination and the problem-details error body."""
+"""Shared schemas: field types, pagination and the problem-details error body."""
 
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BeforeValidator, Field, StringConstraints
+
+
+def blank_to_none(value: object) -> object:
+    """An empty form field means "not set", not an empty string in the database."""
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value
+
+
+LongText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
+OptionalLongText = Annotated[LongText | None, BeforeValidator(blank_to_none)]
 
 
 # Use as `Annotated[PageParams, Query()]` in every list endpoint.
