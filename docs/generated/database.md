@@ -101,3 +101,12 @@ Possible occasions of a gift idea (F-04), n:m. Deleting the idea or the occasion
 | --- | --- | --- | --- |
 | `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
 | `occasion_id` | UUID | no | Possible occasion. Deleting the occasion deletes the link. (PK) (FK → occasion.id) (Index) |
+
+## person_occasion
+
+People an occasion concerns (F-04), n:m. Deleting the person or the occasion removes only the link.
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `person_id` | UUID | no | Person the occasion concerns. Deleting the person deletes the link. (PK) (FK → person.id) |
+| `occasion_id` | UUID | no | Occasion. Deleting it deletes the link. (PK) (FK → occasion.id) (Index) |

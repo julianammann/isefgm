@@ -4,10 +4,11 @@ import datetime as dt
 import enum
 import uuid
 
-from sqlalchemy import Date, Enum, ForeignKey, String, Uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Column, Date, Enum, ForeignKey, String, Table, Uuid, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from giftmanager.models.base import Base
+from giftmanager.models.person import Person
 
 BIRTHDAY_TYPE_ID = uuid.UUID("01a107a9-211b-7486-a304-d5d673618f5b")
 CHRISTMAS_TYPE_ID = uuid.UUID("01a107a9-211b-7486-a304-d5d72f070565")
@@ -65,6 +66,31 @@ class OccasionType(Base):
     )
 
 
+# Link table (F-04) without an owner_id: both sides belong to the same account, which the
+# service checks before linking (Q-01). The primary key covers lookups by person_id.
+person_occasion = Table(
+    "person_occasion",
+    Base.metadata,
+    Column(
+        "person_id",
+        Uuid(),
+        ForeignKey("person.id", ondelete="CASCADE"),
+        primary_key=True,
+        comment="Person the occasion concerns. Deleting the person deletes the link.",
+    ),
+    Column(
+        "occasion_id",
+        Uuid(),
+        ForeignKey("occasion.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+        comment="Occasion. Deleting it deletes the link.",
+    ),
+    comment="People an occasion concerns (F-04), n:m. Deleting the person or the occasion "
+    "removes only the link.",
+)
+
+
 class Occasion(Base):
     """Occasion of an account (F-03), one-off or yearly."""
 
@@ -97,4 +123,12 @@ class Occasion(Base):
     recurrence: Mapped[Recurrence] = mapped_column(
         _recurrence_column("occasion_recurrence"),
         comment="`none` (once) or `yearly` (every year on the same day).",
+    )
+
+    # selectin as on Gift: no lazy loading in async code, one extra query per page.
+    # Same order as the people list.
+    people: Mapped[list[Person]] = relationship(
+        secondary=person_occasion,
+        order_by=lambda: [func.lower(Person.name), Person.id],
+        lazy="selectin",
     )

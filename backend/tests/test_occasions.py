@@ -10,8 +10,10 @@ from giftmanager.models import (
     CHRISTMAS_TYPE_ID,
     Occasion,
     OccasionType,
+    Person,
     Recurrence,
     User,
+    person_occasion,
 )
 from giftmanager.services.occasion import next_occurrence
 from tests.accounts import log_in_new_user
@@ -19,7 +21,9 @@ from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 TYPES = "/api/v1/occasion-types"
 OCCASIONS = "/api/v1/occasions"
+PEOPLE = "/api/v1/people"
 ACCOUNT = "/api/v1/auth/account"
+UNKNOWN_ID = "0192f6a0-0000-7000-8000-000000000000"
 
 WEDDING = {"name": "Hochzeitstag", "date": "2019-06-21", "recurrence": "yearly"}
 
@@ -27,6 +31,10 @@ WEDDING = {"name": "Hochzeitstag", "date": "2019-06-21", "recurrence": "yearly"}
 @pytest.fixture
 async def anna(client: AsyncClient, session: AsyncSession) -> User:
     return await log_in_new_user(client, session, "anna@example.org")
+
+
+async def create_person(client: AsyncClient, name: str) -> str:
+    return (await client.post(PEOPLE, json={"name": name})).json()["id"]
 
 
 @pytest.mark.requirement("F-03")
@@ -113,10 +121,16 @@ async def test_one_off_is_the_default_and_fixed_types_can_be_used(
         ({"name": "Jahrestag", "date": "2019-02-30"}, "date"),
         ({"name": "Jahrestag", "date": "2019-06-21", "recurrence": "monthly"}, "recurrence"),
         ({"name": "Jahrestag", "date": "2019-06-21", "occasion_type_id": "x"}, "occasion_type_id"),
+        ({"name": "Jahrestag", "date": "2019-06-21", "person_ids": None}, "person_ids"),
+        ({"name": "Jahrestag", "date": "2019-06-21", "person_ids": UNKNOWN_ID}, "person_ids"),
+        (
+            {"name": "Jahrestag", "date": "2019-06-21", "person_ids": [UNKNOWN_ID] * 101},
+            "person_ids",
+        ),
     ],
 )
 async def test_invalid_occasion_is_rejected(
-    client: AsyncClient, anna: User, body: dict[str, str], field: str
+    client: AsyncClient, anna: User, body: dict[str, object], field: str
 ) -> None:
     r = await client.post(OCCASIONS, json=body)
     assert r.status_code == 422
@@ -255,3 +269,148 @@ def test_next_occurrence(
 ) -> None:
     result = next_occurrence(dt.date.fromisoformat(start), recurrence, dt.date.fromisoformat(today))
     assert result == (dt.date.fromisoformat(expected) if expected else None)
+
+
+# --- Links to people (F-04) ---------------------------------------------------
+
+
+@pytest.mark.requirement("F-04")
+async def test_occasion_without_people(client: AsyncClient, anna: User) -> None:
+    r = await client.post(OCCASIONS, json=WEDDING)
+    assert r.status_code == 201
+    assert r.json()["people"] == []
+
+
+@pytest.mark.requirement("F-04")
+async def test_occasion_links_people(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+    anton = await create_person(client, "anton")
+
+    r = await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena, anton]})
+    assert r.status_code == 201
+    created = r.json()
+    # Same order as the people list: by name, ignoring case.
+    assert created["people"] == [{"id": anton, "name": "anton"}, {"id": lena, "name": "Lena"}]
+
+    assert (await client.get(f"{OCCASIONS}/{created['id']}")).json() == created
+    assert (await client.get(OCCASIONS)).json()["items"] == [created]
+
+
+@pytest.mark.requirement("F-04")
+async def test_update_replaces_people(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+    anton = await create_person(client, "Anton")
+    created = (await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena]})).json()
+    url = f"{OCCASIONS}/{created['id']}"
+
+    r = await client.put(url, json={**WEDDING, "person_ids": [anton]})
+    assert r.status_code == 200
+    assert r.json()["people"] == [{"id": anton, "name": "Anton"}]
+
+    # person_ids left out: a PUT replaces everything, so the people are unlinked.
+    r = await client.put(url, json=WEDDING)
+    assert r.status_code == 200
+    assert r.json()["people"] == []
+    assert (await client.get(url)).json() == r.json()
+
+    # Unlinking keeps the people.
+    assert (await client.get(f"{PEOPLE}/{lena}")).status_code == 200
+    assert (await client.get(f"{PEOPLE}/{anton}")).status_code == 200
+
+
+@pytest.mark.requirement("F-04")
+async def test_people_and_occasions_are_many_to_many(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+    anton = await create_person(client, "Anton")
+
+    # One occasion for several people ...
+    wedding = await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena, anton]})
+    # ... and one person with several occasions.
+    party = await client.post(
+        OCCASIONS, json={"name": "Abifeier", "date": "2026-07-03", "person_ids": [lena]}
+    )
+
+    assert [p["name"] for p in wedding.json()["people"]] == ["Anton", "Lena"]
+    assert [p["name"] for p in party.json()["people"]] == ["Lena"]
+
+
+@pytest.mark.requirement("F-04")
+async def test_repeated_person_id_is_linked_once(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+
+    r = await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena, lena]})
+    assert r.status_code == 201
+    assert r.json()["people"] == [{"id": lena, "name": "Lena"}]
+
+
+@pytest.mark.requirement("F-04")
+async def test_linking_an_unknown_person_returns_404(client: AsyncClient, anna: User) -> None:
+    r = await client.post(OCCASIONS, json={**WEDDING, "person_ids": [UNKNOWN_ID]})
+    assert r.status_code == 404
+    assert (await client.get(OCCASIONS)).json()["total"] == 0
+
+
+@pytest.mark.requirement("F-04", "Q-01")
+@pytest.mark.parametrize("method", ["POST", "PUT"])
+async def test_people_of_another_account_cannot_be_linked(
+    client: AsyncClient, session: AsyncSession, anna: User, method: str
+) -> None:
+    bob = User(email="bob@example.org", password_hash="not-a-real-hash", display_name="Bob")
+    session.add(bob)
+    await session.flush()
+    bobs_sister = Person(owner_id=bob.id, name="Bobs Schwester")
+    session.add(bobs_sister)
+    await session.flush()
+    lena = await create_person(client, "Lena")
+    wedding = (await client.post(OCCASIONS, json=WEDDING)).json()
+
+    # An own person next to the foreign one does not get linked either.
+    body = {**WEDDING, "name": "Geändert", "person_ids": [lena, str(bobs_sister.id)]}
+    url = OCCASIONS if method == "POST" else f"{OCCASIONS}/{wedding['id']}"
+    r = await client.request(method, url, json=body)
+    assert r.status_code == 404
+    assert r.json()["title"] == "Not Found"
+
+    assert (await client.get(OCCASIONS)).json()["items"] == [wedding]
+
+
+@pytest.mark.requirement("F-04")
+async def test_deleting_a_person_unlinks_it(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    lena = await create_person(client, "Lena")
+    wedding = (await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena]})).json()
+
+    assert (await client.delete(f"{PEOPLE}/{lena}")).status_code == 204
+    # Each request has its own session in production; drop what this one still holds.
+    session.expire_all()
+
+    shown = await client.get(f"{OCCASIONS}/{wedding['id']}")
+    assert shown.status_code == 200
+    assert shown.json()["people"] == []
+
+
+@pytest.mark.requirement("F-04")
+async def test_deleting_an_occasion_keeps_its_people(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    lena = await create_person(client, "Lena")
+    wedding = (await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena]})).json()
+    assert await session.scalar(select(func.count()).select_from(person_occasion)) == 1
+
+    assert (await client.delete(f"{OCCASIONS}/{wedding['id']}")).status_code == 204
+
+    assert (await client.get(f"{PEOPLE}/{lena}")).status_code == 200
+    assert await session.scalar(select(func.count()).select_from(person_occasion)) == 0
+
+
+@pytest.mark.requirement("F-04", "F-17")
+async def test_deleting_the_account_deletes_its_person_links(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    lena = await create_person(client, "Lena")
+    await client.post(OCCASIONS, json={**WEDDING, "person_ids": [lena]})
+    assert await session.scalar(select(func.count()).select_from(person_occasion)) == 1
+
+    assert (await client.delete(ACCOUNT)).status_code == 204
+    assert await session.scalar(select(func.count()).select_from(person_occasion)) == 0

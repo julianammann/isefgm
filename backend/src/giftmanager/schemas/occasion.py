@@ -4,9 +4,18 @@ import datetime as dt
 import uuid
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
-from giftmanager.models import Recurrence
+from giftmanager.models import BIRTHDAY_TYPE_ID, Recurrence
+from giftmanager.schemas.person import LinkedPerson
+
+
+def _not_birthday(value: uuid.UUID | None) -> uuid.UUID | None:
+    """Birthday occasions are derived from person.birthday, never chosen by hand."""
+    if value == BIRTHDAY_TYPE_ID:
+        raise ValueError("birthday occasions come from a person's birthday")
+    return value
+
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 
@@ -42,11 +51,19 @@ class OccasionIn(BaseModel):
         description="`none` for a one-off occasion, `yearly` for every year on the same day.",
         examples=["yearly"],
     )
-    occasion_type_id: uuid.UUID | None = Field(
+    occasion_type_id: Annotated[uuid.UUID | None, AfterValidator(_not_birthday)] = Field(
         default=None,
         description="Occasion type, a system-wide one or one of the account. Null for an own "
-        "occasion without a type.",
+        "occasion without a type. Not Geburtstag: birthday occasions come from a person's "
+        "birthday.",
         examples=[None],
+    )
+    person_ids: list[uuid.UUID] = Field(
+        default_factory=list[uuid.UUID],
+        max_length=100,
+        description="IDs of the account's people the occasion concerns, up to 100. Replaces "
+        "the current links; empty or left out means none.",
+        examples=[["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"]],
     )
 
 
@@ -63,4 +80,8 @@ class OccasionOut(BaseModel):
     recurrence: Recurrence = Field(description="`none` or `yearly`.", examples=["yearly"])
     occasion_type_id: uuid.UUID | None = Field(
         description="Occasion type, or null.", examples=[None]
+    )
+    people: list[LinkedPerson] = Field(
+        description="People the occasion concerns, sorted by name.",
+        examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71", "name": "Lena"}]],
     )

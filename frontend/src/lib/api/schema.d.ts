@@ -271,7 +271,7 @@ export interface paths {
         put?: never;
         /**
          * Create occasion
-         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.
+         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createOccasion"];
         delete?: never;
@@ -294,13 +294,13 @@ export interface paths {
         get: operations["getOccasion"];
         /**
          * Update occasion
-         * @description Replaces all fields of the occasion: a field left out is reset to its default. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.
+         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person.
          */
         put: operations["updateOccasion"];
         post?: never;
         /**
          * Delete occasion
-         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one.
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person.
          */
         delete: operations["deleteOccasion"];
         options?: never;
@@ -323,7 +323,7 @@ export interface paths {
         put?: never;
         /**
          * Create person
-         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null.
+         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
          */
         post: operations["createPerson"];
         delete?: never;
@@ -346,13 +346,13 @@ export interface paths {
         get: operations["getPerson"];
         /**
          * Update person
-         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one.
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
          */
         put: operations["updatePerson"];
         post?: never;
         /**
          * Delete person
-         * @description Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.
+         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one.
          */
         delete: operations["deletePerson"];
         options?: never;
@@ -544,7 +544,7 @@ export interface components {
         };
         /**
          * LinkedPerson
-         * @description A person a gift idea is linked to.
+         * @description A person a gift idea or an occasion is linked to.
          */
         LinkedPerson: {
             /**
@@ -600,10 +600,18 @@ export interface components {
             name: string;
             /**
              * Occasion Type Id
-             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type.
+             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag: birthday occasions come from a person's birthday.
              * @example null
              */
             occasion_type_id?: string | null;
+            /**
+             * Person Ids
+             * @description IDs of the account's people the occasion concerns, up to 100. Replaces the current links; empty or left out means none.
+             * @example [
+             *       "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+             *     ]
+             */
+            person_ids?: string[];
             /**
              * @description `none` for a one-off occasion, `yearly` for every year on the same day.
              * @default none
@@ -642,6 +650,17 @@ export interface components {
              * @example null
              */
             occasion_type_id: string | null;
+            /**
+             * People
+             * @description People the occasion concerns, sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
             /**
              * @description `none` or `yearly`.
              * @example yearly
@@ -1674,6 +1693,15 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1714,6 +1742,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

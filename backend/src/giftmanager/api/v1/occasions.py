@@ -1,4 +1,7 @@
-"""Occasion type and occasion endpoints (F-03)."""
+"""Occasion type and occasion endpoints (F-03).
+
+Create and update also link the occasion to the account's people (F-04).
+"""
 
 import uuid
 from typing import Annotated
@@ -16,7 +19,15 @@ types_router = APIRouter(prefix="/occasion-types", tags=["occasions"])
 router = APIRouter(prefix="/occasions", tags=["occasions"])
 
 _NOT_FOUND_NOTE = " An occasion of another account returns 404, like a missing one."
-_TYPE_NOTE = " `occasion_type_id` must be a system-wide type or one of the account; otherwise 404."
+_TYPE_NOTE = (
+    " `occasion_type_id` must be a system-wide type or one of the account; otherwise 404."
+    " Geburtstag returns 422: birthday occasions come from a person's birthday."
+)
+_BIRTHDAY_NOTE = " A birthday occasion follows its person and returns 409; edit the person."
+_PEOPLE_NOTE = (
+    " `person_ids` links the occasion to people of the account; an ID of another account"
+    " returns 404, like a missing one, and nothing is saved."
+)
 
 
 def _type_out(occasion_type: OccasionType) -> OccasionTypeOut:
@@ -94,7 +105,9 @@ async def list_occasions(
     status_code=status.HTTP_201_CREATED,
     operation_id="createOccasion",
     summary="Create occasion",
-    description="Creates a one-off or yearly occasion for the current account." + _TYPE_NOTE,
+    description="Creates a one-off or yearly occasion for the current account."
+    + _TYPE_NOTE
+    + _PEOPLE_NOTE,
     responses=problem_responses(401, 404),
 )
 async def create_occasion(body: OccasionIn, user: CurrentUser, session: SessionDep) -> OccasionOut:
@@ -122,9 +135,13 @@ async def get_occasion(
     "/{occasion_id}",
     operation_id="updateOccasion",
     summary="Update occasion",
-    description="Replaces all fields of the occasion: a field left out is reset to its "
-    "default." + _NOT_FOUND_NOTE + _TYPE_NOTE,
-    responses=problem_responses(401, 404),
+    description="Replaces all fields of the occasion, including its links: a field left out "
+    "is reset to its default or an empty list. The frontend sends the whole form."
+    + _NOT_FOUND_NOTE
+    + _TYPE_NOTE
+    + _PEOPLE_NOTE
+    + _BIRTHDAY_NOTE,
+    responses=problem_responses(401, 404, 409),
 )
 async def update_occasion(
     occasion_id: uuid.UUID, body: OccasionIn, user: CurrentUser, session: SessionDep
@@ -141,8 +158,8 @@ async def update_occasion(
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="deleteOccasion",
     summary="Delete occasion",
-    description="Deletes the occasion. Cannot be undone." + _NOT_FOUND_NOTE,
-    responses=problem_responses(401, 404),
+    description="Deletes the occasion. Cannot be undone." + _NOT_FOUND_NOTE + _BIRTHDAY_NOTE,
+    responses=problem_responses(401, 404, 409),
 )
 async def delete_occasion(occasion_id: uuid.UUID, user: CurrentUser, session: SessionDep) -> None:
     """Delete an occasion of the current account."""
