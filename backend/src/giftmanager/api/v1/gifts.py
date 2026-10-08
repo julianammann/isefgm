@@ -45,8 +45,9 @@ async def list_gifts(
     operation_id="createGift",
     summary="Create gift idea",
     description="Creates a gift idea for the current account. Only the title is required, "
-    "so an idea can be captured in one step; empty optional fields are stored as null. "
-    "The creation time is set by the server.",
+    "so an idea can be captured in one step: empty optional fields are stored as null, "
+    "`currency` defaults to EUR and `category` to `other`. The creation time is set by the "
+    "server.",
     responses=problem_responses(401),
 )
 async def create_gift(body: GiftIn, user: CurrentUser, session: SessionDep) -> GiftOut:
@@ -72,8 +73,8 @@ async def get_gift(gift_id: uuid.UUID, user: CurrentUser, session: SessionDep) -
     "/{gift_id}",
     operation_id="updateGift",
     summary="Update gift idea",
-    description="Replaces all fields of the gift idea: a field left out is reset to null. "
-    "The frontend sends the whole form." + _NOT_FOUND_NOTE,
+    description="Replaces all fields of the gift idea: a field left out is reset to null "
+    "or its default. The frontend sends the whole form." + _NOT_FOUND_NOTE,
     responses=problem_responses(401, 404),
 )
 async def update_gift(

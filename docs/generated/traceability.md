@@ -80,6 +80,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
 | F-05 | `tests/test_gifts.py::test_create_and_show_gift` | passed |
 | F-05 | `tests/test_gifts.py::test_title_alone_creates_a_gift` | passed |
+| F-05 | `tests/test_gifts.py::test_price_range_in_another_currency` | passed |
 | F-05 | `tests/test_gifts.py::test_created_at_is_set_by_the_server` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body0-title]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body1-title]` | passed |
@@ -90,6 +91,11 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body6-price_from]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body7-price_to]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body8-price_to]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body9-currency]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body10-currency]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body11-currency]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body12-category]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body13-category]` | passed |
 | F-05 | `tests/test_gifts.py::test_price_from_above_price_to_is_rejected` | passed |
 | F-05 | `tests/test_gifts.py::test_open_or_equal_price_range_is_accepted[prices0]` | passed |
 | F-05 | `tests/test_gifts.py::test_open_or_equal_price_range_is_accepted[prices1]` | passed |

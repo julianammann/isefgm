@@ -1,12 +1,32 @@
 """Gift ideas of an account (F-05)."""
 
+import enum
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, ForeignKey, Index, Numeric, String, Text, Uuid
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, Index, Numeric, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from giftmanager.models.base import Base, TimestampMixin
+
+
+class GiftCategory(enum.StrEnum):
+    """Kind of gift; the aggregated feature for suggestions (F-16)."""
+
+    BOOKS = "books"
+    GAMES = "games"
+    EXPERIENCE = "experience"
+    CLOTHING = "clothing"
+    TECH = "tech"
+    FOOD = "food"
+    HOME = "home"
+    VOUCHER = "voucher"
+    OTHER = "other"
+
+
+def _category_values(enum_cls: type[enum.Enum]) -> list[str]:
+    """Persist enum values, not member names."""
+    return [str(member.value) for member in enum_cls]
 
 
 class Gift(TimestampMixin, Base):
@@ -37,8 +57,27 @@ class Gift(TimestampMixin, Base):
         Text, comment="Free-text description. Optional."
     )
     price_from: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), comment="Lower end of the price range in euros. Optional."
+        Numeric(10, 2), comment="Lower end of the price range in `currency`. Optional."
     )
     price_to: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), comment="Upper end of the price range in euros. Optional."
+        Numeric(10, 2), comment="Upper end of the price range in `currency`. Optional."
+    )
+    currency: Mapped[str] = mapped_column(
+        String(3),
+        default="EUR",
+        server_default="EUR",
+        comment="ISO 4217 code of the price range currency, e.g. EUR.",
+    )
+    category: Mapped[GiftCategory] = mapped_column(
+        Enum(
+            GiftCategory,
+            name="gift_category",
+            native_enum=False,
+            length=16,
+            create_constraint=True,
+            values_callable=_category_values,
+        ),
+        default=GiftCategory.OTHER,
+        server_default=GiftCategory.OTHER.value,
+        comment="Kind of gift, feature for suggestions (F-16). `other` when not chosen.",
     )

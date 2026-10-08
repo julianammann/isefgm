@@ -1,8 +1,8 @@
 """create gift
 
-Revision ID: fd4752fb476d
+Revision ID: 6a6e7d90cec7
 Revises: 393161257686
-Create Date: 2026-10-08 13:47:58.864624
+Create Date: 2026-10-08 14:54:45.564980
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "fd4752fb476d"
+revision: str = "6a6e7d90cec7"
 down_revision: str | Sequence[str] | None = "393161257686"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -44,13 +44,41 @@ def upgrade() -> None:
             "price_from",
             sa.Numeric(precision=10, scale=2),
             nullable=True,
-            comment="Lower end of the price range in euros. Optional.",
+            comment="Lower end of the price range in `currency`. Optional.",
         ),
         sa.Column(
             "price_to",
             sa.Numeric(precision=10, scale=2),
             nullable=True,
-            comment="Upper end of the price range in euros. Optional.",
+            comment="Upper end of the price range in `currency`. Optional.",
+        ),
+        sa.Column(
+            "currency",
+            sa.String(length=3),
+            server_default="EUR",
+            nullable=False,
+            comment="ISO 4217 code of the price range currency, e.g. EUR.",
+        ),
+        sa.Column(
+            "category",
+            sa.Enum(
+                "books",
+                "games",
+                "experience",
+                "clothing",
+                "tech",
+                "food",
+                "home",
+                "voucher",
+                "other",
+                name="gift_category",
+                native_enum=False,
+                create_constraint=True,
+                length=16,
+            ),
+            server_default="other",
+            nullable=False,
+            comment="Kind of gift, feature for suggestions (F-16). `other` when not chosen.",
         ),
         sa.Column(
             "created_at",

@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Gift
+from giftmanager.models import Gift, GiftCategory
 from giftmanager.services.ownership import get_owned, owned, paginate
 
 
@@ -36,6 +36,8 @@ async def create_gift(
     description: str | None,
     price_from: Decimal | None,
     price_to: Decimal | None,
+    currency: str,
+    category: GiftCategory,
 ) -> Gift:
     """Create a gift idea for the owner."""
     gift = Gift(
@@ -44,6 +46,8 @@ async def create_gift(
         description=description,
         price_from=price_from,
         price_to=price_to,
+        currency=currency,
+        category=category,
     )
     session.add(gift)
     await session.flush()
@@ -59,6 +63,8 @@ async def update_gift(
     description: str | None,
     price_from: Decimal | None,
     price_to: Decimal | None,
+    currency: str,
+    category: GiftCategory,
 ) -> Gift:
     """Replace all editable fields of the owner's gift idea."""
     gift = await get_gift(session, owner_id, gift_id)
@@ -66,6 +72,8 @@ async def update_gift(
     gift.description = description
     gift.price_from = price_from
     gift.price_to = price_to
+    gift.currency = currency
+    gift.category = category
     await session.flush()
     return gift
 

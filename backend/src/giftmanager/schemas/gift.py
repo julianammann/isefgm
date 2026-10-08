@@ -14,6 +14,7 @@ from pydantic import (
     model_validator,
 )
 
+from giftmanager.models import GiftCategory
 from giftmanager.schemas.common import OptionalLongText
 
 
@@ -25,6 +26,7 @@ def _to_cents(value: Decimal) -> Decimal:
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 # Matches the Numeric(10, 2) column: at most 8 digits before and 2 after the point.
 Price = Annotated[Decimal, Field(ge=0, max_digits=10, decimal_places=2), AfterValidator(_to_cents)]
+Currency = Annotated[str, StringConstraints(pattern=r"^[A-Z]{3}$")]
 
 
 class GiftIn(BaseModel):
@@ -41,14 +43,24 @@ class GiftIn(BaseModel):
     )
     price_from: Price | None = Field(
         default=None,
-        description="Lower end of the price range in euros, at most 2 decimal places.",
+        description="Lower end of the price range in `currency`, at most 2 decimal places.",
         examples=["10.00"],
     )
     price_to: Price | None = Field(
         default=None,
-        description="Upper end of the price range in euros, at most 2 decimal places. "
+        description="Upper end of the price range in `currency`, at most 2 decimal places. "
         "Must not be below `price_from`.",
         examples=["100.00"],
+    )
+    currency: Currency = Field(
+        default="EUR",
+        description="ISO 4217 code of the price range currency, three capital letters.",
+        examples=["EUR"],
+    )
+    category: GiftCategory = Field(
+        default=GiftCategory.OTHER,
+        description="Kind of gift, used for suggestions (F-16). `other` when not chosen.",
+        examples=["tech"],
     )
 
     @model_validator(mode="after")
@@ -76,13 +88,15 @@ class GiftOut(BaseModel):
         description="Free-text description, or null.", examples=["Technik, für IT-Begeisterte"]
     )
     price_from: Decimal | None = Field(
-        description="Lower end of the price range in euros, as a string, or null.",
+        description="Lower end of the price range in `currency`, as a string, or null.",
         examples=["10.00"],
     )
     price_to: Decimal | None = Field(
-        description="Upper end of the price range in euros, as a string, or null.",
+        description="Upper end of the price range in `currency`, as a string, or null.",
         examples=["100.00"],
     )
+    currency: str = Field(description="ISO 4217 currency code.", examples=["EUR"])
+    category: GiftCategory = Field(description="Kind of gift.", examples=["tech"])
     created_at: datetime = Field(
         description="Creation time (UTC), set by the server.", examples=["2026-10-04T09:30:00Z"]
     )

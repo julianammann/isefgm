@@ -27,8 +27,10 @@ Gift idea of an account (F-05): the reusable content of an idea. Visible only to
 | `owner_id` | UUID | no | Account the gift idea belongs to. Deleted together with the account. (FK → user_account.id) |
 | `title` | VARCHAR(200) | no | Short title, the only required field for quick capture. |
 | `description` | TEXT | yes | Free-text description. Optional. |
-| `price_from` | NUMERIC(10, 2) | yes | Lower end of the price range in euros. Optional. |
-| `price_to` | NUMERIC(10, 2) | yes | Upper end of the price range in euros. Optional. |
+| `price_from` | NUMERIC(10, 2) | yes | Lower end of the price range in `currency`. Optional. |
+| `price_to` | NUMERIC(10, 2) | yes | Upper end of the price range in `currency`. Optional. |
+| `currency` | VARCHAR(3) | no | ISO 4217 code of the price range currency, e.g. EUR. |
+| `category` | VARCHAR(16) | no | Kind of gift, feature for suggestions (F-16). `other` when not chosen. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
 ## occasion_type

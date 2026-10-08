@@ -19,6 +19,8 @@ PI = {
     "description": "Technik, für IT-Begeisterte",
     "price_from": "10.00",
     "price_to": "100.00",
+    "currency": "EUR",
+    "category": "tech",
 }
 
 
@@ -36,6 +38,8 @@ async def test_create_and_show_gift(client: AsyncClient, anna: User) -> None:
     assert created["description"] == "Technik, für IT-Begeisterte"
     assert created["price_from"] == "10.00"
     assert created["price_to"] == "100.00"
+    assert created["currency"] == "EUR"
+    assert created["category"] == "tech"
     assert created["created_at"]
 
     shown = await client.get(f"{GIFTS}/{created['id']}")
@@ -52,6 +56,15 @@ async def test_title_alone_creates_a_gift(client: AsyncClient, anna: User) -> No
     assert body["description"] is None
     assert body["price_from"] is None
     assert body["price_to"] is None
+    assert body["currency"] == "EUR"
+    assert body["category"] == "other"
+
+
+@pytest.mark.requirement("F-05")
+async def test_price_range_in_another_currency(client: AsyncClient, anna: User) -> None:
+    r = await client.post(GIFTS, json={"title": "Uhr", "price_from": "200", "currency": "CHF"})
+    assert r.status_code == 201
+    assert r.json()["currency"] == "CHF"
 
 
 @pytest.mark.requirement("F-05", "Q-08")
@@ -76,6 +89,11 @@ async def test_created_at_is_set_by_the_server(client: AsyncClient, anna: User) 
         ({"title": "Pi", "price_from": "19.999"}, "price_from"),
         ({"title": "Pi", "price_to": "abc"}, "price_to"),
         ({"title": "Pi", "price_to": "123456789"}, "price_to"),
+        ({"title": "Pi", "currency": "eur"}, "currency"),
+        ({"title": "Pi", "currency": "EURO"}, "currency"),
+        ({"title": "Pi", "currency": None}, "currency"),
+        ({"title": "Pi", "category": "weapons"}, "category"),
+        ({"title": "Pi", "category": None}, "category"),
     ],
 )
 async def test_invalid_gift_is_rejected(
@@ -135,7 +153,7 @@ async def test_database_rejects_invalid_prices(
 
 @pytest.mark.requirement("F-05")
 async def test_update_replaces_all_fields(client: AsyncClient, anna: User) -> None:
-    created = (await client.post(GIFTS, json=PI)).json()
+    created = (await client.post(GIFTS, json={**PI, "currency": "CHF"})).json()
 
     r = await client.put(f"{GIFTS}/{created['id']}", json={"title": "Raspberry Pi 5"})
     assert r.status_code == 200
@@ -145,6 +163,8 @@ async def test_update_replaces_all_fields(client: AsyncClient, anna: User) -> No
     assert body["description"] is None
     assert body["price_from"] is None
     assert body["price_to"] is None
+    assert body["currency"] == "EUR"
+    assert body["category"] == "other"
     assert body["created_at"] == created["created_at"]
 
 
