@@ -127,6 +127,9 @@ async def delete_occasion(
 ) -> None:
     """Delete the owner's occasion."""
     occasion = await _get_editable_occasion(session, owner_id, occasion_id)
+    # TODO(F-06): if await gifting_service.is_occasion_in_use(session, occasion.id): raise
+    #   ConflictError(...) -> 409 (test_occasion_with_giftings_cannot_be_deleted). Update the
+    #   delete_occasion endpoint (description, problem_responses 409).
     await session.delete(occasion)
     await session.flush()
 
@@ -169,6 +172,10 @@ async def delete_birthday(session: AsyncSession, person: Person) -> None:
     """Delete the person's birthday occasion, if there is one."""
     occasion = await _birthday_of(session, person)
     if occasion is not None:
+        # TODO(F-06): if is_occasion_in_use(...): raise ConflictError(...) -> 409. Covers
+        #   delete_person, which calls this before deleting the person
+        #   (test_birthday_with_giftings_cannot_be_removed[DELETE]). Update the delete_person
+        #   endpoint (description, problem_responses 409).
         await session.delete(occasion)
         await session.flush()
 

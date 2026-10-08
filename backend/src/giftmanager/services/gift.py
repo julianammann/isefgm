@@ -102,5 +102,8 @@ async def _reload_links(session: AsyncSession, gift: Gift) -> None:
 async def delete_gift(session: AsyncSession, owner_id: uuid.UUID, gift_id: uuid.UUID) -> None:
     """Delete the owner's gift idea."""
     gift = await get_gift(session, owner_id, gift_id)
+    # TODO(F-06): if await gifting_service.is_gift_in_use(session, gift.id): raise
+    #   ConflictError(...) -> 409, the idea stays (test_idea_with_giftings_cannot_be_deleted).
+    #   Update the docstring and the delete_gift endpoint (description, problem_responses 409).
     await session.delete(gift)
     await session.flush()

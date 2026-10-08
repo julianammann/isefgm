@@ -293,6 +293,224 @@
         "title": "GiftOut",
         "type": "object"
       },
+      "GiftingIn": {
+        "description": "Data of a gifting; used for create and for full update (PUT).",
+        "properties": {
+          "gift_id": {
+            "description": "ID of the account's gift idea this gifting uses. The idea's content is referenced, not copied.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "given_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Day the gift was given, as a plain date (YYYY-MM-DD). Required for `given`; not stored with any other status.",
+            "examples": [
+              "2026-12-24"
+            ],
+            "title": "Given On"
+          },
+          "occasion_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Concrete date of the occasion as a plain date (YYYY-MM-DD), e.g. Christmas 2026 for a yearly occasion. Required for `given`.",
+            "examples": [
+              "2026-12-24"
+            ],
+            "title": "Occasion Date"
+          },
+          "occasion_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ID of the account's occasion the gift is for. Required for `given`.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"
+            ],
+            "title": "Occasion Id"
+          },
+          "person_ids": {
+            "description": "IDs of the account's people who receive the gift (actual recipients), up to 100. Several people share one joint gift. At least one for `given`. Replaces the current recipients; empty or left out means none.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Person Ids",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GiftingStatus",
+            "default": "idea",
+            "description": "`idea`, `planned`, `acquired` or `given`; `idea` when left out. Any status may follow any other. `given` needs recipients, an occasion, its date and `given_on`, so a past gift can be recorded in one step.",
+            "examples": [
+              "planned"
+            ]
+          }
+        },
+        "required": [
+          "gift_id"
+        ],
+        "title": "GiftingIn",
+        "type": "object"
+      },
+      "GiftingOut": {
+        "description": "A gifting as the frontend sees it.",
+        "properties": {
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-04T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "gift": {
+            "$ref": "#/components/schemas/LinkedGift",
+            "description": "The gift idea this gifting uses.",
+            "examples": [
+              {
+                "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+                "title": "Raspberry Pi"
+              }
+            ]
+          },
+          "given_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Day the gift was given as a plain date; null unless `given`.",
+            "examples": [
+              "2026-12-24"
+            ],
+            "title": "Given On"
+          },
+          "id": {
+            "description": "Gifting ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occasion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedOccasion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occasion the gift is for, or null.",
+            "examples": [
+              {
+                "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+                "name": "Weihnachten"
+              }
+            ]
+          },
+          "occasion_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Concrete date of the occasion as a plain date, or null.",
+            "examples": [
+              "2026-12-24"
+            ],
+            "title": "Occasion Date"
+          },
+          "people": {
+            "description": "Actual recipients, sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GiftingStatus",
+            "description": "Progress of the gifting.",
+            "examples": [
+              "planned"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "gift",
+          "status",
+          "people",
+          "occasion",
+          "occasion_date",
+          "given_on",
+          "created_at"
+        ],
+        "title": "GiftingOut",
+        "type": "object"
+      },
+      "GiftingStatus": {
+        "description": "Progress of a gifting (F-06). Any status may follow any other, also back from `given`.",
+        "enum": [
+          "idea",
+          "planned",
+          "acquired",
+          "given"
+        ],
+        "title": "GiftingStatus",
+        "type": "string"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -327,6 +545,34 @@
           "database"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "LinkedGift": {
+        "description": "The gift idea a gifting uses.",
+        "properties": {
+          "id": {
+            "description": "Gift idea ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "description": "Current title of the idea.",
+            "examples": [
+              "Raspberry Pi"
+            ],
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "LinkedGift",
         "type": "object"
       },
       "LinkedOccasion": {
@@ -638,6 +884,37 @@
           "offset"
         ],
         "title": "Page[GiftOut]",
+        "type": "object"
+      },
+      "Page_GiftingOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GiftingOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[GiftingOut]",
         "type": "object"
       },
       "Page_OccasionOut_": {
@@ -1319,6 +1596,324 @@
         "summary": "Create account",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/giftings": {
+      "get": {
+        "description": "Returns the giftings of the current account, newest first, one page at a time. `total` counts all giftings of the account.",
+        "operationId": "listGiftings",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_GiftingOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List giftings",
+        "tags": [
+          "giftings"
+        ]
+      },
+      "post": {
+        "description": "Turns a gift idea into a gifting in one step: only `gift_id` is required, the status defaults to `idea`. The idea is referenced, not copied, and stays in the idea list. A past gift is recorded directly with status `given`. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved.",
+        "operationId": "createGifting",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiftingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create gifting",
+        "tags": [
+          "giftings"
+        ]
+      }
+    },
+    "/api/v1/giftings/{gifting_id}": {
+      "delete": {
+        "description": "Deletes the gifting. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one.",
+        "operationId": "deleteGifting",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gifting_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gifting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete gifting",
+        "tags": [
+          "giftings"
+        ]
+      },
+      "get": {
+        "description": "Returns one gifting of the current account. A gifting of another account returns 404, like a missing one.",
+        "operationId": "getGifting",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gifting_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gifting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show gifting",
+        "tags": [
+          "giftings"
+        ]
+      },
+      "put": {
+        "description": "Replaces all fields of the gifting, including its recipients: a field left out is reset to null, its default or an empty list. Any status may follow any other. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gifting of another account returns 404, like a missing one.",
+        "operationId": "updateGifting",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gifting_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gifting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiftingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update gifting",
+        "tags": [
+          "giftings"
         ]
       }
     },
