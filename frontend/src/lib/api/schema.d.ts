@@ -124,6 +124,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gifts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List gift ideas
+         * @description Returns the gift ideas of the current account, newest first, one page at a time. `total` counts all gift ideas of the account.
+         */
+        get: operations["listGifts"];
+        put?: never;
+        /**
+         * Create gift idea
+         * @description Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server.
+         */
+        post: operations["createGift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gifts/{gift_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show gift idea
+         * @description Returns one gift idea of the current account. A gift idea of another account returns 404, like a missing one.
+         */
+        get: operations["getGift"];
+        /**
+         * Update gift idea
+         * @description Replaces all fields of the gift idea: a field left out is reset to null or its default. The frontend sends the whole form. A gift idea of another account returns 404, like a missing one.
+         */
+        put: operations["updateGift"];
+        post?: never;
+        /**
+         * Delete gift idea
+         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteGift"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -312,6 +364,109 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * GiftCategory
+         * @description Kind of gift; the aggregated feature for suggestions (F-16).
+         * @enum {string}
+         */
+        GiftCategory: "books" | "games" | "experience" | "clothing" | "tech" | "food" | "home" | "voucher" | "other";
+        /**
+         * GiftIn
+         * @description Data of a gift idea; used for create and for full update (PUT).
+         */
+        GiftIn: {
+            /**
+             * @description Kind of gift, used for suggestions (F-16). `other` when not chosen.
+             * @default other
+             * @example tech
+             */
+            category: components["schemas"]["GiftCategory"];
+            /**
+             * Currency
+             * @description ISO 4217 code of the price range currency, three capital letters. EUR when a price is given without one; not stored without a price.
+             * @example EUR
+             */
+            currency?: string | null;
+            /**
+             * Description
+             * @description Free-text description, up to 2000 characters. Empty means not set.
+             * @example Technik, für IT-Begeisterte
+             */
+            description?: string | null;
+            /**
+             * Price From
+             * @description Lower end of the price range in `currency`, at most 2 decimal places.
+             * @example 10.00
+             */
+            price_from?: number | string | null;
+            /**
+             * Price To
+             * @description Upper end of the price range in `currency`, at most 2 decimal places. Must not be below `price_from`.
+             * @example 100.00
+             */
+            price_to?: number | string | null;
+            /**
+             * Title
+             * @description Title, 1 to 200 characters. The only required field.
+             * @example Raspberry Pi
+             */
+            title: string;
+        };
+        /**
+         * GiftOut
+         * @description A gift idea as the frontend sees it.
+         */
+        GiftOut: {
+            /**
+             * @description Kind of gift.
+             * @example tech
+             */
+            category: components["schemas"]["GiftCategory"];
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Currency
+             * @description ISO 4217 currency code, or null when no price is set.
+             * @example EUR
+             */
+            currency: string | null;
+            /**
+             * Description
+             * @description Free-text description, or null.
+             * @example Technik, für IT-Begeisterte
+             */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Gift idea ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            id: string;
+            /**
+             * Price From
+             * @description Lower end of the price range in `currency`, as a string, or null.
+             * @example 10.00
+             */
+            price_from: string | null;
+            /**
+             * Price To
+             * @description Upper end of the price range in `currency`, as a string, or null.
+             * @example 100.00
+             */
+            price_to: string | null;
+            /**
+             * Title
+             * @description Title.
+             * @example Raspberry Pi
+             */
+            title: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -446,6 +601,17 @@ export interface components {
              * @example true
              */
             system: boolean;
+        };
+        /** Page[GiftOut] */
+        Page_GiftOut_: {
+            /** Items */
+            items: components["schemas"]["GiftOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
         };
         /** Page[OccasionOut] */
         Page_OccasionOut_: {
@@ -874,6 +1040,238 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listGifts: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_GiftOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createGift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getGift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gift_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateGift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gift_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteGift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gift_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -89,8 +89,8 @@ erDiagram
         text description "nullable"
         numeric price_from "nullable"
         numeric price_to "nullable"
-        text currency "ISO 4217, default EUR"
-        text category "für F-16, Enum"
+        text currency "nullable, ISO 4217, nur mit Preis, default EUR"
+        text category "für F-16: books | games | experience | clothing | tech | food | home | voucher | other, default other"
         timestamptz created_at
     }
     gift_person {
@@ -180,6 +180,8 @@ erDiagram
 | Regel | Umsetzung |
 |---|---|
 | Eine Idee kann ohne Empfänger und Anlass existieren (F-04, F-05) | `gift_person`, `gift_occasion` optional; `gifting.occasion_id` nullable |
+| Schnellerfassung einer Idee nur mit Titel (F-05) | übrige `gift`-Spalten nullable oder mit Default: `category` `other` |
+| Eine Währung gibt es nur zu einem Preis (F-05) | Check-Constraint `ck_gift_currency_with_price` auf `(currency IS NULL) = (price_from IS NULL AND price_to IS NULL)`; die API setzt `EUR`, wenn ein Preis ohne Währung kommt, und verwirft die Währung ohne Preis |
 | Gemeinsames Geschenk an mehrere Personen (F-04, F-06) | eine `gifting`-Zeile, mehrere `gifting_person`-Zeilen |
 | Unabhängige Beschenkungen derselben Idee | mehrere `gifting`-Zeilen je `gift` |
 | Bei `given` sind Empfänger, Anlass, Termin, Verschenkdatum Pflicht (F-06) | Check-Constraint `ck_gifting_given_complete` auf `status <> 'given' OR (occasion_id IS NOT NULL AND occasion_date IS NOT NULL AND given_on IS NOT NULL)`; mindestens ein Empfänger wird im Service geprüft |
@@ -192,10 +194,9 @@ erDiagram
 
 ## Indizes
 
-Neben den Primär- und Unique-Schlüsseln: Index auf jedem `owner_id`, jedem Fremdschlüssel, `notification(status, scheduled_for)` für den Scheduler und `person(owner_id, birthday)` für die Geburtstagsplanung.
+Neben den Primär- und Unique-Schlüsseln: Index auf jedem `owner_id`, jedem Fremdschlüssel, `notification(status, scheduled_for)` für den Scheduler, `person(owner_id, birthday)` für die Geburtstagsplanung und `gift(owner_id, created_at)` für die Ideenliste.
 
 ## Offene Punkte
 
-- `gift.category`: Enum-Werte festlegen (Vorschlag: `books`, `games`, `experience`, `clothing`, `tech`, `food`, `home`, `voucher`, `other`).
 - Preisband für F-16: Grenzen festlegen (Vorschlag: `<20`, `20–50`, `50–100`, `>100`).
 - Altersgruppe für F-16 wird zur Laufzeit aus `person.birthday` abgeleitet, nicht gespeichert.
