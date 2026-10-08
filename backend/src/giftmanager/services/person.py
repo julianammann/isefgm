@@ -66,6 +66,12 @@ async def update_person(
 ) -> Person:
     """Replace all editable fields of the owner's person; the birthday occasion follows."""
     person = await get_person(session, owner_id, person_id)
+    # TODO(F-06): Clearing the birthday deletes the birthday occasion (sync_birthday ->
+    #   delete_birthday). If a gifting uses it: 409, and the person must stay unchanged.
+    #   delete_birthday raises only after the flush below has already written the new
+    #   fields, so check here, before assigning anything
+    #   (test_birthday_with_giftings_cannot_be_removed[PUT]). Update the update_person
+    #   endpoint (description, problem_responses 409).
     person.name = name
     person.birthday = birthday
     person.relationship = relationship
