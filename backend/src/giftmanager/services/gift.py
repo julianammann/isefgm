@@ -36,7 +36,7 @@ async def create_gift(
     description: str | None,
     price_from: Decimal | None,
     price_to: Decimal | None,
-    currency: str,
+    currency: str | None,
     category: GiftCategory,
 ) -> Gift:
     """Create a gift idea for the owner."""
@@ -63,7 +63,7 @@ async def update_gift(
     description: str | None,
     price_from: Decimal | None,
     price_to: Decimal | None,
-    currency: str,
+    currency: str | None,
     category: GiftCategory,
 ) -> Gift:
     """Replace all editable fields of the owner's gift idea."""

@@ -29,7 +29,7 @@ Gift idea of an account (F-05): the reusable content of an idea. Visible only to
 | `description` | TEXT | yes | Free-text description. Optional. |
 | `price_from` | NUMERIC(10, 2) | yes | Lower end of the price range in `currency`. Optional. |
 | `price_to` | NUMERIC(10, 2) | yes | Upper end of the price range in `currency`. Optional. |
-| `currency` | VARCHAR(3) | no | ISO 4217 code of the price range currency, e.g. EUR. |
+| `currency` | VARCHAR(3) | yes | ISO 4217 code of the price range currency, e.g. EUR. Set exactly when a price is set. |
 | `category` | VARCHAR(16) | no | Kind of gift, feature for suggestions (F-16). `other` when not chosen. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 

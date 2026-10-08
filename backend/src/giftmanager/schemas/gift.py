@@ -52,9 +52,10 @@ class GiftIn(BaseModel):
         "Must not be below `price_from`.",
         examples=["100.00"],
     )
-    currency: Currency = Field(
-        default="EUR",
-        description="ISO 4217 code of the price range currency, three capital letters.",
+    currency: Currency | None = Field(
+        default=None,
+        description="ISO 4217 code of the price range currency, three capital letters. "
+        "EUR when a price is given without one; not stored without a price.",
         examples=["EUR"],
     )
     category: GiftCategory = Field(
@@ -72,6 +73,16 @@ class GiftIn(BaseModel):
             and self.price_from > self.price_to
         ):
             raise ValueError("price_from must not be greater than price_to")
+        return self
+
+    @model_validator(mode="after")
+    def currency_only_with_a_price(self) -> Self:
+        """Keep the currency exactly when a price is set; EUR if the price has none."""
+        if self.price_from is None and self.price_to is None:
+            # The form sends its currency field even when both prices are empty.
+            self.currency = None
+        elif self.currency is None:
+            self.currency = "EUR"
         return self
 
 
@@ -95,7 +106,9 @@ class GiftOut(BaseModel):
         description="Upper end of the price range in `currency`, as a string, or null.",
         examples=["100.00"],
     )
-    currency: str = Field(description="ISO 4217 currency code.", examples=["EUR"])
+    currency: str | None = Field(
+        description="ISO 4217 currency code, or null when no price is set.", examples=["EUR"]
+    )
     category: GiftCategory = Field(description="Kind of gift.", examples=["tech"])
     created_at: datetime = Field(
         description="Creation time (UTC), set by the server.", examples=["2026-10-04T09:30:00Z"]

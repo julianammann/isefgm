@@ -24,7 +24,7 @@ Create, log in to, log out of and delete an account (F-01, F-17). The session li
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
 | `GET /api/v1/gifts` | `listGifts` | List gift ideas | Returns the gift ideas of the current account, newest first, one page at a time. `total` counts all gift ideas of the account. | 200, 401, 422 |
-| `POST /api/v1/gifts` | `createGift` | Create gift idea | Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null, `currency` defaults to EUR and `category` to `other`. The creation time is set by the server. | 201, 401, 422 |
+| `POST /api/v1/gifts` | `createGift` | Create gift idea | Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. | 201, 401, 422 |
 | `GET /api/v1/gifts/{gift_id}` | `getGift` | Show gift idea | Returns one gift idea of the current account. A gift idea of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `PUT /api/v1/gifts/{gift_id}` | `updateGift` | Update gift idea | Replaces all fields of the gift idea: a field left out is reset to null or its default. The frontend sends the whole form. A gift idea of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `DELETE /api/v1/gifts/{gift_id}` | `deleteGift` | Delete gift idea | Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. | 204, 401, 404, 422 |

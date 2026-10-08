@@ -45,9 +45,9 @@ async def list_gifts(
     operation_id="createGift",
     summary="Create gift idea",
     description="Creates a gift idea for the current account. Only the title is required, "
-    "so an idea can be captured in one step: empty optional fields are stored as null, "
-    "`currency` defaults to EUR and `category` to `other`. The creation time is set by the "
-    "server.",
+    "so an idea can be captured in one step: empty optional fields are stored as null and "
+    "`category` defaults to `other`. `currency` is stored only with a price, EUR if none is "
+    "given. The creation time is set by the server.",
     responses=problem_responses(401),
 )
 async def create_gift(body: GiftIn, user: CurrentUser, session: SessionDep) -> GiftOut:
