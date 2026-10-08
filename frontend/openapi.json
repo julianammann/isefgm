@@ -547,6 +547,94 @@
         "title": "HealthOut",
         "type": "object"
       },
+      "LinkIn": {
+        "description": "Data of a link; used for create and for full update (PUT).",
+        "properties": {
+          "gift_id": {
+            "description": "ID of the account's gift idea the link belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label, 1 to 100 characters.",
+            "examples": [
+              "Thalia"
+            ],
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "url": {
+            "description": "Absolute http or https URL, up to 2048 characters.",
+            "examples": [
+              "https://www.thalia.de/shop/home/artikeldetails/A1234"
+            ],
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gift_id",
+          "label",
+          "url"
+        ],
+        "title": "LinkIn",
+        "type": "object"
+      },
+      "LinkOut": {
+        "description": "A link as the frontend sees it.",
+        "properties": {
+          "gift_id": {
+            "description": "ID of the gift idea the link belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "id": {
+            "description": "Link ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label.",
+            "examples": [
+              "Thalia"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "url": {
+            "description": "Absolute http or https URL.",
+            "examples": [
+              "https://www.thalia.de/shop/home/artikeldetails/A1234"
+            ],
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gift_id",
+          "label",
+          "url"
+        ],
+        "title": "LinkOut",
+        "type": "object"
+      },
       "LinkedGift": {
         "description": "The gift idea a gifting uses.",
         "properties": {
@@ -659,6 +747,94 @@
           "password"
         ],
         "title": "LoginIn",
+        "type": "object"
+      },
+      "NoteIn": {
+        "description": "Data of a note; used for create and for full update (PUT).",
+        "properties": {
+          "gift_id": {
+            "description": "ID of the account's gift idea the note belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label, 1 to 100 characters.",
+            "examples": [
+              "Gr\u00f6\u00dfe"
+            ],
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "text": {
+            "description": "Text, 1 to 2000 characters.",
+            "examples": [
+              "M, eher weit"
+            ],
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gift_id",
+          "label",
+          "text"
+        ],
+        "title": "NoteIn",
+        "type": "object"
+      },
+      "NoteOut": {
+        "description": "A note as the frontend sees it.",
+        "properties": {
+          "gift_id": {
+            "description": "ID of the gift idea the note belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "id": {
+            "description": "Note ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a74"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label.",
+            "examples": [
+              "Gr\u00f6\u00dfe"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "text": {
+            "description": "Text.",
+            "examples": [
+              "M, eher weit"
+            ],
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gift_id",
+          "label",
+          "text"
+        ],
+        "title": "NoteOut",
         "type": "object"
       },
       "OccasionIn": {
@@ -855,6 +1031,26 @@
         "title": "OccasionTypeOut",
         "type": "object"
       },
+      "PageParams": {
+        "description": "Pagination for list endpoints (Q-05).",
+        "properties": {
+          "limit": {
+            "default": 50,
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "title": "PageParams",
+        "type": "object"
+      },
       "Page_GiftOut_": {
         "properties": {
           "items": {
@@ -915,6 +1111,68 @@
           "offset"
         ],
         "title": "Page[GiftingOut]",
+        "type": "object"
+      },
+      "Page_LinkOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LinkOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[LinkOut]",
+        "type": "object"
+      },
+      "Page_NoteOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NoteOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[NoteOut]",
         "type": "object"
       },
       "Page_OccasionOut_": {
@@ -2276,6 +2534,650 @@
         "summary": "Database reachable",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/links": {
+      "get": {
+        "description": "Returns the links of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page.",
+        "operationId": "listLinks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PageParams"
+            }
+          },
+          {
+            "description": "Only the links of this gift idea.",
+            "in": "query",
+            "name": "gift_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the links of this gift idea.",
+              "title": "Gift Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_LinkOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List links",
+        "tags": [
+          "links"
+        ]
+      },
+      "post": {
+        "description": "Adds a labelled link to a gift idea of the current account. The URL is stored as entered. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. `url` must be an absolute http or https URL (422 otherwise).",
+        "operationId": "createLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create link",
+        "tags": [
+          "links"
+        ]
+      }
+    },
+    "/api/v1/links/{link_id}": {
+      "delete": {
+        "description": "Deletes the link. Cannot be undone. A link of another account returns 404, like a missing one.",
+        "operationId": "deleteLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "link_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete link",
+        "tags": [
+          "links"
+        ]
+      },
+      "get": {
+        "description": "Returns one link of the current account. A link of another account returns 404, like a missing one.",
+        "operationId": "getLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "link_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show link",
+        "tags": [
+          "links"
+        ]
+      },
+      "put": {
+        "description": "Replaces all fields of the link. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. `url` must be an absolute http or https URL (422 otherwise). A link of another account returns 404, like a missing one.",
+        "operationId": "updateLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "link_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update link",
+        "tags": [
+          "links"
+        ]
+      }
+    },
+    "/api/v1/notes": {
+      "get": {
+        "description": "Returns the notes of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page.",
+        "operationId": "listNotes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PageParams"
+            }
+          },
+          {
+            "description": "Only the notes of this gift idea.",
+            "in": "query",
+            "name": "gift_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the notes of this gift idea.",
+              "title": "Gift Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NoteOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List notes",
+        "tags": [
+          "notes"
+        ]
+      },
+      "post": {
+        "description": "Adds a labelled note to a gift idea of the current account. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved.",
+        "operationId": "createNote",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create note",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/{note_id}": {
+      "delete": {
+        "description": "Deletes the note. Cannot be undone. A note of another account returns 404, like a missing one.",
+        "operationId": "deleteNote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete note",
+        "tags": [
+          "notes"
+        ]
+      },
+      "get": {
+        "description": "Returns one note of the current account. A note of another account returns 404, like a missing one.",
+        "operationId": "getNote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show note",
+        "tags": [
+          "notes"
+        ]
+      },
+      "put": {
+        "description": "Replaces all fields of the note. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. A note of another account returns 404, like a missing one.",
+        "operationId": "updateNote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update note",
+        "tags": [
+          "notes"
         ]
       }
     },
