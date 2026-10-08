@@ -39,7 +39,7 @@ _TAG_LIKE = re.compile(r"<(?=[A-Za-z][A-Za-z0-9-]*[\s/>])")
 
 
 def _fix_page(text: str) -> str:
-    lines = []
+    lines: list[str] = []
     for line in text.split("\n"):
         if line.startswith("#"):
             line = _HEADING_LINK.sub(r"\1", _KEYWORD_ONLY.sub(" *, ", line))
