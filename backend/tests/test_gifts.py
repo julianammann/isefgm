@@ -76,8 +76,23 @@ async def test_title_alone_creates_a_gift(client: AsyncClient, anna: User) -> No
     assert body["description"] is None
     assert body["price_from"] is None
     assert body["price_to"] is None
-    assert body["currency"] == "EUR"
+    assert body["currency"] is None
     assert body["category"] == "other"
+
+
+@pytest.mark.requirement("F-05")
+async def test_price_without_currency_is_in_euro(client: AsyncClient, anna: User) -> None:
+    r = await client.post(GIFTS, json={"title": "Pi", "price_to": "20"})
+    assert r.status_code == 201
+    assert r.json()["currency"] == "EUR"
+
+
+@pytest.mark.requirement("F-05")
+async def test_currency_without_price_is_not_stored(client: AsyncClient, anna: User) -> None:
+    # The form sends its currency field even when both prices are empty.
+    r = await client.post(GIFTS, json={"title": "Pi", "currency": "CHF"})
+    assert r.status_code == 201
+    assert r.json()["currency"] is None
 
 
 @pytest.mark.requirement("F-05")
@@ -111,7 +126,6 @@ async def test_created_at_is_set_by_the_server(client: AsyncClient, anna: User) 
         ({"title": "Pi", "price_to": "123456789"}, "price_to"),
         ({"title": "Pi", "currency": "eur"}, "currency"),
         ({"title": "Pi", "currency": "EURO"}, "currency"),
-        ({"title": "Pi", "currency": None}, "currency"),
         ({"title": "Pi", "category": "weapons"}, "category"),
         ({"title": "Pi", "category": None}, "category"),
         ({"title": "Pi", "person_ids": None}, "person_ids"),
@@ -169,7 +183,33 @@ async def test_database_rejects_invalid_prices(
     with pytest.raises(IntegrityError):
         async with session.begin_nested():
             session.add(
-                Gift(owner_id=anna.id, title="Pi", price_from=price_from, price_to=price_to)
+                Gift(
+                    owner_id=anna.id,
+                    title="Pi",
+                    price_from=price_from,
+                    price_to=price_to,
+                    currency="EUR",
+                )
+            )
+            await session.flush()
+
+
+@pytest.mark.requirement("F-05")
+@pytest.mark.parametrize(
+    ("price_from", "currency"),
+    [
+        (Decimal("20.00"), None),
+        (None, "EUR"),
+    ],
+)
+async def test_database_requires_a_currency_exactly_with_a_price(
+    session: AsyncSession, anna: User, price_from: Decimal | None, currency: str | None
+) -> None:
+    # Bypasses the API: a currency without a price, or a price without one, is never stored.
+    with pytest.raises(IntegrityError):
+        async with session.begin_nested():
+            session.add(
+                Gift(owner_id=anna.id, title="Pi", price_from=price_from, currency=currency)
             )
             await session.flush()
 
@@ -186,7 +226,7 @@ async def test_update_replaces_all_fields(client: AsyncClient, anna: User) -> No
     assert body["description"] is None
     assert body["price_from"] is None
     assert body["price_to"] is None
-    assert body["currency"] == "EUR"
+    assert body["currency"] is None
     assert body["category"] == "other"
     assert body["created_at"] == created["created_at"]
 
