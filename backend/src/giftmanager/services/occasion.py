@@ -1,4 +1,5 @@
-"""Occasion types and occasions of an account (F-03). No HTTP in here."""
+"""Occasion types and occasions of an account (F-03), and the birthday occasions derived from
+person.birthday (F-03, F-04). No HTTP in here."""
 
 import calendar
 import datetime as dt
@@ -7,8 +8,8 @@ import uuid
 from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.core.errors import NotFoundError
-from giftmanager.models import Occasion, OccasionType, Person, Recurrence
+from giftmanager.core.errors import ConflictError, NotFoundError
+from giftmanager.models import BIRTHDAY_TYPE_ID, Occasion, OccasionType, Person, Recurrence
 from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
 
@@ -101,7 +102,7 @@ async def update_occasion(
     person_ids: list[uuid.UUID],
 ) -> Occasion:
     """Replace all editable fields and links of the owner's occasion."""
-    occasion = await get_occasion(session, owner_id, occasion_id)
+    occasion = await _get_editable_occasion(session, owner_id, occasion_id)
     if occasion_type_id is not None:
         await get_occasion_type(session, owner_id, occasion_type_id)
     # Resolve the links first, so a foreign or unknown id leaves the occasion untouched.
@@ -125,9 +126,61 @@ async def delete_occasion(
     session: AsyncSession, owner_id: uuid.UUID, occasion_id: uuid.UUID
 ) -> None:
     """Delete the owner's occasion."""
-    occasion = await get_occasion(session, owner_id, occasion_id)
+    occasion = await _get_editable_occasion(session, owner_id, occasion_id)
     await session.delete(occasion)
     await session.flush()
+
+
+async def _get_editable_occasion(
+    session: AsyncSession, owner_id: uuid.UUID, occasion_id: uuid.UUID
+) -> Occasion:
+    """Return the owner's occasion, unless it is a birthday, which follows its person."""
+    occasion = await get_occasion(session, owner_id, occasion_id)
+    if occasion.occasion_type_id == BIRTHDAY_TYPE_ID:
+        raise ConflictError("A birthday occasion follows the person's birthday; edit the person")
+    return occasion
+
+
+async def sync_birthday(session: AsyncSession, person: Person) -> None:
+    """Create, update or delete the person's birthday occasion to match person.birthday.
+
+    person.birthday is the only source. The occasion exists so that gift ideas and giftings
+    refer to a birthday like to any other occasion; it is linked to exactly this person.
+    """
+    if person.birthday is None:
+        await delete_birthday(session, person)
+        return
+    occasion = await _birthday_of(session, person)
+    if occasion is None:
+        occasion = Occasion(
+            owner_id=person.owner_id,
+            occasion_type_id=BIRTHDAY_TYPE_ID,
+            recurrence=Recurrence.YEARLY,
+            people=[person],
+        )
+        session.add(occasion)
+    # The occasion name holds 100 characters, as many as the person's name alone.
+    occasion.name = f"Geburtstag {person.name}"[:100]
+    occasion.date = person.birthday
+    await session.flush()
+
+
+async def delete_birthday(session: AsyncSession, person: Person) -> None:
+    """Delete the person's birthday occasion, if there is one."""
+    occasion = await _birthday_of(session, person)
+    if occasion is not None:
+        await session.delete(occasion)
+        await session.flush()
+
+
+async def _birthday_of(session: AsyncSession, person: Person) -> Occasion | None:
+    """Return the birthday occasion linked to the person."""
+    return await session.scalar(
+        owned(Occasion, person.owner_id).where(
+            Occasion.occasion_type_id == BIRTHDAY_TYPE_ID,
+            Occasion.people.any(Person.id == person.id),
+        )
+    )
 
 
 def _in_year(day: dt.date, year: int) -> dt.date:

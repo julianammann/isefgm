@@ -374,28 +374,6 @@ async def test_people_of_another_account_cannot_be_linked(
     assert (await client.get(OCCASIONS)).json()["items"] == [wedding]
 
 
-@pytest.mark.requirement("F-03", "F-04")
-async def test_birthday_occasion_can_be_linked_to_people(client: AsyncClient, anna: User) -> None:
-    # Allowed in addition to person.birthday; the two are not checked against each other.
-    r = await client.post(PEOPLE, json={"name": "Lena", "birthday": "1990-05-01"})
-    lena = r.json()["id"]
-    birthday = {
-        "name": "Geburtstag",
-        "date": "1990-05-01",
-        "recurrence": "yearly",
-        "occasion_type_id": str(BIRTHDAY_TYPE_ID),
-    }
-
-    r = await client.post(OCCASIONS, json={**birthday, "person_ids": [lena]})
-    assert r.status_code == 201
-    assert r.json()["people"] == [{"id": lena, "name": "Lena"}]
-
-    unlinked = (await client.post(OCCASIONS, json=birthday)).json()
-    r = await client.put(f"{OCCASIONS}/{unlinked['id']}", json={**birthday, "person_ids": [lena]})
-    assert r.status_code == 200
-    assert r.json()["people"] == [{"id": lena, "name": "Lena"}]
-
-
 @pytest.mark.requirement("F-04")
 async def test_deleting_a_person_unlinks_it(
     client: AsyncClient, session: AsyncSession, anna: User

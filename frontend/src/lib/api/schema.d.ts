@@ -271,7 +271,7 @@ export interface paths {
         put?: never;
         /**
          * Create occasion
-         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createOccasion"];
         delete?: never;
@@ -294,13 +294,13 @@ export interface paths {
         get: operations["getOccasion"];
         /**
          * Update occasion
-         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person.
          */
         put: operations["updateOccasion"];
         post?: never;
         /**
          * Delete occasion
-         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one.
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person.
          */
         delete: operations["deleteOccasion"];
         options?: never;
@@ -323,7 +323,7 @@ export interface paths {
         put?: never;
         /**
          * Create person
-         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null.
+         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
          */
         post: operations["createPerson"];
         delete?: never;
@@ -346,13 +346,13 @@ export interface paths {
         get: operations["getPerson"];
         /**
          * Update person
-         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one.
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
          */
         put: operations["updatePerson"];
         post?: never;
         /**
          * Delete person
-         * @description Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.
+         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one.
          */
         delete: operations["deletePerson"];
         options?: never;
@@ -601,7 +601,7 @@ export interface components {
             name: string;
             /**
              * Occasion Type Id
-             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type.
+             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag: birthday occasions come from a person's birthday.
              * @example null
              */
             occasion_type_id?: string | null;
@@ -1694,6 +1694,15 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1734,6 +1743,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
