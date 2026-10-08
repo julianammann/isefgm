@@ -4,10 +4,24 @@ import enum
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, Index, Numeric, String, Text, Uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    Enum,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Table,
+    Text,
+    Uuid,
+    func,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from giftmanager.models.base import Base, TimestampMixin
+from giftmanager.models.occasion import Occasion
+from giftmanager.models.person import Person
 
 
 class GiftCategory(enum.StrEnum):
@@ -27,6 +41,53 @@ class GiftCategory(enum.StrEnum):
 def _category_values(enum_cls: type[enum.Enum]) -> list[str]:
     """Persist enum values, not member names."""
     return [str(member.value) for member in enum_cls]
+
+
+# Link tables (F-04) without an owner_id: both sides belong to the same account, which the
+# service checks before linking (Q-01). The primary key covers lookups by gift_id.
+gift_person = Table(
+    "gift_person",
+    Base.metadata,
+    Column(
+        "gift_id",
+        Uuid(),
+        ForeignKey("gift.id", ondelete="CASCADE"),
+        primary_key=True,
+        comment="Gift idea. Deleting it deletes the link.",
+    ),
+    Column(
+        "person_id",
+        Uuid(),
+        ForeignKey("person.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+        comment="Possible recipient. Deleting the person deletes the link.",
+    ),
+    comment="Possible recipients of a gift idea (F-04), n:m. Deleting the idea or the person "
+    "removes only the link. Actual recipients belong to a gifting (F-06).",
+)
+
+gift_occasion = Table(
+    "gift_occasion",
+    Base.metadata,
+    Column(
+        "gift_id",
+        Uuid(),
+        ForeignKey("gift.id", ondelete="CASCADE"),
+        primary_key=True,
+        comment="Gift idea. Deleting it deletes the link.",
+    ),
+    Column(
+        "occasion_id",
+        Uuid(),
+        ForeignKey("occasion.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+        comment="Possible occasion. Deleting the occasion deletes the link.",
+    ),
+    comment="Possible occasions of a gift idea (F-04), n:m. Deleting the idea or the occasion "
+    "removes only the link. The concrete occasion belongs to a gifting (F-06).",
+)
 
 
 class Gift(TimestampMixin, Base):
@@ -80,4 +141,17 @@ class Gift(TimestampMixin, Base):
         default=GiftCategory.OTHER,
         server_default=GiftCategory.OTHER.value,
         comment="Kind of gift, feature for suggestions (F-16). `other` when not chosen.",
+    )
+
+    # selectin: an async session cannot lazy-load on attribute access, and one extra query
+    # per page loads the links of every idea on it. Same order as the people and occasion lists.
+    people: Mapped[list[Person]] = relationship(
+        secondary=gift_person,
+        order_by=lambda: [func.lower(Person.name), Person.id],
+        lazy="selectin",
+    )
+    occasions: Mapped[list[Occasion]] = relationship(
+        secondary=gift_occasion,
+        order_by=lambda: [Occasion.date, func.lower(Occasion.name), Occasion.id],
+        lazy="selectin",
     )

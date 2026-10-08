@@ -1,4 +1,4 @@
-"""Request and response bodies of the gift idea endpoints (F-05)."""
+"""Request and response bodies of the gift idea endpoints (F-04, F-05)."""
 
 import uuid
 from datetime import datetime
@@ -62,6 +62,20 @@ class GiftIn(BaseModel):
         description="Kind of gift, used for suggestions (F-16). `other` when not chosen.",
         examples=["tech"],
     )
+    person_ids: list[uuid.UUID] = Field(
+        default_factory=list[uuid.UUID],
+        max_length=100,
+        description="IDs of the account's people the idea is meant for (possible recipients), "
+        "up to 100. Replaces the current links; empty or left out means none.",
+        examples=[["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"]],
+    )
+    occasion_ids: list[uuid.UUID] = Field(
+        default_factory=list[uuid.UUID],
+        max_length=100,
+        description="IDs of the account's occasions the idea is meant for, up to 100. "
+        "Replaces the current links; empty or left out means none.",
+        examples=[["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"]],
+    )
 
     @model_validator(mode="after")
     def check_price_range(self) -> Self:
@@ -73,6 +87,28 @@ class GiftIn(BaseModel):
         ):
             raise ValueError("price_from must not be greater than price_to")
         return self
+
+
+class LinkedPerson(BaseModel):
+    """A person a gift idea is linked to."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID = Field(
+        description="Person ID (UUIDv7).", examples=["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"]
+    )
+    name: str = Field(description="Name.", examples=["Lena"])
+
+
+class LinkedOccasion(BaseModel):
+    """An occasion a gift idea is linked to."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID = Field(
+        description="Occasion ID (UUIDv7).", examples=["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"]
+    )
+    name: str = Field(description="Title.", examples=["Weihnachten"])
 
 
 class GiftOut(BaseModel):
@@ -97,6 +133,14 @@ class GiftOut(BaseModel):
     )
     currency: str = Field(description="ISO 4217 currency code.", examples=["EUR"])
     category: GiftCategory = Field(description="Kind of gift.", examples=["tech"])
+    people: list[LinkedPerson] = Field(
+        description="People the idea is meant for (possible recipients), sorted by name.",
+        examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71", "name": "Lena"}]],
+    )
+    occasions: list[LinkedOccasion] = Field(
+        description="Occasions the idea is meant for, sorted by date.",
+        examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72", "name": "Weihnachten"}]],
+    )
     created_at: datetime = Field(
         description="Creation time (UTC), set by the server.", examples=["2026-10-04T09:30:00Z"]
     )
