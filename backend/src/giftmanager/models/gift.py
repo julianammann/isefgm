@@ -98,6 +98,11 @@ class Gift(TimestampMixin, Base):
         Index("ix_gift_owner_id_created_at", "owner_id", "created_at"),
         CheckConstraint("price_from >= 0 AND price_to >= 0", name="price_non_negative"),
         CheckConstraint("price_from <= price_to", name="price_range_ordered"),
+        # A currency means nothing without a price, and a price nothing without a currency.
+        CheckConstraint(
+            "(currency IS NULL) = (price_from IS NULL AND price_to IS NULL)",
+            name="currency_with_price",
+        ),
         {
             "comment": "Gift idea of an account (F-05): the reusable content of an idea. "
             "Visible only to its owner (Q-01); deleted together with the account (F-17)."
@@ -123,11 +128,10 @@ class Gift(TimestampMixin, Base):
     price_to: Mapped[Decimal | None] = mapped_column(
         Numeric(10, 2), comment="Upper end of the price range in `currency`. Optional."
     )
-    currency: Mapped[str] = mapped_column(
+    currency: Mapped[str | None] = mapped_column(
         String(3),
-        default="EUR",
-        server_default="EUR",
-        comment="ISO 4217 code of the price range currency, e.g. EUR.",
+        comment="ISO 4217 code of the price range currency, e.g. EUR. Set exactly when a "
+        "price is set.",
     )
     category: Mapped[GiftCategory] = mapped_column(
         Enum(

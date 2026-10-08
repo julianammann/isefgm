@@ -139,7 +139,7 @@ export interface paths {
         put?: never;
         /**
          * Create gift idea
-         * @description Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null, `currency` defaults to EUR and `category` to `other`. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         * @description Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createGift"];
         delete?: never;
@@ -383,11 +383,10 @@ export interface components {
             category: components["schemas"]["GiftCategory"];
             /**
              * Currency
-             * @description ISO 4217 code of the price range currency, three capital letters.
-             * @default EUR
+             * @description ISO 4217 code of the price range currency, three capital letters. EUR when a price is given without one; not stored without a price.
              * @example EUR
              */
-            currency: string;
+            currency?: string | null;
             /**
              * Description
              * @description Free-text description, up to 2000 characters. Empty means not set.
@@ -448,10 +447,10 @@ export interface components {
             created_at: string;
             /**
              * Currency
-             * @description ISO 4217 currency code.
+             * @description ISO 4217 currency code, or null when no price is set.
              * @example EUR
              */
-            currency: string;
+            currency: string | null;
             /**
              * Description
              * @description Free-text description, or null.

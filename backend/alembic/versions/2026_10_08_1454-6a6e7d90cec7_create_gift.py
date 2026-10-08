@@ -55,9 +55,8 @@ def upgrade() -> None:
         sa.Column(
             "currency",
             sa.String(length=3),
-            server_default="EUR",
-            nullable=False,
-            comment="ISO 4217 code of the price range currency, e.g. EUR.",
+            nullable=True,
+            comment="ISO 4217 code of the price range currency, e.g. EUR. Set exactly when a price is set.",
         ),
         sa.Column(
             "category",
@@ -86,6 +85,10 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
             comment="Creation time (UTC), set by the database (Q-08).",
+        ),
+        sa.CheckConstraint(
+            "(currency IS NULL) = (price_from IS NULL AND price_to IS NULL)",
+            name=op.f("ck_gift_currency_with_price"),
         ),
         sa.CheckConstraint("price_from <= price_to", name=op.f("ck_gift_price_range_ordered")),
         sa.CheckConstraint(

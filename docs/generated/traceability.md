@@ -130,6 +130,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-04 | `tests/test_occasions.py::test_deleting_the_account_deletes_its_person_links` | passed |
 | F-05 | `tests/test_gifts.py::test_create_and_show_gift` | passed |
 | F-05 | `tests/test_gifts.py::test_title_alone_creates_a_gift` | passed |
+| F-05 | `tests/test_gifts.py::test_price_without_currency_is_in_euro` | passed |
+| F-05 | `tests/test_gifts.py::test_currency_without_price_is_not_stored` | passed |
 | F-05 | `tests/test_gifts.py::test_price_range_in_another_currency` | passed |
 | F-05 | `tests/test_gifts.py::test_created_at_is_set_by_the_server` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body0-title]` | passed |
@@ -143,12 +145,11 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body8-price_to]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body9-currency]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body10-currency]` | passed |
-| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body11-currency]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body11-category]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body12-category]` | passed |
-| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body13-category]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body13-person_ids]` | passed |
 | F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body14-person_ids]` | passed |
-| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body15-person_ids]` | passed |
-| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body16-occasion_ids]` | passed |
+| F-05 | `tests/test_gifts.py::test_invalid_gift_is_rejected[body15-occasion_ids]` | passed |
 | F-05 | `tests/test_gifts.py::test_price_from_above_price_to_is_rejected` | passed |
 | F-05 | `tests/test_gifts.py::test_open_or_equal_price_range_is_accepted[prices0]` | passed |
 | F-05 | `tests/test_gifts.py::test_open_or_equal_price_range_is_accepted[prices1]` | passed |
@@ -156,6 +157,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-05 | `tests/test_gifts.py::test_database_rejects_invalid_prices[price_from0-None]` | passed |
 | F-05 | `tests/test_gifts.py::test_database_rejects_invalid_prices[None-price_to1]` | passed |
 | F-05 | `tests/test_gifts.py::test_database_rejects_invalid_prices[price_from2-price_to2]` | passed |
+| F-05 | `tests/test_gifts.py::test_database_requires_a_currency_exactly_with_a_price[price_from0-None]` | passed |
+| F-05 | `tests/test_gifts.py::test_database_requires_a_currency_exactly_with_a_price[None-EUR]` | passed |
 | F-05 | `tests/test_gifts.py::test_update_replaces_all_fields` | passed |
 | F-05 | `tests/test_gifts.py::test_delete_gift` | passed |
 | F-05 | `tests/test_gifts.py::test_list_is_newest_first_and_paginated` | passed |
