@@ -139,7 +139,7 @@ export interface paths {
         put?: never;
         /**
          * Create gift idea
-         * @description Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server.
+         * @description Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createGift"];
         delete?: never;
@@ -162,7 +162,7 @@ export interface paths {
         get: operations["getGift"];
         /**
          * Update gift idea
-         * @description Replaces all fields of the gift idea: a field left out is reset to null or its default. The frontend sends the whole form. A gift idea of another account returns 404, like a missing one.
+         * @description Replaces all fields of the gift idea, including its links: a field left out is reset to null, its default or an empty list. The frontend sends the whole form. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gift idea of another account returns 404, like a missing one.
          */
         put: operations["updateGift"];
         post?: never;
@@ -394,6 +394,22 @@ export interface components {
              */
             description?: string | null;
             /**
+             * Occasion Ids
+             * @description IDs of the account's occasions the idea is meant for, up to 100. Replaces the current links; empty or left out means none.
+             * @example [
+             *       "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"
+             *     ]
+             */
+            occasion_ids?: string[];
+            /**
+             * Person Ids
+             * @description IDs of the account's people the idea is meant for (possible recipients), up to 100. Replaces the current links; empty or left out means none.
+             * @example [
+             *       "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+             *     ]
+             */
+            person_ids?: string[];
+            /**
              * Price From
              * @description Lower end of the price range in `currency`, at most 2 decimal places.
              * @example 10.00
@@ -449,6 +465,28 @@ export interface components {
              */
             id: string;
             /**
+             * Occasions
+             * @description Occasions the idea is meant for, sorted by date.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+             *         "name": "Weihnachten"
+             *       }
+             *     ]
+             */
+            occasions: components["schemas"]["LinkedOccasion"][];
+            /**
+             * People
+             * @description People the idea is meant for (possible recipients), sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+            /**
              * Price From
              * @description Lower end of the price range in `currency`, as a string, or null.
              * @example 10.00
@@ -484,6 +522,44 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "degraded";
+        };
+        /**
+         * LinkedOccasion
+         * @description An occasion a gift idea is linked to.
+         */
+        LinkedOccasion: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Occasion ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72
+             */
+            id: string;
+            /**
+             * Name
+             * @description Title.
+             * @example Weihnachten
+             */
+            name: string;
+        };
+        /**
+         * LinkedPerson
+         * @description A person a gift idea is linked to.
+         */
+        LinkedPerson: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Person ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71
+             */
+            id: string;
+            /**
+             * Name
+             * @description Name.
+             * @example Lena
+             */
+            name: string;
         };
         /**
          * LoginIn
@@ -1109,6 +1185,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,4 +1,7 @@
-"""Gift idea endpoints (F-05): list, create, show, update, delete."""
+"""Gift idea endpoints (F-04, F-05): list, create, show, update, delete.
+
+Create and update also link the idea to the account's people and occasions.
+"""
 
 import uuid
 from typing import Annotated
@@ -14,6 +17,10 @@ from giftmanager.services import gift as gift_service
 router = APIRouter(prefix="/gifts", tags=["gifts"])
 
 _NOT_FOUND_NOTE = " A gift idea of another account returns 404, like a missing one."
+_LINKS_NOTE = (
+    " `person_ids` and `occasion_ids` link the idea to people and occasions of the account;"
+    " an ID of another account returns 404, like a missing one, and nothing is saved."
+)
 
 
 @router.get(
@@ -47,8 +54,8 @@ async def list_gifts(
     description="Creates a gift idea for the current account. Only the title is required, "
     "so an idea can be captured in one step: empty optional fields are stored as null and "
     "`category` defaults to `other`. `currency` is stored only with a price, EUR if none is "
-    "given. The creation time is set by the server.",
-    responses=problem_responses(401),
+    "given. The creation time is set by the server." + _LINKS_NOTE,
+    responses=problem_responses(401, 404),
 )
 async def create_gift(body: GiftIn, user: CurrentUser, session: SessionDep) -> GiftOut:
     """Create a gift idea for the current account."""
@@ -73,8 +80,10 @@ async def get_gift(gift_id: uuid.UUID, user: CurrentUser, session: SessionDep) -
     "/{gift_id}",
     operation_id="updateGift",
     summary="Update gift idea",
-    description="Replaces all fields of the gift idea: a field left out is reset to null "
-    "or its default. The frontend sends the whole form." + _NOT_FOUND_NOTE,
+    description="Replaces all fields of the gift idea, including its links: a field left out "
+    "is reset to null, its default or an empty list. The frontend sends the whole form."
+    + _LINKS_NOTE
+    + _NOT_FOUND_NOTE,
     responses=problem_responses(401, 404),
 )
 async def update_gift(

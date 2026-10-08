@@ -71,6 +71,15 @@ Server-side session. One cookie token maps to exactly one row; logging out delet
 | `last_seen_at` | TIMESTAMP WITH TIME ZONE | no | Last use (UTC), updated at most every five minutes. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## gift_person
+
+Possible recipients of a gift idea (F-04), n:m. Deleting the idea or the person removes only the link. Actual recipients belong to a gifting (F-06).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
+| `person_id` | UUID | no | Possible recipient. Deleting the person deletes the link. (PK) (FK → person.id) (Index) |
+
 ## occasion
 
 Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete year is stored where the occasion is used. Visible only to its owner (Q-01).
@@ -83,3 +92,12 @@ Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete
 | `name` | VARCHAR(100) | no | Title, e.g. Hochzeitstag. |
 | `date` | DATE | no | Date as a plain calendar date (Q-08). First occurrence for yearly ones. |
 | `recurrence` | VARCHAR(16) | no | `none` (once) or `yearly` (every year on the same day). |
+
+## gift_occasion
+
+Possible occasions of a gift idea (F-04), n:m. Deleting the idea or the occasion removes only the link. The concrete occasion belongs to a gifting (F-06).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
+| `occasion_id` | UUID | no | Possible occasion. Deleting the occasion deletes the link. (PK) (FK → occasion.id) (Index) |

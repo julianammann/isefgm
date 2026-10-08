@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
@@ -7,12 +7,23 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Gift, User
+from giftmanager.models import (
+    Gift,
+    Occasion,
+    Person,
+    Recurrence,
+    User,
+    gift_occasion,
+    gift_person,
+)
 from tests.accounts import log_in_new_user
 from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 GIFTS = "/api/v1/gifts"
+PEOPLE = "/api/v1/people"
+OCCASIONS = "/api/v1/occasions"
 ACCOUNT = "/api/v1/auth/account"
+UNKNOWN_ID = "0192f6a0-0000-7000-8000-000000000000"
 
 PI = {
     "title": "Raspberry Pi",
@@ -27,6 +38,15 @@ PI = {
 @pytest.fixture
 async def anna(client: AsyncClient, session: AsyncSession) -> User:
     return await log_in_new_user(client, session, "anna@example.org")
+
+
+async def create_person(client: AsyncClient, name: str) -> str:
+    return (await client.post(PEOPLE, json={"name": name})).json()["id"]
+
+
+async def create_occasion(client: AsyncClient, name: str, on: str) -> str:
+    body = {"name": name, "date": on, "recurrence": "yearly"}
+    return (await client.post(OCCASIONS, json=body)).json()["id"]
 
 
 @pytest.mark.requirement("F-05")
@@ -108,6 +128,9 @@ async def test_created_at_is_set_by_the_server(client: AsyncClient, anna: User) 
         ({"title": "Pi", "currency": "EURO"}, "currency"),
         ({"title": "Pi", "category": "weapons"}, "category"),
         ({"title": "Pi", "category": None}, "category"),
+        ({"title": "Pi", "person_ids": None}, "person_ids"),
+        ({"title": "Pi", "person_ids": [UNKNOWN_ID] * 101}, "person_ids"),
+        ({"title": "Pi", "occasion_ids": UNKNOWN_ID}, "occasion_ids"),
     ],
 )
 async def test_invalid_gift_is_rejected(
@@ -278,3 +301,183 @@ async def test_deleting_the_account_deletes_its_gifts(
     assert (await client.delete(ACCOUNT)).status_code == 204
     count = select(func.count()).select_from(Gift).where(Gift.owner_id == anna.id)
     assert await session.scalar(count) == 0
+
+
+# --- Links to people and occasions (F-04) ------------------------------------
+
+
+@pytest.mark.requirement("F-04")
+async def test_gift_without_people_or_occasions(client: AsyncClient, anna: User) -> None:
+    r = await client.post(GIFTS, json={"title": "Buch"})
+    assert r.status_code == 201
+    assert r.json()["people"] == []
+    assert r.json()["occasions"] == []
+
+
+@pytest.mark.requirement("F-04")
+async def test_gift_links_people_and_occasions(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+    anton = await create_person(client, "anton")
+    xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+    wedding = await create_occasion(client, "Hochzeitstag", "2019-06-21")
+
+    r = await client.post(
+        GIFTS, json={**PI, "person_ids": [lena, anton], "occasion_ids": [xmas, wedding]}
+    )
+    assert r.status_code == 201
+    created = r.json()
+    # Same order as the people list (by name) and the occasion list (by date).
+    assert created["people"] == [{"id": anton, "name": "anton"}, {"id": lena, "name": "Lena"}]
+    assert created["occasions"] == [
+        {"id": wedding, "name": "Hochzeitstag"},
+        {"id": xmas, "name": "Weihnachten"},
+    ]
+
+    assert (await client.get(f"{GIFTS}/{created['id']}")).json() == created
+    assert (await client.get(GIFTS)).json()["items"] == [created]
+
+
+@pytest.mark.requirement("F-04")
+async def test_update_replaces_links(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+    anton = await create_person(client, "Anton")
+    xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+    body = {**PI, "person_ids": [lena, anton], "occasion_ids": [xmas]}
+    created = (await client.post(GIFTS, json=body)).json()
+
+    # occasion_ids left out: a PUT replaces everything, so the occasion is unlinked.
+    r = await client.put(f"{GIFTS}/{created['id']}", json={**PI, "person_ids": [anton]})
+    assert r.status_code == 200
+    assert r.json()["people"] == [{"id": anton, "name": "Anton"}]
+    assert r.json()["occasions"] == []
+    assert (await client.get(f"{GIFTS}/{created['id']}")).json() == r.json()
+
+    # Unlinking keeps the person and the occasion.
+    assert (await client.get(f"{PEOPLE}/{lena}")).status_code == 200
+    assert (await client.get(f"{OCCASIONS}/{xmas}")).status_code == 200
+
+
+@pytest.mark.requirement("F-04")
+async def test_links_are_many_to_many(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+    anton = await create_person(client, "Anton")
+    xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+
+    # One idea for several people, as a joint gift or as separate giftings (F-06) ...
+    pi = await client.post(GIFTS, json={**PI, "person_ids": [lena, anton], "occasion_ids": [xmas]})
+    # ... and one person and one occasion with several ideas.
+    book = await client.post(
+        GIFTS, json={"title": "Buch", "person_ids": [lena], "occasion_ids": [xmas]}
+    )
+
+    assert [p["name"] for p in pi.json()["people"]] == ["Anton", "Lena"]
+    assert [p["name"] for p in book.json()["people"]] == ["Lena"]
+    assert (
+        pi.json()["occasions"] == book.json()["occasions"] == [{"id": xmas, "name": "Weihnachten"}]
+    )
+
+
+@pytest.mark.requirement("F-04")
+async def test_repeated_id_is_linked_once(client: AsyncClient, anna: User) -> None:
+    lena = await create_person(client, "Lena")
+
+    r = await client.post(GIFTS, json={**PI, "person_ids": [lena, lena]})
+    assert r.status_code == 201
+    assert r.json()["people"] == [{"id": lena, "name": "Lena"}]
+
+
+@pytest.mark.requirement("F-04")
+@pytest.mark.parametrize("field", ["person_ids", "occasion_ids"])
+async def test_linking_an_unknown_id_returns_404(
+    client: AsyncClient, anna: User, field: str
+) -> None:
+    r = await client.post(GIFTS, json={**PI, field: [UNKNOWN_ID]})
+    assert r.status_code == 404
+    assert (await client.get(GIFTS)).json()["total"] == 0
+
+
+@pytest.mark.requirement("F-04", "Q-01")
+@pytest.mark.parametrize("method", ["POST", "PUT"])
+@pytest.mark.parametrize("field", ["person_ids", "occasion_ids"])
+async def test_records_of_another_account_cannot_be_linked(
+    client: AsyncClient, session: AsyncSession, anna: User, method: str, field: str
+) -> None:
+    bob = User(email="bob@example.org", password_hash="not-a-real-hash", display_name="Bob")
+    session.add(bob)
+    await session.flush()
+    bobs_records = {
+        "person_ids": Person(owner_id=bob.id, name="Bobs Schwester"),
+        "occasion_ids": Occasion(
+            owner_id=bob.id,
+            name="Bobs Geburtstag",
+            date=date(1990, 5, 1),
+            recurrence=Recurrence.YEARLY,
+        ),
+    }
+    session.add(bobs_records[field])
+    await session.flush()
+    own = await create_person(client, "Lena")
+    own_xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+    gift = (await client.post(GIFTS, json=PI)).json()
+
+    # An own record next to the foreign one does not get linked either.
+    own_id = own if field == "person_ids" else own_xmas
+    body = {**PI, "title": "Geändert", field: [own_id, str(bobs_records[field].id)]}
+    url = GIFTS if method == "POST" else f"{GIFTS}/{gift['id']}"
+    r = await client.request(method, url, json=body)
+    assert r.status_code == 404
+    assert r.json()["title"] == "Not Found"
+
+    assert (await client.get(GIFTS)).json()["items"] == [gift]
+
+
+@pytest.mark.requirement("F-04")
+async def test_deleting_a_person_or_occasion_unlinks_it(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    lena = await create_person(client, "Lena")
+    xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+    body = {**PI, "person_ids": [lena], "occasion_ids": [xmas]}
+    gift = (await client.post(GIFTS, json=body)).json()
+
+    assert (await client.delete(f"{PEOPLE}/{lena}")).status_code == 204
+    assert (await client.delete(f"{OCCASIONS}/{xmas}")).status_code == 204
+    # Each request has its own session in production; drop what this one still holds.
+    session.expire_all()
+
+    shown = await client.get(f"{GIFTS}/{gift['id']}")
+    assert shown.status_code == 200
+    assert shown.json()["people"] == []
+    assert shown.json()["occasions"] == []
+
+
+@pytest.mark.requirement("F-04")
+async def test_deleting_a_gift_keeps_its_people_and_occasions(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    lena = await create_person(client, "Lena")
+    xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+    body = {**PI, "person_ids": [lena], "occasion_ids": [xmas]}
+    gift = (await client.post(GIFTS, json=body)).json()
+    assert await session.scalar(select(func.count()).select_from(gift_person)) == 1
+
+    assert (await client.delete(f"{GIFTS}/{gift['id']}")).status_code == 204
+
+    assert (await client.get(f"{PEOPLE}/{lena}")).status_code == 200
+    assert (await client.get(f"{OCCASIONS}/{xmas}")).status_code == 200
+    assert await session.scalar(select(func.count()).select_from(gift_person)) == 0
+    assert await session.scalar(select(func.count()).select_from(gift_occasion)) == 0
+
+
+@pytest.mark.requirement("F-04", "F-17")
+async def test_deleting_the_account_deletes_its_links(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    lena = await create_person(client, "Lena")
+    xmas = await create_occasion(client, "Weihnachten", "2026-12-24")
+    await client.post(GIFTS, json={**PI, "person_ids": [lena], "occasion_ids": [xmas]})
+    assert await session.scalar(select(func.count()).select_from(gift_occasion)) == 1
+
+    assert (await client.delete(ACCOUNT)).status_code == 204
+    assert await session.scalar(select(func.count()).select_from(gift_person)) == 0
+    assert await session.scalar(select(func.count()).select_from(gift_occasion)) == 0

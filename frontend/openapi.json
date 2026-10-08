@@ -60,6 +60,36 @@
             ],
             "title": "Description"
           },
+          "occasion_ids": {
+            "description": "IDs of the account's occasions the idea is meant for, up to 100. Replaces the current links; empty or left out means none.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Occasion Ids",
+            "type": "array"
+          },
+          "person_ids": {
+            "description": "IDs of the account's people the idea is meant for (possible recipients), up to 100. Replaces the current links; empty or left out means none.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Person Ids",
+            "type": "array"
+          },
           "price_from": {
             "anyOf": [
               {
@@ -175,6 +205,38 @@
             "title": "Id",
             "type": "string"
           },
+          "occasions": {
+            "description": "Occasions the idea is meant for, sorted by date.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+                  "name": "Weihnachten"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedOccasion"
+            },
+            "title": "Occasions",
+            "type": "array"
+          },
+          "people": {
+            "description": "People the idea is meant for (possible recipients), sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
           "price_from": {
             "anyOf": [
               {
@@ -224,6 +286,8 @@
           "price_to",
           "currency",
           "category",
+          "people",
+          "occasions",
           "created_at"
         ],
         "title": "GiftOut",
@@ -263,6 +327,62 @@
           "database"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "LinkedOccasion": {
+        "description": "An occasion a gift idea is linked to.",
+        "properties": {
+          "id": {
+            "description": "Occasion ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Title.",
+            "examples": [
+              "Weihnachten"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "LinkedOccasion",
+        "type": "object"
+      },
+      "LinkedPerson": {
+        "description": "A person a gift idea is linked to.",
+        "properties": {
+          "id": {
+            "description": "Person ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name.",
+            "examples": [
+              "Lena"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "LinkedPerson",
         "type": "object"
       },
       "LoginIn": {
@@ -1237,7 +1357,7 @@
         ]
       },
       "post": {
-        "description": "Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server.",
+        "description": "Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved.",
         "operationId": "createGift",
         "requestBody": {
           "content": {
@@ -1269,6 +1389,16 @@
               }
             },
             "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
           },
           "422": {
             "content": {
@@ -1406,7 +1536,7 @@
         ]
       },
       "put": {
-        "description": "Replaces all fields of the gift idea: a field left out is reset to null or its default. The frontend sends the whole form. A gift idea of another account returns 404, like a missing one.",
+        "description": "Replaces all fields of the gift idea, including its links: a field left out is reset to null, its default or an empty list. The frontend sends the whole form. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gift idea of another account returns 404, like a missing one.",
         "operationId": "updateGift",
         "parameters": [
           {

@@ -1,7 +1,7 @@
 """Import every model here so Alembic autogenerate sees it in Base.metadata."""
 
 from giftmanager.models.base import Base, TimestampMixin
-from giftmanager.models.gift import Gift, GiftCategory
+from giftmanager.models.gift import Gift, GiftCategory, gift_occasion, gift_person
 from giftmanager.models.occasion import (
     BIRTHDAY_TYPE_ID,
     CHRISTMAS_TYPE_ID,
@@ -26,4 +26,6 @@ __all__ = [
     "User",
     "UserSession",
     "UserStatus",
+    "gift_occasion",
+    "gift_person",
 ]

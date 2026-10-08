@@ -1,12 +1,15 @@
-"""Gift ideas of an account (F-05). No HTTP in here."""
+"""Gift ideas of an account (F-05) and their links to people and occasions (F-04).
+
+No HTTP in here.
+"""
 
 import uuid
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Gift, GiftCategory
-from giftmanager.services.ownership import get_owned, owned, paginate
+from giftmanager.models import Gift, GiftCategory, Occasion, Person
+from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
 
 async def list_gifts(
@@ -38,8 +41,10 @@ async def create_gift(
     price_to: Decimal | None,
     currency: str | None,
     category: GiftCategory,
+    person_ids: list[uuid.UUID],
+    occasion_ids: list[uuid.UUID],
 ) -> Gift:
-    """Create a gift idea for the owner."""
+    """Create a gift idea for the owner, linked to some of the owner's people and occasions."""
     gift = Gift(
         owner_id=owner_id,
         title=title,
@@ -48,9 +53,12 @@ async def create_gift(
         price_to=price_to,
         currency=currency,
         category=category,
+        people=await get_all_owned(session, Person, owner_id, person_ids),
+        occasions=await get_all_owned(session, Occasion, owner_id, occasion_ids),
     )
     session.add(gift)
     await session.flush()
+    await _reload_links(session, gift)
     return gift
 
 
@@ -65,17 +73,30 @@ async def update_gift(
     price_to: Decimal | None,
     currency: str | None,
     category: GiftCategory,
+    person_ids: list[uuid.UUID],
+    occasion_ids: list[uuid.UUID],
 ) -> Gift:
-    """Replace all editable fields of the owner's gift idea."""
+    """Replace all editable fields and links of the owner's gift idea."""
     gift = await get_gift(session, owner_id, gift_id)
+    # Resolve the links first, so a foreign or unknown id leaves the idea untouched.
+    people = await get_all_owned(session, Person, owner_id, person_ids)
+    occasions = await get_all_owned(session, Occasion, owner_id, occasion_ids)
     gift.title = title
     gift.description = description
     gift.price_from = price_from
     gift.price_to = price_to
     gift.currency = currency
     gift.category = category
+    gift.people = people
+    gift.occasions = occasions
     await session.flush()
+    await _reload_links(session, gift)
     return gift
+
+
+async def _reload_links(session: AsyncSession, gift: Gift) -> None:
+    """Load the links in the relationship's order, so a response matches a later read."""
+    await session.refresh(gift, ["people", "occasions"])
 
 
 async def delete_gift(session: AsyncSession, owner_id: uuid.UUID, gift_id: uuid.UUID) -> None:
