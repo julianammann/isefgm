@@ -32,6 +32,10 @@ _KEYWORD_ONLY = re.compile(r"(?<=[(,]) ?, ")
 # puts cross-references into signature headings, so two sections can end up with the
 # same ID and the build fails. Headings keep the type names, only without links.
 _HEADING_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+# Defaults in signatures are reprs. Markdown passes one that looks like an HTML tag, such as
+# `<factory>` (Pydantic default_factory), through as HTML, and VitePress's Vue compiler
+# fails on the unclosed element. Reprs like `<sqlalchemy.orm…>` are no tag names and stay.
+_TAG_LIKE = re.compile(r"<(?=[A-Za-z][A-Za-z0-9-]*[\s/>])")
 
 
 def _fix_page(text: str) -> str:
@@ -40,6 +44,7 @@ def _fix_page(text: str) -> str:
         if line.startswith("#"):
             line = _HEADING_LINK.sub(r"\1", _KEYWORD_ONLY.sub(" *, ", line))
             line = line.replace("( *, ", "(*, ")
+            line = _TAG_LIKE.sub("&lt;", line)
         lines.append(line)
     return "\n".join(lines)
 
