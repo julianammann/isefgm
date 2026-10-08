@@ -14,6 +14,8 @@ def blank_to_none(value: object) -> object:
 
 LongText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
 OptionalLongText = Annotated[LongText | None, BeforeValidator(blank_to_none)]
+# Label of a note, link or image (F-07): required, so a list of them stays readable.
+Label = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 
 
 # Use as `Annotated[PageParams, Query()]` in every list endpoint.
