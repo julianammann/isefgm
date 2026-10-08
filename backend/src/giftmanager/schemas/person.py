@@ -56,3 +56,14 @@ class PersonOut(BaseModel):
     created_at: datetime = Field(
         description="Creation time (UTC).", examples=["2026-10-04T09:30:00Z"]
     )
+
+
+class LinkedPerson(BaseModel):
+    """A person a gift idea or an occasion is linked to."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID = Field(
+        description="Person ID (UUIDv7).", examples=["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"]
+    )
+    name: str = Field(description="Name.", examples=["Lena"])

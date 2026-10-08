@@ -8,6 +8,7 @@ from giftmanager.models.occasion import (
     Occasion,
     OccasionType,
     Recurrence,
+    person_occasion,
 )
 from giftmanager.models.person import Person
 from giftmanager.models.user import User, UserSession, UserStatus
@@ -28,4 +29,5 @@ __all__ = [
     "UserStatus",
     "gift_occasion",
     "gift_person",
+    "person_occasion",
 ]

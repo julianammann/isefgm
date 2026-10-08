@@ -8,8 +8,8 @@ from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import NotFoundError
-from giftmanager.models import Occasion, OccasionType, Recurrence
-from giftmanager.services.ownership import get_owned, owned, paginate
+from giftmanager.models import Occasion, OccasionType, Person, Recurrence
+from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
 
 def _visible_types(owner_id: uuid.UUID) -> ColumnElement[bool]:
@@ -70,8 +70,9 @@ async def create_occasion(
     date: dt.date,
     recurrence: Recurrence,
     occasion_type_id: uuid.UUID | None,
+    person_ids: list[uuid.UUID],
 ) -> Occasion:
-    """Create an occasion for the owner."""
+    """Create an occasion for the owner, linked to some of the owner's people."""
     if occasion_type_id is not None:
         await get_occasion_type(session, owner_id, occasion_type_id)
     occasion = Occasion(
@@ -80,9 +81,11 @@ async def create_occasion(
         date=date,
         recurrence=recurrence,
         occasion_type_id=occasion_type_id,
+        people=await get_all_owned(session, Person, owner_id, person_ids),
     )
     session.add(occasion)
     await session.flush()
+    await _reload_people(session, occasion)
     return occasion
 
 
@@ -95,17 +98,27 @@ async def update_occasion(
     date: dt.date,
     recurrence: Recurrence,
     occasion_type_id: uuid.UUID | None,
+    person_ids: list[uuid.UUID],
 ) -> Occasion:
-    """Replace all editable fields of the owner's occasion."""
+    """Replace all editable fields and links of the owner's occasion."""
     occasion = await get_occasion(session, owner_id, occasion_id)
     if occasion_type_id is not None:
         await get_occasion_type(session, owner_id, occasion_type_id)
+    # Resolve the links first, so a foreign or unknown id leaves the occasion untouched.
+    people = await get_all_owned(session, Person, owner_id, person_ids)
     occasion.name = name
     occasion.date = date
     occasion.recurrence = recurrence
     occasion.occasion_type_id = occasion_type_id
+    occasion.people = people
     await session.flush()
+    await _reload_people(session, occasion)
     return occasion
+
+
+async def _reload_people(session: AsyncSession, occasion: Occasion) -> None:
+    """Load the links in the relationship's order, so a response matches a later read."""
+    await session.refresh(occasion, ["people"])
 
 
 async def delete_occasion(

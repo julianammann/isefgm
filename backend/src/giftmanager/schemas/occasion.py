@@ -2,11 +2,12 @@
 
 import datetime as dt
 import uuid
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from giftmanager.models import Recurrence
+from giftmanager.models import BIRTHDAY_TYPE_ID, Recurrence
+from giftmanager.schemas.person import LinkedPerson
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 
@@ -48,6 +49,20 @@ class OccasionIn(BaseModel):
         "occasion without a type.",
         examples=[None],
     )
+    person_ids: list[uuid.UUID] = Field(
+        default_factory=list[uuid.UUID],
+        max_length=100,
+        description="IDs of the account's people the occasion concerns, up to 100. Replaces "
+        "the current links; empty or left out means none. Not allowed for the type Geburtstag.",
+        examples=[["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"]],
+    )
+
+    @model_validator(mode="after")
+    def check_birthday_has_no_people(self) -> Self:
+        """Reject people on a birthday occasion: a person's birthday is stored on the person."""
+        if self.occasion_type_id == BIRTHDAY_TYPE_ID and self.person_ids:
+            raise ValueError("a birthday occasion cannot be linked to people; use their birthday")
+        return self
 
 
 class OccasionOut(BaseModel):
@@ -63,4 +78,8 @@ class OccasionOut(BaseModel):
     recurrence: Recurrence = Field(description="`none` or `yearly`.", examples=["yearly"])
     occasion_type_id: uuid.UUID | None = Field(
         description="Occasion type, or null.", examples=[None]
+    )
+    people: list[LinkedPerson] = Field(
+        description="People the occasion concerns, sorted by name.",
+        examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71", "name": "Lena"}]],
     )
