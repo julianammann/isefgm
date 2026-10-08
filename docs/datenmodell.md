@@ -188,7 +188,6 @@ erDiagram
 | Kein Doppelversand (F-13, Q-02) | `UNIQUE(dedup_key)` auf `notification` |
 | Freigabelink nicht erratbar, widerrufbar, ablaufend (F-14) | 256-Bit-Token, nur `token_hash` gespeichert, `active`, `expires_at` |
 | Kontolöschung löscht alles (F-17) | `ON DELETE CASCADE` auf allen `owner_id` und auf `user_session.user_id`; Dateien aus `attachment.storage_path` werden nach dem Commit gelöscht |
-| Der Geburtstag einer Person steht nur in `person.birthday` (F-03, F-04) | ein Anlass vom Typ „Geburtstag“ hat keine `person_occasion`-Zeilen; geprüft im Request-Schema (422) |
 | Systemweite Anlasstypen (F-03) | `occasion_type.owner_id IS NULL`; „Geburtstag“ und „Weihnachten“ per Daten-Migration |
 | Vorschläge nur aus aggregierten Merkmalen (F-16, Q-04) | Aggregation über `gift.category`, Preisband aus `price_from/price_to`, `occasion_type.name`; nie über `title`, `description`, `note`, `attachment` |
 

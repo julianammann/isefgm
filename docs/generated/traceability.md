@@ -81,7 +81,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-03-01-2028-02-29]` | passed |
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-02-29-2028-02-29]` | passed |
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
-| F-03 | `tests/test_occasions.py::test_birthday_occasion_cannot_be_linked_to_people` | passed |
+| F-03 | `tests/test_occasions.py::test_birthday_occasion_can_be_linked_to_people` | passed |
 | F-04 | `tests/test_gifts.py::test_gift_without_people_or_occasions` | passed |
 | F-04 | `tests/test_gifts.py::test_gift_links_people_and_occasions` | passed |
 | F-04 | `tests/test_gifts.py::test_update_replaces_links` | passed |
@@ -104,7 +104,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-04 | `tests/test_occasions.py::test_linking_an_unknown_person_returns_404` | passed |
 | F-04 | `tests/test_occasions.py::test_people_of_another_account_cannot_be_linked[POST]` | passed |
 | F-04 | `tests/test_occasions.py::test_people_of_another_account_cannot_be_linked[PUT]` | passed |
-| F-04 | `tests/test_occasions.py::test_birthday_occasion_cannot_be_linked_to_people` | passed |
+| F-04 | `tests/test_occasions.py::test_birthday_occasion_can_be_linked_to_people` | passed |
 | F-04 | `tests/test_occasions.py::test_deleting_a_person_unlinks_it` | passed |
 | F-04 | `tests/test_occasions.py::test_deleting_an_occasion_keeps_its_people` | passed |
 | F-04 | `tests/test_occasions.py::test_deleting_the_account_deletes_its_person_links` | passed |

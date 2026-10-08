@@ -49,7 +49,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("person_id", "occasion_id", name=op.f("pk_person_occasion")),
-        comment="People an occasion concerns (F-04), n:m. Deleting the person or the occasion removes only the link. A person's birthday is person.birthday, not a link.",
+        comment="People an occasion concerns (F-04), n:m. Deleting the person or the occasion removes only the link.",
     )
     op.create_index(
         op.f("ix_person_occasion_occasion_id"), "person_occasion", ["occasion_id"], unique=False

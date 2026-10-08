@@ -87,7 +87,7 @@ person_occasion = Table(
         comment="Occasion. Deleting it deletes the link.",
     ),
     comment="People an occasion concerns (F-04), n:m. Deleting the person or the occasion "
-    "removes only the link. A person's birthday is person.birthday, not a link.",
+    "removes only the link.",
 )
 
 

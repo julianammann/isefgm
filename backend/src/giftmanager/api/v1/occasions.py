@@ -22,8 +22,7 @@ _NOT_FOUND_NOTE = " An occasion of another account returns 404, like a missing o
 _TYPE_NOTE = " `occasion_type_id` must be a system-wide type or one of the account; otherwise 404."
 _PEOPLE_NOTE = (
     " `person_ids` links the occasion to people of the account; an ID of another account"
-    " returns 404, like a missing one, and nothing is saved. An occasion of the type"
-    " Geburtstag cannot have people (422): a person's birthday is stored on the person."
+    " returns 404, like a missing one, and nothing is saved."
 )
 
 

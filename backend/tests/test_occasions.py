@@ -375,30 +375,25 @@ async def test_people_of_another_account_cannot_be_linked(
 
 
 @pytest.mark.requirement("F-03", "F-04")
-async def test_birthday_occasion_cannot_be_linked_to_people(
-    client: AsyncClient, anna: User
-) -> None:
-    # A person's birthday lives in person.birthday only, so it cannot be stored twice.
-    lena = await create_person(client, "Lena")
-    birthday = {"name": "Geburtstag", "date": "1990-05-01", "recurrence": "yearly"}
-    birthday_type = {"occasion_type_id": str(BIRTHDAY_TYPE_ID)}
+async def test_birthday_occasion_can_be_linked_to_people(client: AsyncClient, anna: User) -> None:
+    # Allowed in addition to person.birthday; the two are not checked against each other.
+    r = await client.post(PEOPLE, json={"name": "Lena", "birthday": "1990-05-01"})
+    lena = r.json()["id"]
+    birthday = {
+        "name": "Geburtstag",
+        "date": "1990-05-01",
+        "recurrence": "yearly",
+        "occasion_type_id": str(BIRTHDAY_TYPE_ID),
+    }
 
-    r = await client.post(OCCASIONS, json={**birthday, **birthday_type, "person_ids": [lena]})
-    assert r.status_code == 422
-    # The check spans two fields, so the error points at the whole body.
-    assert r.json()["errors"][0]["loc"] == ["body"]
-    assert (await client.get(OCCASIONS)).json()["total"] == 0
-
-    linked = (await client.post(OCCASIONS, json={**birthday, "person_ids": [lena]})).json()
-    r = await client.put(
-        f"{OCCASIONS}/{linked['id']}", json={**birthday, **birthday_type, "person_ids": [lena]}
-    )
-    assert r.status_code == 422
-    assert (await client.get(f"{OCCASIONS}/{linked['id']}")).json() == linked
-
-    # Without people the birthday type stays usable.
-    r = await client.post(OCCASIONS, json={**birthday, **birthday_type})
+    r = await client.post(OCCASIONS, json={**birthday, "person_ids": [lena]})
     assert r.status_code == 201
+    assert r.json()["people"] == [{"id": lena, "name": "Lena"}]
+
+    unlinked = (await client.post(OCCASIONS, json=birthday)).json()
+    r = await client.put(f"{OCCASIONS}/{unlinked['id']}", json={**birthday, "person_ids": [lena]})
+    assert r.status_code == 200
+    assert r.json()["people"] == [{"id": lena, "name": "Lena"}]
 
 
 @pytest.mark.requirement("F-04")

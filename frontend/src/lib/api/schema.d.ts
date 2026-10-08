@@ -271,7 +271,7 @@ export interface paths {
         put?: never;
         /**
          * Create occasion
-         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. An occasion of the type Geburtstag cannot have people (422): a person's birthday is stored on the person.
+         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createOccasion"];
         delete?: never;
@@ -294,7 +294,7 @@ export interface paths {
         get: operations["getOccasion"];
         /**
          * Update occasion
-         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. An occasion of the type Geburtstag cannot have people (422): a person's birthday is stored on the person.
+         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         put: operations["updateOccasion"];
         post?: never;
@@ -607,7 +607,7 @@ export interface components {
             occasion_type_id?: string | null;
             /**
              * Person Ids
-             * @description IDs of the account's people the occasion concerns, up to 100. Replaces the current links; empty or left out means none. Not allowed for the type Geburtstag.
+             * @description IDs of the account's people the occasion concerns, up to 100. Replaces the current links; empty or left out means none.
              * @example [
              *       "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
              *     ]
