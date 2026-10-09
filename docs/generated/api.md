@@ -17,6 +17,18 @@ Create, log in to, log out of and delete an account (F-01, F-17). The session li
 | `GET /api/v1/auth/me` | `authMe` | Current account | Returns the account of the current session. The frontend calls it on every page request to determine the login state. | 200, 401 |
 | `POST /api/v1/auth/register` | `authRegister` | Create account | Creates an account and logs it in right away: the response sets the session cookie. Returns 403 while registration is closed (`REGISTRATION_ENABLED`). The e-mail address is stored lowercased; an address that is already registered returns 409. When too many logins and registrations are already being checked, returns 503 at once with a Retry-After header; retry a few seconds later. | 201, 403, 409, 422, 503 |
 
+## gifts
+
+
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/gifts` | `listGifts` | List gift ideas | Returns the gift ideas of the current account, newest first, one page at a time. `total` counts all gift ideas of the account. | 200, 401, 422 |
+| `POST /api/v1/gifts` | `createGift` | Create gift idea | Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
+| `GET /api/v1/gifts/{gift_id}` | `getGift` | Show gift idea | Returns one gift idea of the current account. A gift idea of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/gifts/{gift_id}` | `updateGift` | Update gift idea | Replaces all fields of the gift idea, including its links: a field left out is reset to null, its default or an empty list. The frontend sends the whole form. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gift idea of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `DELETE /api/v1/gifts/{gift_id}` | `deleteGift` | Delete gift idea | Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+
 ## health
 
 Liveness and readiness for container healthchecks and Traefik.
@@ -35,10 +47,10 @@ Occasion types and occasions (F-03). The types Geburtstag and Weihnachten are sy
 | `GET /api/v1/occasion-types` | `listOccasionTypes` | List occasion types | Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them. | 200, 401, 422 |
 | `GET /api/v1/occasion-types/{occasion_type_id}` | `getOccasionType` | Show occasion type | Returns one system-wide type or one of the account's own types. A type of another account returns 404. | 200, 401, 404, 422 |
 | `GET /api/v1/occasions` | `listOccasions` | List occasions | Returns the occasions of the current account, sorted by date, one page at a time. `total` counts all occasions of the account. | 200, 401, 422 |
-| `POST /api/v1/occasions` | `createOccasion` | Create occasion | Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. | 201, 401, 404, 422 |
+| `POST /api/v1/occasions` | `createOccasion` | Create occasion | Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
 | `GET /api/v1/occasions/{occasion_id}` | `getOccasion` | Show occasion | Returns one occasion of the current account. An occasion of another account returns 404, like a missing one. | 200, 401, 404, 422 |
-| `PUT /api/v1/occasions/{occasion_id}` | `updateOccasion` | Update occasion | Replaces all fields of the occasion: a field left out is reset to its default. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. | 200, 401, 404, 422 |
-| `DELETE /api/v1/occasions/{occasion_id}` | `deleteOccasion` | Delete occasion | Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+| `PUT /api/v1/occasions/{occasion_id}` | `updateOccasion` | Update occasion | Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person. | 200, 401, 404, 409, 422 |
+| `DELETE /api/v1/occasions/{occasion_id}` | `deleteOccasion` | Delete occasion | Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person. | 204, 401, 404, 409, 422 |
 
 ## people
 
@@ -47,7 +59,7 @@ People the account gives gifts to (F-02). Every account sees only its own people
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
 | `GET /api/v1/people` | `listPeople` | List people | Returns the people of the current account, sorted by name (case-insensitive), one page at a time. `total` counts all people of the account. | 200, 401, 422 |
-| `POST /api/v1/people` | `createPerson` | Create person | Creates a person for the current account. Only the name is required; empty optional fields are stored as null. | 201, 401, 422 |
+| `POST /api/v1/people` | `createPerson` | Create person | Creates a person for the current account. Only the name is required; empty optional fields are stored as null. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. | 201, 401, 422 |
 | `GET /api/v1/people/{person_id}` | `getPerson` | Show person | Returns one person of the current account. A person of another account returns 404, like a missing one. | 200, 401, 404, 422 |
-| `PUT /api/v1/people/{person_id}` | `updatePerson` | Update person | Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. | 200, 401, 404, 422 |
-| `DELETE /api/v1/people/{person_id}` | `deletePerson` | Delete person | Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+| `PUT /api/v1/people/{person_id}` | `updatePerson` | Update person | Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. | 200, 401, 404, 422 |
+| `DELETE /api/v1/people/{person_id}` | `deletePerson` | Delete person | Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one. | 204, 401, 404, 422 |

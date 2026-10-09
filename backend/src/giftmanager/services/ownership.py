@@ -4,6 +4,7 @@ No HTTP in here. Rules: backend/README.md, section "Mandantentrennung (Q-01)".
 """
 
 import uuid
+from collections.abc import Iterable
 from typing import Protocol
 
 from sqlalchemy import Select, func, select
@@ -43,6 +44,24 @@ async def get_owned[T: Owned](
         raise NotFoundError(f"{model.__name__} not found")
 
     return row
+
+
+async def get_all_owned[T: Owned](
+    session: AsyncSession, model: type[T], owner_id: uuid.UUID, row_ids: Iterable[uuid.UUID]
+) -> list[T]:
+    """Return the owner's rows with these ids, e.g. to link them; a repeated id counts once.
+
+    Raises:
+        NotFoundError: One of the rows does not exist or belongs to another account.
+    """
+    wanted = set(row_ids)
+    if not wanted:
+        return []
+    rows = list(await session.scalars(owned(model, owner_id).where(model.id.in_(wanted))))
+    if len(rows) != len(wanted):
+        raise NotFoundError(f"{model.__name__} not found")
+
+    return rows
 
 
 async def paginate[T](

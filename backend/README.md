@@ -52,11 +52,12 @@ Import-Pfade sind immer absolut: `from giftmanager.core.config import get_settin
 2. Services bekommen nach der Session `owner_id` und lesen kontogebundene Tabellen nur über `services/ownership.py`:
    - `owned(Model, owner_id)` liefert das nach Besitzer gefilterte `SELECT`. Sortierung und weitere Bedingungen hängt der Service an.
    - `get_owned(session, Model, owner_id, id)` liefert den Datensatz oder wirft `NotFoundError`. `update_*` und `delete_*` holen den Datensatz darüber.
+   - `get_all_owned(session, Model, owner_id, ids)` liefert mehrere Datensätze, etwa zum Verknüpfen, oder wirft `NotFoundError`, sobald eine ID fehlt oder einem anderen Konto gehört. Doppelte IDs zählen einmal.
    - `paginate(session, stmt, limit=…, offset=…)` liefert Seite und Gesamtzahl aus demselben Statement. So kann die Zählung den Besitzerfilter nicht verlieren.
 
    Nie `session.get(Model, id)` und kein `select(Model)` ohne `owned()`. Das Modell muss `id` und ein nicht-nullbares `owner_id` haben (Protocol `Owned`), sonst lehnt Pyright den Aufruf ab.
 3. Fremde IDs liefern `NotFoundError` (404), nicht 403. Ein 403 würde verraten, dass die ID in einem anderen Konto existiert ([RFC 9110, 15.5.4](https://www.rfc-editor.org/rfc/rfc9110#section-15.5.4), [OWASP API1:2023](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/)). `get_owned` unterscheidet „gibt es nicht“ und „gehört jemand anderem“ deshalb nicht.
-4. Beim Verknüpfen zweier Datensätze prüft der Service, dass beide demselben Konto gehören. Systemweite Anlasstypen (`owner_id IS NULL`) sind ausgenommen: Sie passen nicht zu `Owned`, `services/occasion.py` filtert sie mit `_visible_types()` und nutzt nur `paginate()`.
+4. Beim Verknüpfen zweier Datensätze prüft der Service, dass beide demselben Konto gehören: Er holt die verknüpften Datensätze mit `get_all_owned`, bevor er etwas ändert (Beispiel: `services/gift.py`). Verknüpfungstabellen wie `gift_person` haben kein eigenes `owner_id`. Systemweite Anlasstypen (`owner_id IS NULL`) sind ausgenommen: Sie passen nicht zu `Owned`, `services/occasion.py` filtert sie mit `_visible_types()` und nutzt nur `paginate()`.
 5. Zu jeder Ressource gehört ein Test „Nutzer B greift auf Ressource von Nutzer A zu → 404“ mit `assert_invisible_to_other_account` aus `tests/ownership.py`, parametrisiert mit `ITEM_METHODS`. So ist jeder Endpunkt ein eigener Testfall (QZ-06). Der Helfer prüft 404 für die Methode, dass die Liste des fremden Kontos den Datensatz weder zeigt noch mitzählt und dass er danach unverändert ist. `replacement` muss ein gültiger PUT-Body sein, sonst antwortet die Validierung mit 422, bevor der Besitzer geprüft wird. Ohne diesen Test ist der Endpoint nicht fertig.
 
 Neue Ressource, am Beispiel `Person`:

@@ -14,6 +14,10 @@ from giftmanager.services import person as person_service
 router = APIRouter(prefix="/people", tags=["people"])
 
 _NOT_FOUND_NOTE = " A person of another account returns 404, like a missing one."
+_BIRTHDAY_NOTE = (
+    " The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`:"
+    " it is created, updated or deleted with it."
+)
 
 
 @router.get(
@@ -45,7 +49,7 @@ async def list_people(
     operation_id="createPerson",
     summary="Create person",
     description="Creates a person for the current account. Only the name is required; "
-    "empty optional fields are stored as null.",
+    "empty optional fields are stored as null." + _BIRTHDAY_NOTE,
     responses=problem_responses(401),
 )
 async def create_person(body: PersonIn, user: CurrentUser, session: SessionDep) -> PersonOut:
@@ -72,7 +76,7 @@ async def get_person(person_id: uuid.UUID, user: CurrentUser, session: SessionDe
     operation_id="updatePerson",
     summary="Update person",
     description="Replaces all fields of the person: a field left out is reset to null. "
-    "The frontend sends the whole form." + _NOT_FOUND_NOTE,
+    "The frontend sends the whole form." + _NOT_FOUND_NOTE + _BIRTHDAY_NOTE,
     responses=problem_responses(401, 404),
 )
 async def update_person(
@@ -88,7 +92,8 @@ async def update_person(
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="deletePerson",
     summary="Delete person",
-    description="Deletes the person. Cannot be undone." + _NOT_FOUND_NOTE,
+    description="Deletes the person and their birthday occasion. Cannot be undone."
+    + _NOT_FOUND_NOTE,
     responses=problem_responses(401, 404),
 )
 async def delete_person(person_id: uuid.UUID, user: CurrentUser, session: SessionDep) -> None:

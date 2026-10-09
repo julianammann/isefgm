@@ -37,7 +37,8 @@ class NotFoundError(DomainError):
 
 
 class ConflictError(DomainError):
-    """A uniqueness rule is violated, e.g. an e-mail address is already registered."""
+    """The request conflicts with the current state, e.g. an e-mail address is already
+    registered or a derived birthday occasion is edited directly."""
 
     status_code = 409
     title = "Conflict"

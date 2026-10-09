@@ -1,6 +1,298 @@
 {
   "components": {
     "schemas": {
+      "GiftCategory": {
+        "description": "Kind of gift; the aggregated feature for suggestions (F-16).",
+        "enum": [
+          "books",
+          "games",
+          "experience",
+          "clothing",
+          "tech",
+          "food",
+          "home",
+          "voucher",
+          "other"
+        ],
+        "title": "GiftCategory",
+        "type": "string"
+      },
+      "GiftIn": {
+        "description": "Data of a gift idea; used for create and for full update (PUT).",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/GiftCategory",
+            "default": "other",
+            "description": "Kind of gift, used for suggestions (F-16). `other` when not chosen.",
+            "examples": [
+              "tech"
+            ]
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 4217 code of the price range currency, three capital letters. EUR when a price is given without one; not stored without a price.",
+            "examples": [
+              "EUR"
+            ],
+            "title": "Currency"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text description, up to 2000 characters. Empty means not set.",
+            "examples": [
+              "Technik, f\u00fcr IT-Begeisterte"
+            ],
+            "title": "Description"
+          },
+          "occasion_ids": {
+            "description": "IDs of the account's occasions the idea is meant for, up to 100. Replaces the current links; empty or left out means none.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Occasion Ids",
+            "type": "array"
+          },
+          "person_ids": {
+            "description": "IDs of the account's people the idea is meant for (possible recipients), up to 100. Replaces the current links; empty or left out means none.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Person Ids",
+            "type": "array"
+          },
+          "price_from": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,8}|(?=[\\d.]{1,11}0*$)\\d{0,8}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lower end of the price range in `currency`, at most 2 decimal places.",
+            "examples": [
+              "10.00"
+            ],
+            "title": "Price From"
+          },
+          "price_to": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,8}|(?=[\\d.]{1,11}0*$)\\d{0,8}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Upper end of the price range in `currency`, at most 2 decimal places. Must not be below `price_from`.",
+            "examples": [
+              "100.00"
+            ],
+            "title": "Price To"
+          },
+          "title": {
+            "description": "Title, 1 to 200 characters. The only required field.",
+            "examples": [
+              "Raspberry Pi"
+            ],
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "GiftIn",
+        "type": "object"
+      },
+      "GiftOut": {
+        "description": "A gift idea as the frontend sees it.",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/GiftCategory",
+            "description": "Kind of gift.",
+            "examples": [
+              "tech"
+            ]
+          },
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-04T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 4217 currency code, or null when no price is set.",
+            "examples": [
+              "EUR"
+            ],
+            "title": "Currency"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text description, or null.",
+            "examples": [
+              "Technik, f\u00fcr IT-Begeisterte"
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "description": "Gift idea ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occasions": {
+            "description": "Occasions the idea is meant for, sorted by date.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+                  "name": "Weihnachten"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedOccasion"
+            },
+            "title": "Occasions",
+            "type": "array"
+          },
+          "people": {
+            "description": "People the idea is meant for (possible recipients), sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "price_from": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lower end of the price range in `currency`, as a string, or null.",
+            "examples": [
+              "10.00"
+            ],
+            "title": "Price From"
+          },
+          "price_to": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Upper end of the price range in `currency`, as a string, or null.",
+            "examples": [
+              "100.00"
+            ],
+            "title": "Price To"
+          },
+          "title": {
+            "description": "Title.",
+            "examples": [
+              "Raspberry Pi"
+            ],
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "price_from",
+          "price_to",
+          "currency",
+          "category",
+          "people",
+          "occasions",
+          "created_at"
+        ],
+        "title": "GiftOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -35,6 +327,62 @@
           "database"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "LinkedOccasion": {
+        "description": "An occasion a gift idea is linked to.",
+        "properties": {
+          "id": {
+            "description": "Occasion ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Title.",
+            "examples": [
+              "Weihnachten"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "LinkedOccasion",
+        "type": "object"
+      },
+      "LinkedPerson": {
+        "description": "A person a gift idea or an occasion is linked to.",
+        "properties": {
+          "id": {
+            "description": "Person ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name.",
+            "examples": [
+              "Lena"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "LinkedPerson",
         "type": "object"
       },
       "LoginIn": {
@@ -99,11 +447,26 @@
                 "type": "null"
               }
             ],
-            "description": "Occasion type, a system-wide one or one of the account. Null for an own occasion without a type.",
+            "description": "Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag: birthday occasions come from a person's birthday.",
             "examples": [
               null
             ],
             "title": "Occasion Type Id"
+          },
+          "person_ids": {
+            "description": "IDs of the account's people the occasion concerns, up to 100. Replaces the current links; empty or left out means none.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Person Ids",
+            "type": "array"
           },
           "recurrence": {
             "$ref": "#/components/schemas/Recurrence",
@@ -166,6 +529,22 @@
             ],
             "title": "Occasion Type Id"
           },
+          "people": {
+            "description": "People the occasion concerns, sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
           "recurrence": {
             "$ref": "#/components/schemas/Recurrence",
             "description": "`none` or `yearly`.",
@@ -179,7 +558,8 @@
           "name",
           "date",
           "recurrence",
-          "occasion_type_id"
+          "occasion_type_id",
+          "people"
         ],
         "title": "OccasionOut",
         "type": "object"
@@ -227,6 +607,37 @@
           "system"
         ],
         "title": "OccasionTypeOut",
+        "type": "object"
+      },
+      "Page_GiftOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GiftOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[GiftOut]",
         "type": "object"
       },
       "Page_OccasionOut_": {
@@ -911,6 +1322,324 @@
         ]
       }
     },
+    "/api/v1/gifts": {
+      "get": {
+        "description": "Returns the gift ideas of the current account, newest first, one page at a time. `total` counts all gift ideas of the account.",
+        "operationId": "listGifts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_GiftOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List gift ideas",
+        "tags": [
+          "gifts"
+        ]
+      },
+      "post": {
+        "description": "Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved.",
+        "operationId": "createGift",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create gift idea",
+        "tags": [
+          "gifts"
+        ]
+      }
+    },
+    "/api/v1/gifts/{gift_id}": {
+      "delete": {
+        "description": "Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one.",
+        "operationId": "deleteGift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gift_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gift Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete gift idea",
+        "tags": [
+          "gifts"
+        ]
+      },
+      "get": {
+        "description": "Returns one gift idea of the current account. A gift idea of another account returns 404, like a missing one.",
+        "operationId": "getGift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gift_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gift Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show gift idea",
+        "tags": [
+          "gifts"
+        ]
+      },
+      "put": {
+        "description": "Replaces all fields of the gift idea, including its links: a field left out is reset to null, its default or an empty list. The frontend sends the whole form. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gift idea of another account returns 404, like a missing one.",
+        "operationId": "updateGift",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gift_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gift Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update gift idea",
+        "tags": [
+          "gifts"
+        ]
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "description": "Answers as soon as the process accepts requests; does not touch the database. Target of the container healthcheck.",
@@ -1153,7 +1882,7 @@
         ]
       },
       "post": {
-        "description": "Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.",
+        "description": "Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.",
         "operationId": "createOccasion",
         "requestBody": {
           "content": {
@@ -1215,7 +1944,7 @@
     },
     "/api/v1/occasions/{occasion_id}": {
       "delete": {
-        "description": "Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one.",
+        "description": "Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person.",
         "operationId": "deleteOccasion",
         "parameters": [
           {
@@ -1252,6 +1981,16 @@
               }
             },
             "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
           },
           "422": {
             "content": {
@@ -1332,7 +2071,7 @@
         ]
       },
       "put": {
-        "description": "Replaces all fields of the occasion: a field left out is reset to its default. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404.",
+        "description": "Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person.",
         "operationId": "updateOccasion",
         "parameters": [
           {
@@ -1386,6 +2125,16 @@
               }
             },
             "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
           },
           "422": {
             "content": {
@@ -1471,7 +2220,7 @@
         ]
       },
       "post": {
-        "description": "Creates a person for the current account. Only the name is required; empty optional fields are stored as null.",
+        "description": "Creates a person for the current account. Only the name is required; empty optional fields are stored as null. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.",
         "operationId": "createPerson",
         "requestBody": {
           "content": {
@@ -1523,7 +2272,7 @@
     },
     "/api/v1/people/{person_id}": {
       "delete": {
-        "description": "Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.",
+        "description": "Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one.",
         "operationId": "deletePerson",
         "parameters": [
           {
@@ -1640,7 +2389,7 @@
         ]
       },
       "put": {
-        "description": "Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one.",
+        "description": "Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.",
         "operationId": "updatePerson",
         "parameters": [
           {

@@ -17,6 +17,22 @@ User account (F-01). Every domain table belongs to exactly one account via owner
 | `status` | VARCHAR(16) | no | `active` or `deleted`. `deleted` only marks an account while it is being deleted. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## gift
+
+Gift idea of an account (F-05): the reusable content of an idea. Visible only to its owner (Q-01); deleted together with the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | no | Account the gift idea belongs to. Deleted together with the account. (FK → user_account.id) |
+| `title` | VARCHAR(200) | no | Short title, the only required field for quick capture. |
+| `description` | TEXT | yes | Free-text description. Optional. |
+| `price_from` | NUMERIC(10, 2) | yes | Lower end of the price range in `currency`. Optional. |
+| `price_to` | NUMERIC(10, 2) | yes | Upper end of the price range in `currency`. Optional. |
+| `currency` | VARCHAR(3) | yes | ISO 4217 code of the price range currency, e.g. EUR. Set exactly when a price is set. |
+| `category` | VARCHAR(16) | no | Kind of gift, feature for suggestions (F-16). `other` when not chosen. |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
 ## occasion_type
 
 Kind of occasion (F-03). owner_id NULL marks the system-wide types Geburtstag and Weihnachten, created by a migration and read-only for users.
@@ -55,6 +71,15 @@ Server-side session. One cookie token maps to exactly one row; logging out delet
 | `last_seen_at` | TIMESTAMP WITH TIME ZONE | no | Last use (UTC), updated at most every five minutes. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## gift_person
+
+Possible recipients of a gift idea (F-04), n:m. Deleting the idea or the person removes only the link. Actual recipients belong to a gifting (F-06).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
+| `person_id` | UUID | no | Possible recipient. Deleting the person deletes the link. (PK) (FK → person.id) (Index) |
+
 ## occasion
 
 Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete year is stored where the occasion is used. Visible only to its owner (Q-01).
@@ -67,3 +92,21 @@ Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete
 | `name` | VARCHAR(100) | no | Title, e.g. Hochzeitstag. |
 | `date` | DATE | no | Date as a plain calendar date (Q-08). First occurrence for yearly ones. |
 | `recurrence` | VARCHAR(16) | no | `none` (once) or `yearly` (every year on the same day). |
+
+## gift_occasion
+
+Possible occasions of a gift idea (F-04), n:m. Deleting the idea or the occasion removes only the link. The concrete occasion belongs to a gifting (F-06).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
+| `occasion_id` | UUID | no | Possible occasion. Deleting the occasion deletes the link. (PK) (FK → occasion.id) (Index) |
+
+## person_occasion
+
+People an occasion concerns (F-04), n:m. Deleting the person or the occasion removes only the link.
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `person_id` | UUID | no | Person the occasion concerns. Deleting the person deletes the link. (PK) (FK → person.id) |
+| `occasion_id` | UUID | no | Occasion. Deleting it deletes the link. (PK) (FK → occasion.id) (Index) |

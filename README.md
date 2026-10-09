@@ -66,7 +66,7 @@ Workflows laufen nur für die geänderte Komponente:
 
 | Workflow | Prüft |
 |---|---|
-| `backend.yml` | Ruff, Pyright (strict), Alembic-Migrationen gegen Postgres, pytest, pip-audit |
+| `backend.yml` | Ruff, Pyright (strict), Alembic-Migrationen gegen Postgres, pytest mit mindestens 70 % Zeilenabdeckung (HTML-Bericht als Artefakt `backend-coverage`), pip-audit |
 | `frontend.yml` | ESLint, tsc, Vitest, Build, Aktualität der generierten API-Typen |
 | `docker.yml` | Image-Build und Push nach GHCR bei `main` und Tags `v*` |
 | `gitleaks.yml` | Secret-Scan über die gesamte Historie |
