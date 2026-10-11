@@ -1,68 +1,108 @@
 /**
  * Persons data access (F-02).
  *
- * Temporary in-memory mock until the backend endpoints (#20) exist. All functions already
- * take the API client, so call sites stay unchanged when switching to `locals.api`.
+ * Wraps the people endpoints of the backend (`/api/v1/people`). All functions take the
+ * typed API client from `locals.api` and return a `Result`, so routes never deal with
+ * HTTP details themselves.
  *
  * @module
  */
 
-// TODO(#20): replace with generated types
-// import type { components } from '$lib/api/schema';
-// export type Person = components['schemas']['PersonRead'];
-// export type PersonInput = components['schemas']['PersonCreate'];
-export type Person = {
-  id: string;
-  name: string;
-  birthday: string | null;
-  notes: string | null;
-};
-export type PersonInput = Omit<Person, 'id'>;
+import type { components } from '$lib/api/schema';
+
+export type Person = components['schemas']['PersonOut'];
+export type PersonInput = components['schemas']['PersonIn'];
 
 type Api = App.Locals['api'];
 
+type Failure = { ok: false; status: number; message: string };
+
 /** Outcome of a data access call; on failure carries the HTTP status and a display message. */
-export type Result<T> = { ok: true; data: T } | { ok: false; status: number; message: string };
+export type Result<T> = { ok: true; data: T } | Failure;
 
-// TODO(#20): remove mock store, call `api` instead
-let store: Person[] = [
-  { id: '1', name: 'Anna Beispiel', birthday: '1990-04-12', notes: null },
-  { id: '2', name: 'Ben Muster', birthday: null, notes: 'mag Bücher' }
-];
+/** Display messages per HTTP status; the backend's own `detail` texts are English and not shown. */
+const messages: Record<number, string> = {
+  401: 'Sitzung abgelaufen. Bitte erneut anmelden.',
+  404: 'Person nicht gefunden.',
+  422: 'Die Eingaben sind ungültig.',
+  502: 'Das Backend ist nicht erreichbar.'
+};
 
-const notFound = { ok: false, status: 404, message: 'Person nicht gefunden.' } as const;
+function fail(status: number): Failure {
+  return {
+    ok: false,
+    status,
+    message: messages[status] ?? 'Unerwarteter Fehler. Bitte später erneut versuchen.'
+  };
+}
 
-/** Returns all persons of the current account. */
-// export async function listPersons(_api: Api): Promise<Result<Person[]>> {
-//   return { ok: true, data: structuredClone(store) };
-// }
+/** Awaits an API call and turns its response into a `Result`; network errors become 502. */
+async function send<T>(request: Promise<{ data?: T; response: Response }>): Promise<Result<T>> {
+  try {
+    const { data, response } = await request;
+    if (!response.ok) return fail(response.status);
+    if (data === undefined) {
+      return {
+        ok: false,
+        status: 502,
+        message: 'Das Backend hat eine unerwartete Antwort geliefert.'
+      };
+    }
+    return { ok: true, data };
+  } catch (cause) {
+    if (cause instanceof TypeError) return fail(502);
+    throw cause;
+  }
+}
+
+/** Returns all persons of the current account, sorted by name; reads every page of the list. */
 export async function listPersons(api: Api): Promise<Result<Person[]>> {
-  void api;
-  return { ok: true, data: structuredClone(store) };
+  const persons: Person[] = [];
+  for (;;) {
+    const page = await send(
+      api.GET('/api/v1/people', { params: { query: { offset: persons.length } } })
+    );
+    if (!page.ok) return page;
+    persons.push(...page.data.items);
+    if (page.data.items.length === 0 || persons.length >= page.data.total) {
+      return { ok: true, data: persons };
+    }
+  }
+}
+
+/** Returns one person; 404 if the id is unknown or belongs to another account. */
+export async function getPerson(api: Api, id: string): Promise<Result<Person>> {
+  return send(api.GET('/api/v1/people/{person_id}', { params: { path: { person_id: id } } }));
 }
 
 /** Creates a person and returns it with its new id. */
-export async function createPerson(_api: Api, input: PersonInput): Promise<Result<Person>> {
-  const person = { id: crypto.randomUUID(), ...input };
-  store.push(person);
-  return { ok: true, data: structuredClone(person) };
+export async function createPerson(api: Api, input: PersonInput): Promise<Result<Person>> {
+  return send(api.POST('/api/v1/people', { body: input }));
 }
 
-/** Replaces the data of an existing person; 404 if the id is unknown. */
+/**
+ * Replaces all data of an existing person; 404 if the id is unknown.
+ * Fields left out of `input` are reset to null by the backend.
+ */
 export async function updatePerson(
-  _api: Api,
+  api: Api,
   id: string,
   input: PersonInput
 ): Promise<Result<Person>> {
-  const index = store.findIndex((p) => p.id === id);
-  if (index === -1) return notFound;
-  store[index] = { id, ...input };
-  return { ok: true, data: structuredClone(store[index]) };
+  return send(
+    api.PUT('/api/v1/people/{person_id}', { params: { path: { person_id: id } }, body: input })
+  );
 }
 
-/** Deletes a person; 404 if the id is unknown. */
-export async function deletePerson(_api: Api, id: string): Promise<Result<null>> {
-  const before = store.length;
-  store = store.filter((p) => p.id !== id);
-  return store.length < before ? { ok: true, data: null } : notFound;
+/** Deletes a person and their birthday occasion; 404 if the id is unknown. */
+export async function deletePerson(api: Api, id: string): Promise<Result<null>> {
+  try {
+    const { response } = await api.DELETE('/api/v1/people/{person_id}', {
+      params: { path: { person_id: id } }
+    });
+    return response.ok ? { ok: true, data: null } : fail(response.status);
+  } catch (cause) {
+    if (cause instanceof TypeError) return fail(502);
+    throw cause;
+  }
 }

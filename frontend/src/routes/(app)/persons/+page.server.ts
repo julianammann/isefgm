@@ -16,10 +16,27 @@ import {
 
 type FieldErrors = Partial<Record<keyof PersonInput, string>>;
 
+/**
+ * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,
+ * so the page cannot be made to show arbitrary text and the `Location` header stays ASCII.
+ */
+const successMessages = {
+  created: 'Person angelegt!',
+  updated: 'Änderungen gespeichert!',
+  deleted: 'Person gelöscht!'
+} as const;
+
+type SuccessKey = keyof typeof successMessages;
+
+function isSuccessKey(key: string | null): key is SuccessKey {
+  return key !== null && Object.prototype.hasOwnProperty.call(successMessages, key);
+}
+
 /** Reads and validates the person form. The backend remains the authority on validation. */
 function parseForm(form: FormData): { values: PersonInput; errors: FieldErrors } {
   const name = String(form.get('name') ?? '').trim();
   const birthday = String(form.get('birthday') ?? '').trim() || null;
+  const relationship = String(form.get('relationship') ?? '').trim() || null;
   const notes = String(form.get('notes') ?? '').trim() || null;
   const errors: FieldErrors = {};
 
@@ -28,10 +45,16 @@ function parseForm(form: FormData): { values: PersonInput; errors: FieldErrors }
   if (birthday && Number.isNaN(Date.parse(birthday))) {
     errors.birthday = 'Bitte gib ein gültiges Datum an.';
   }
-  return { values: { name, birthday, notes }, errors };
+  if (relationship && relationship.length > 100) {
+    errors.relationship = 'Die Beziehung darf höchstens 100 Zeichen lang sein.';
+  }
+  if (notes && notes.length > 2000) {
+    errors.notes = 'Notizen dürfen höchstens 2000 Zeichen lang sein.';
+  }
+  return { values: { name, birthday, relationship, notes }, errors };
 }
 
-/** Loads all persons; `?edit=<id>` preselects one for the edit form. */
+/** Loads all persons; `?edit=<id>` returns one for the edit form. */
 export const load: PageServerLoad = async ({ locals, url }) => {
   const result = await listPersons(locals.api);
   if (!result.ok) error(result.status, result.message);
@@ -40,7 +63,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   return {
     persons: result.data,
     editing: result.data.find((p) => p.id === editId) ?? null,
-    success
+    success: isSuccessKey(success) ? successMessages[success] : null
   };
 };
 
@@ -55,7 +78,7 @@ export const actions: Actions = {
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await createPerson(locals.api, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
-    throw redirect(303, '/persons?success=Person+angelegt!');
+    throw redirect(303, '/persons?success=created');
   },
   update: async ({ request, locals }) => {
     const form = await request.formData();
@@ -64,12 +87,12 @@ export const actions: Actions = {
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await updatePerson(locals.api, id, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
-    throw redirect(303, '/persons?success=Änderungen+gespeichert!');
+    throw redirect(303, '/persons?success=updated');
   },
   delete: async ({ request, locals }) => {
     const id = String((await request.formData()).get('id') ?? '');
     const result = await deletePerson(locals.api, id);
     if (!result.ok) return fail(result.status, { deleteMessage: result.message });
-    throw redirect(303, '/persons?success=Person+gelöscht!');
+    throw redirect(303, '/persons?success=deleted');
   }
 };
