@@ -4,6 +4,7 @@ lefthook = "2.1.14"
 node = "26.9.0"
 pnpm = "12.5.1"
 python = "3.14"
+trivy = "0.75.0"
 uv = "0.12.9"
 
 [env]
