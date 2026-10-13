@@ -7,11 +7,13 @@ on:
       - "backend/**"
       - "frontend/**"
       - ".github/workflows/docker.yml"
+      - ".trivyignore"
   pull_request:
     paths:
       - "backend/**"
       - "frontend/**"
       - ".github/workflows/docker.yml"
+      - ".trivyignore"
 
 concurrency:
   group: docker-${{ github.ref }}
@@ -37,7 +39,7 @@ jobs:
           # Part of the cache key, so a cached binary always matches. Dependabot does
           # not bump this input; raise it by hand (#92).
           version: 2026.10.3
-          install_args: uv
+          install_args: uv trivy
       - run: echo "UV_VERSION=$(mise current uv)" >> "$GITHUB_ENV"
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -55,12 +57,16 @@ jobs:
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ${{ matrix.component }}
-          push: false
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
           build-args: UV_VERSION=${{ env.UV_VERSION }}
+
+      # QZ-06: high and critical findings fail the job. Exceptions go into
+      # .trivyignore, each with the issue that justifies it.
+      - run: trivy image --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ steps.meta.outputs.version }}
 
   publish:
     if: github.event_name == 'push'
@@ -78,7 +84,7 @@ jobs:
           # Part of the cache key, so a cached binary always matches. Dependabot does
           # not bump this input; raise it by hand (#92).
           version: 2026.10.3
-          install_args: uv
+          install_args: uv trivy
       - run: echo "UV_VERSION=$(mise current uv)" >> "$GITHUB_ENV"
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -100,6 +106,21 @@ jobs:
             type=semver,pattern={{version}}
             type=sha
             type=sha,format=long
+      # Scan before pushing so a blocked image never reaches the registry.
+      # The push step below reuses the build cache.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.component }}
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+          build-args: UV_VERSION=${{ env.UV_VERSION }}
+      # QZ-06: high and critical findings fail the job. Exceptions go into
+      # .trivyignore, each with the issue that justifies it.
+      - run: trivy image --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ steps.meta.outputs.version }}
+
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ${{ matrix.component }}

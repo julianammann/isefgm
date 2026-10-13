@@ -1,0 +1,4 @@
+# Accepted image-scan findings (QZ-06). One CVE ID per line, each preceded by
+# a comment linking the issue with risk, remediation target and approval, e.g.
+#   # #123: no fix upstream yet, not reachable from the app; approved by Y. Wu-Hanke
+#   CVE-2026-12345
