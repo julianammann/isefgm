@@ -18,6 +18,10 @@ _BIRTHDAY_NOTE = (
     " The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`:"
     " it is created, updated or deleted with it."
 )
+_BIRTHDAY_GIFTING_NOTE = (
+    " Clearing the birthday or deleting the person returns 409 if their birthday "
+    "occasion is used by a gifting."
+)
 
 
 @router.get(
@@ -76,7 +80,10 @@ async def get_person(person_id: uuid.UUID, user: CurrentUser, session: SessionDe
     operation_id="updatePerson",
     summary="Update person",
     description="Replaces all fields of the person: a field left out is reset to null. "
-    "The frontend sends the whole form." + _NOT_FOUND_NOTE + _BIRTHDAY_NOTE,
+    "The frontend sends the whole form."
+    + _NOT_FOUND_NOTE
+    + _BIRTHDAY_NOTE
+    + _BIRTHDAY_GIFTING_NOTE,
     responses=problem_responses(401, 404),
 )
 async def update_person(
@@ -93,7 +100,8 @@ async def update_person(
     operation_id="deletePerson",
     summary="Delete person",
     description="Deletes the person and their birthday occasion. Cannot be undone."
-    + _NOT_FOUND_NOTE,
+    + _NOT_FOUND_NOTE
+    + _BIRTHDAY_GIFTING_NOTE,
     responses=problem_responses(401, 404),
 )
 async def delete_person(person_id: uuid.UUID, user: CurrentUser, session: SessionDep) -> None:

@@ -36,6 +36,10 @@ run = "uv run alembic check"
 description = "mise run create-user -- --email anna@example.org --display-name Anna"
 run = "uv run python -m giftmanager.create_user"
 
+[tasks.seed]
+description = "recreate the test accounts with the synthetic test dataset (QZ-02)"
+run = "uv run python -m giftmanager.seed"
+
 [tasks.openapi]
 run = "uv run python -m giftmanager.export_openapi > ../frontend/openapi.json"
 
