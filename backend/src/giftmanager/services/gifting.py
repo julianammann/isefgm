@@ -8,24 +8,28 @@ own queries through gift.owner_id. `paginate()` and `get_all_owned()` still appl
 import uuid
 from datetime import date
 
+from sqlalchemy import Select, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Gifting, GiftingStatus
+from giftmanager.core.errors import NotFoundError
+from giftmanager.models import Gift, Gifting, GiftingStatus, Occasion, Person
+from giftmanager.services.ownership import get_all_owned, get_owned, paginate
 
-# TODO(F-06): Owner scope, used by every read below (README: never select(Gifting) unscoped):
-#   def _owned_giftings(owner_id) -> Select[tuple[Gifting]]:
-#       return select(Gifting).join(Gifting.gift).where(Gift.owner_id == owner_id)
-#   Add it together with its first caller; pyright strict flags an unused private function.
+
+def _owned_giftings(owner_id: uuid.UUID) -> Select[tuple[Gifting]]:
+    """Select giftings whose gift idea belongs to the given account."""
+    return select(Gifting).join(Gifting.gift).where(Gift.owner_id == owner_id)
 
 
 async def list_giftings(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Gifting], int]:
     """Return one page of the owner's giftings, newest first, and the total count."""
-    # TODO(F-06): paginate(session, _owned_giftings(owner_id).order_by(...), ...).
-    #   Order by created_at desc, then id desc: giftings saved in one transaction share
-    #   created_at, the UUIDv7 breaks the tie (see list_gifts).
-    raise NotImplementedError
+    statement = _owned_giftings(owner_id).order_by(
+        Gifting.created_at.desc(),
+        Gifting.id.desc(),
+    )
+    return await paginate(session, statement, limit=limit, offset=offset)
 
 
 async def get_gifting(session: AsyncSession, owner_id: uuid.UUID, gifting_id: uuid.UUID) -> Gifting:
@@ -34,10 +38,10 @@ async def get_gifting(session: AsyncSession, owner_id: uuid.UUID, gifting_id: uu
     Raises:
         NotFoundError: The gifting does not exist or belongs to another account.
     """
-    # TODO(F-06): session.scalar(_owned_giftings(owner_id).where(Gifting.id == gifting_id));
-    #   None -> raise NotFoundError("Gifting not found"). Same message for "missing" and
-    #   "foreign" (Q-01, README rule 3).
-    raise NotImplementedError
+    gifting = await session.scalar(_owned_giftings(owner_id).where(Gifting.id == gifting_id))
+    if gifting is None:
+        raise NotFoundError("Gifting not found")
+    return gifting
 
 
 async def create_gifting(
@@ -57,17 +61,25 @@ async def create_gifting(
         NotFoundError: The idea, a person or the occasion does not exist or belongs to
             another account.
     """
-    # TODO(F-06): Three steps.
-    #   1. Resolve everything the gifting refers to, before adding anything:
-    #      gift = get_owned(session, Gift, owner_id, gift_id)
-    #      people = get_all_owned(session, Person, owner_id, person_ids)
-    #      occasion = get_owned(session, Occasion, owner_id, occasion_id) if one is given
-    #   2. Gifting(gift=gift, status=..., people=people, occasion=occasion, ...),
-    #      session.add, session.flush().
-    #   3. session.refresh(gifting, ["people"]) so the recipients come back in the
-    #      relationship's order (see _reload_links in services/gift.py).
-    #   The completeness of `given` is already checked by GiftingIn.
-    raise NotImplementedError
+    gift = await get_owned(session, Gift, owner_id, gift_id)
+    people = await get_all_owned(session, Person, owner_id, person_ids)
+
+    occasion = None
+    if occasion_id is not None:
+        occasion = await get_owned(session, Occasion, owner_id, occasion_id)
+
+    gifting = Gifting(
+        gift=gift,
+        status=status,
+        people=people,
+        occasion=occasion,
+        occasion_date=occasion_date,
+        given_on=given_on,
+    )
+    session.add(gifting)
+    await session.flush()
+    await session.refresh(gifting, ["people"])
+    return gifting
 
 
 async def update_gifting(
@@ -88,29 +100,46 @@ async def update_gifting(
         NotFoundError: The gifting, the idea, a person or the occasion does not exist or
             belongs to another account.
     """
-    # TODO(F-06): get_gifting first, then resolve gift, people and occasion like in
-    #   create_gifting, and only then assign the fields. A foreign or unknown id must leave
-    #   the gifting untouched (test_records_of_another_account_cannot_be_used[PUT-...]).
-    #   flush, then refresh people.
-    raise NotImplementedError
+    gifting = await get_gifting(session, owner_id, gifting_id)
+    gift = await get_owned(session, Gift, owner_id, gift_id)
+    people = await get_all_owned(session, Person, owner_id, person_ids)
+
+    occasion = None
+    if occasion_id is not None:
+        occasion = await get_owned(session, Occasion, owner_id, occasion_id)
+
+    gifting.gift = gift
+    gifting.status = status
+    gifting.people = people
+    gifting.occasion = occasion
+    gifting.occasion_date = occasion_date
+    gifting.given_on = given_on
+
+    await session.flush()
+    await session.refresh(gifting, ["people"])
+    return gifting
 
 
 async def delete_gifting(session: AsyncSession, owner_id: uuid.UUID, gifting_id: uuid.UUID) -> None:
     """Delete the owner's gifting; the idea, people and occasion stay."""
-    # TODO(F-06): get_gifting, session.delete, session.flush (like delete_gift).
-    raise NotImplementedError
+    gifting = await get_gifting(session, owner_id, gifting_id)
+    await session.delete(gifting)
+    await session.flush()
 
 
 async def is_gift_in_use(session: AsyncSession, gift_id: uuid.UUID) -> bool:
     """Return whether any gifting uses the gift idea."""
-    # TODO(F-06): bool(await session.scalar(select(exists().where(Gifting.gift_id == ...))))
-    #   No owner filter needed: the caller already holds the owner's gift.
-    #   Used by delete_gift (services/gift.py) for the 409.
-    raise NotImplementedError
+
+    # No owner filter needed: the caller already holds the owner's gift.
+    # Used by delete_gift (services/gift.py) for the 409.
+    statement = select(exists().where(Gifting.gift_id == gift_id))
+    return bool(await session.scalar(statement))
 
 
 async def is_occasion_in_use(session: AsyncSession, occasion_id: uuid.UUID) -> bool:
     """Return whether any gifting refers to the occasion."""
-    # TODO(F-06): Like is_gift_in_use, on Gifting.occasion_id. Used by delete_occasion and
-    #   delete_birthday (services/occasion.py) and update_person (services/person.py).
-    raise NotImplementedError
+
+    # Used by delete_occasion and delete_birthday (services/occasion.py)
+    # and update_person (services/person.py).
+    statement = select(exists().where(Gifting.occasion_id == occasion_id))
+    return bool(await session.scalar(statement))

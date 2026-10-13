@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import ConflictError, NotFoundError
 from giftmanager.models import BIRTHDAY_TYPE_ID, Occasion, OccasionType, Person, Recurrence
+from giftmanager.services import gifting as gifting_service
 from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
 
@@ -127,9 +128,8 @@ async def delete_occasion(
 ) -> None:
     """Delete the owner's occasion."""
     occasion = await _get_editable_occasion(session, owner_id, occasion_id)
-    # TODO(F-06): if await gifting_service.is_occasion_in_use(session, occasion.id): raise
-    #   ConflictError(...) -> 409 (test_occasion_with_giftings_cannot_be_deleted). Update the
-    #   delete_occasion endpoint (description, problem_responses 409).
+    if await gifting_service.is_occasion_in_use(session, occasion.id):
+        raise ConflictError("Occasion is used by a gifting")
     await session.delete(occasion)
     await session.flush()
 
@@ -176,6 +176,8 @@ async def delete_birthday(session: AsyncSession, person: Person) -> None:
         #   delete_person, which calls this before deleting the person
         #   (test_birthday_with_giftings_cannot_be_removed[DELETE]). Update the delete_person
         #   endpoint (description, problem_responses 409).
+        if await gifting_service.is_occasion_in_use(session, occasion.id):
+            raise ConflictError("Occasion is used by a gifting")
         await session.delete(occasion)
         await session.flush()
 

@@ -72,12 +72,18 @@ async def update_person(
     #   fields, so check here, before assigning anything
     #   (test_birthday_with_giftings_cannot_be_removed[PUT]). Update the update_person
     #   endpoint (description, problem_responses 409).
+    if birthday is None:
+        await delete_birthday(session, person)
+
     person.name = name
     person.birthday = birthday
     person.relationship = relationship
     person.notes = notes
     await session.flush()
-    await sync_birthday(session, person)
+
+    if birthday is not None:
+        await sync_birthday(session, person)
+
     return person
 
 

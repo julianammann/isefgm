@@ -55,19 +55,28 @@ class GiftingIn(BaseModel):
     @model_validator(mode="after")
     def check_given_complete(self) -> Self:
         """Reject a given gifting without recipients, occasion, occasion date or given date."""
-        # TODO(F-06): If self.status is GIVEN and person_ids is empty or occasion_id,
-        #   occasion_date or given_on is None: raise ValueError(...). A ValueError in a
-        #   model validator becomes 422 with loc ["body"], like check_price_range in
-        #   schemas/gift.py (test_given_gifting_must_be_complete).
+        if self.status is GiftingStatus.GIVEN and (
+            not self.person_ids
+            or self.occasion_id is None
+            or self.occasion_date is None
+            or self.given_on is None
+        ):
+            # A ValueError in a model validator becomes 422 with loc ["body"],
+            # like check_price_range in schemas/gift.py (test_given_gifting_must_be_complete).
+            raise ValueError(
+                "A given gifting needs at least one recipient, an occasion, "
+                "the occasion date and given_on."
+            )
         return self
 
     @model_validator(mode="after")
     def given_on_only_when_given(self) -> Self:
         """Keep `given_on` only for a given gifting."""
-        # TODO(F-06): If self.status is not GIVEN: set self.given_on = None. The form sends
-        #   its date field whatever the status, and going back from `given` must clear the
-        #   date (test_given_on_is_only_stored_when_given,
-        #   test_status_can_go_back_from_given). Same idea as currency_only_with_a_price.
+        if self.status is not GiftingStatus.GIVEN:
+            # The form sends its date field whatever the status, and going back from `given` must clear the date
+            # (test_given_on_is_only_stored_when_given, test_status_can_go_back_from_given).
+            # Same idea as currency_only_with_a_price.
+            self.given_on = None
         return self
 
 
