@@ -220,7 +220,7 @@ export interface paths {
         post?: never;
         /**
          * Delete gift idea
-         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one.
+         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteGift"];
         options?: never;
@@ -352,7 +352,7 @@ export interface paths {
         post?: never;
         /**
          * Delete occasion
-         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person.
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person. An occasion used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteOccasion"];
         options?: never;
@@ -398,13 +398,13 @@ export interface paths {
         get: operations["getPerson"];
         /**
          * Update person
-         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
          */
         put: operations["updatePerson"];
         post?: never;
         /**
          * Delete person
-         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one.
+         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
          */
         delete: operations["deletePerson"];
         options?: never;
@@ -1800,6 +1800,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

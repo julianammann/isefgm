@@ -24,7 +24,7 @@ _TYPE_NOTE = (
     " Geburtstag returns 422: birthday occasions come from a person's birthday."
 )
 _BIRTHDAY_NOTE = " A birthday occasion follows its person and returns 409; edit the person."
-_GIFTING_NOTE = "An occasion used by a gifting cannot be deleted; this returns 409."
+_GIFTING_NOTE = " An occasion used by a gifting cannot be deleted; this returns 409."
 _PEOPLE_NOTE = (
     " `person_ids` links the occasion to people of the account; an ID of another account"
     " returns 404, like a missing one, and nothing is saved."
