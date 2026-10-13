@@ -10,7 +10,9 @@
 
 import type { components } from '$lib/api/schema';
 
+/** Payload for creating or updating a person. */
 export type Person = components['schemas']['PersonOut'];
+/** A person as returned by the API. */
 export type PersonInput = components['schemas']['PersonIn'];
 
 type Api = App.Locals['api'];
