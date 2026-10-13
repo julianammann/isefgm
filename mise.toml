@@ -22,6 +22,10 @@ lefthook install
 [tasks.db]
 run = "docker compose up -d db"
 
+[tasks.seed]
+description = "recreate the test accounts and synthetic test dataset in the compose stack"
+run = "docker compose run --rm api python -m giftmanager.seed"
+
 [tasks.check]
 description = "full project lint, typecheck"
 run = ["mise -C backend run check", "mise -C frontend run check"]

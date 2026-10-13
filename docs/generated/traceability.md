@@ -300,6 +300,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_main.py::test_schema_and_swagger_ui_are_served_only_in_development[production-404]` | passed |
 | Q-03 | `tests/test_security.py::test_argon2_calls_are_bounded_to_fit_the_memory_budget` | passed |
 | Q-03 | `tests/test_security.py::test_password_checks_beyond_the_queue_are_turned_away_at_once` | passed |
+| Q-03 | `tests/test_seed.py::test_rejects_a_weak_password` | passed |
+| Q-04 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-05 | `tests/test_giftings.py::test_list_is_newest_first_and_paginated` | passed |
 | Q-05 | `tests/test_giftings.py::test_list_rejects_oversized_page` | passed |
 | Q-05 | `tests/test_gifts.py::test_list_is_newest_first_and_paginated` | passed |
@@ -307,6 +309,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-05 | `tests/test_occasions.py::test_list_is_sorted_by_date_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_is_sorted_by_name_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_rejects_oversized_page` | passed |
+| Q-05 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-06 | `tests/test_auth.py::test_unknown_route_and_method_use_problem_details` | passed |
 | Q-06 | `tests/test_errors.py::test_unhandled_error_uses_problem_details` | passed |
 | Q-06 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |
