@@ -172,10 +172,6 @@ async def delete_birthday(session: AsyncSession, person: Person) -> None:
     """Delete the person's birthday occasion, if there is one."""
     occasion = await _birthday_of(session, person)
     if occasion is not None:
-        # TODO(F-06): if is_occasion_in_use(...): raise ConflictError(...) -> 409. Covers
-        #   delete_person, which calls this before deleting the person
-        #   (test_birthday_with_giftings_cannot_be_removed[DELETE]). Update the delete_person
-        #   endpoint (description, problem_responses 409).
         if await gifting_service.is_occasion_in_use(session, occasion.id):
             raise ConflictError("Occasion is used by a gifting")
         await session.delete(occasion)
