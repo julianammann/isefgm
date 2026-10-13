@@ -66,12 +66,18 @@ async def update_person(
 ) -> Person:
     """Replace all editable fields of the owner's person; the birthday occasion follows."""
     person = await get_person(session, owner_id, person_id)
+    if birthday is None:
+        await delete_birthday(session, person)
+
     person.name = name
     person.birthday = birthday
     person.relationship = relationship
     person.notes = notes
     await session.flush()
-    await sync_birthday(session, person)
+
+    if birthday is not None:
+        await sync_birthday(session, person)
+
     return person
 
 

@@ -21,6 +21,7 @@ _LINKS_NOTE = (
     " `person_ids` and `occasion_ids` link the idea to people and occasions of the account;"
     " an ID of another account returns 404, like a missing one, and nothing is saved."
 )
+_IN_USE_NOTE = " A gift idea used by a gifting cannot be deleted; this returns 409."
 
 
 @router.get(
@@ -99,8 +100,8 @@ async def update_gift(
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="deleteGift",
     summary="Delete gift idea",
-    description="Deletes the gift idea. Cannot be undone." + _NOT_FOUND_NOTE,
-    responses=problem_responses(401, 404),
+    description="Deletes the gift idea. Cannot be undone." + _NOT_FOUND_NOTE + _IN_USE_NOTE,
+    responses=problem_responses(401, 404, 409),
 )
 async def delete_gift(gift_id: uuid.UUID, user: CurrentUser, session: SessionDep) -> None:
     """Delete a gift idea of the current account."""
