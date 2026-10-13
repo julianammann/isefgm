@@ -6,16 +6,21 @@ attachment has no owner_id; this module scopes its queries through gift.owner_id
 
 import uuid
 
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Attachment
+from giftmanager.core.errors import NotFoundError
+from giftmanager.models import Attachment, AttachmentKind, Gift
+from giftmanager.services.ownership import get_owned, paginate
 
-# TODO(F-07): Owner scope, used by every read below:
-#   def _owned_links(owner_id) -> Select[tuple[Attachment]]:
-#       select(Attachment).join(Gift, Gift.id == Attachment.gift_id)
-#           .where(Gift.owner_id == owner_id, Attachment.kind == AttachmentKind.LINK)
-#   The kind filter matters once #29 stores images: /links/{id} of an image must be 404
-#   and the link list must not count images.
+
+def _owned_links(owner_id: uuid.UUID) -> Select[tuple[Attachment]]:
+    """Select links whose gift idea belongs to the given account; images are left out."""
+    return (
+        select(Attachment)
+        .join(Gift, Gift.id == Attachment.gift_id)
+        .where(Gift.owner_id == owner_id, Attachment.kind == AttachmentKind.LINK)
+    )
 
 
 async def list_links(
@@ -31,9 +36,10 @@ async def list_links(
     With `gift_id`, only the links of that idea; an idea of another account yields an
     empty page.
     """
-    # TODO(F-07): Like list_notes: optional gift_id filter, order_by(Attachment.id),
-    #   paginate.
-    raise NotImplementedError
+    statement = _owned_links(owner_id)
+    if gift_id is not None:
+        statement = statement.where(Attachment.gift_id == gift_id)
+    return await paginate(session, statement.order_by(Attachment.id), limit=limit, offset=offset)
 
 
 async def get_link(session: AsyncSession, owner_id: uuid.UUID, link_id: uuid.UUID) -> Attachment:
@@ -42,9 +48,10 @@ async def get_link(session: AsyncSession, owner_id: uuid.UUID, link_id: uuid.UUI
     Raises:
         NotFoundError: The link does not exist or belongs to another account.
     """
-    # TODO(F-07): session.scalar(_owned_links(owner_id).where(Attachment.id == link_id));
-    #   None -> raise NotFoundError("Link not found").
-    raise NotImplementedError
+    link = await session.scalar(_owned_links(owner_id).where(Attachment.id == link_id))
+    if link is None:
+        raise NotFoundError("Link not found")
+    return link
 
 
 async def create_link(
@@ -55,10 +62,11 @@ async def create_link(
     Raises:
         NotFoundError: The idea does not exist or belongs to another account.
     """
-    # TODO(F-07): get_owned(session, Gift, owner_id, gift_id) first, then
-    #   Attachment(gift_id=..., kind=AttachmentKind.LINK, label=..., url=...), add, flush.
-    #   The URL is already checked by LinkIn.
-    raise NotImplementedError
+    await get_owned(session, Gift, owner_id, gift_id)
+    link = Attachment(gift_id=gift_id, kind=AttachmentKind.LINK, label=label, url=url)
+    session.add(link)
+    await session.flush()
+    return link
 
 
 async def update_link(
@@ -75,12 +83,17 @@ async def update_link(
     Raises:
         NotFoundError: The link or the idea does not exist or belongs to another account.
     """
-    # TODO(F-07): get_link, then get_owned(Gift, gift_id), then assign label, url, gift_id;
-    #   flush. Never touch kind.
-    raise NotImplementedError
+    link = await get_link(session, owner_id, link_id)
+    await get_owned(session, Gift, owner_id, gift_id)
+    link.gift_id = gift_id
+    link.label = label
+    link.url = url
+    await session.flush()
+    return link
 
 
 async def delete_link(session: AsyncSession, owner_id: uuid.UUID, link_id: uuid.UUID) -> None:
     """Delete the owner's link."""
-    # TODO(F-07): get_link, session.delete, session.flush.
-    raise NotImplementedError
+    link = await get_link(session, owner_id, link_id)
+    await session.delete(link)
+    await session.flush()

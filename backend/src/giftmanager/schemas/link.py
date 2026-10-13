@@ -3,12 +3,29 @@
 import uuid
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    StringConstraints,
+    TypeAdapter,
+    ValidationError,
+    field_validator,
+)
 
-from giftmanager.schemas.common import Label
+from giftmanager.schemas.common import Label, PageParams
 
 # Matches the String(2048) column.
 Url = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2048)]
+
+_HTTP_URL = TypeAdapter(HttpUrl)
+
+
+class LinkListParams(PageParams):
+    """Pagination for the link list, optionally narrowed to one gift idea."""
+
+    gift_id: uuid.UUID | None = Field(default=None, description="Only the links of this gift idea.")
 
 
 class LinkIn(BaseModel):
@@ -28,13 +45,10 @@ class LinkIn(BaseModel):
     @classmethod
     def check_url(cls, value: str) -> str:
         """Accept only absolute http and https URLs with a host."""
-        # TODO(F-07): Raise ValueError for anything else -> 422 with loc ["body", "url"]
-        #   (test_invalid_url_is_rejected). The frontend renders the URL as <a href>, so
-        #   javascript:, data: and the like must never get through.
-        #   Option: pydantic.TypeAdapter(HttpUrl).validate_python(value) inside try/except
-        #   ValidationError. Keep returning `value`, not str(...) of the parsed URL: HttpUrl
-        #   normalizes, e.g. "https://example.org" becomes "https://example.org/", and the
-        #   user should get back what they entered (test_create_and_show_link).
+        try:
+            _HTTP_URL.validate_python(value)
+        except ValidationError as exc:
+            raise ValueError("must be an absolute http or https URL") from exc
         return value
 
 

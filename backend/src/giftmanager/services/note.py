@@ -6,15 +6,17 @@ this module scopes its own queries through gift.owner_id; `paginate()` still app
 
 import uuid
 
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Note
+from giftmanager.core.errors import NotFoundError
+from giftmanager.models import Gift, Note
+from giftmanager.services.ownership import get_owned, paginate
 
-# TODO(F-07): Owner scope, used by every read below:
-#   def _owned_notes(owner_id) -> Select[tuple[Note]]:
-#       return select(Note).join(Gift, Gift.id == Note.gift_id).where(Gift.owner_id == owner_id)
-#   (explicit ON clause: Note has no relationship to Gift.) Same join as _owned_giftings;
-#   with the third copy in services/link.py a shared helper in ownership.py may pay off.
+
+def _owned_notes(owner_id: uuid.UUID) -> Select[tuple[Note]]:
+    """Select notes whose gift idea belongs to the given account."""
+    return select(Note).join(Gift, Gift.id == Note.gift_id).where(Gift.owner_id == owner_id)
 
 
 async def list_notes(
@@ -30,10 +32,10 @@ async def list_notes(
     With `gift_id`, only the notes of that idea. An idea of another account yields an empty
     page, not 404: the filter only narrows the owner's notes.
     """
-    # TODO(F-07): stmt = _owned_notes(owner_id); if gift_id: stmt.where(Note.gift_id == gift_id)
-    #   order_by(Note.id): UUIDv7, so creation order (test_list_filters_by_idea_...).
-    #   paginate(session, stmt, limit=limit, offset=offset).
-    raise NotImplementedError
+    statement = _owned_notes(owner_id)
+    if gift_id is not None:
+        statement = statement.where(Note.gift_id == gift_id)
+    return await paginate(session, statement.order_by(Note.id), limit=limit, offset=offset)
 
 
 async def get_note(session: AsyncSession, owner_id: uuid.UUID, note_id: uuid.UUID) -> Note:
@@ -42,9 +44,10 @@ async def get_note(session: AsyncSession, owner_id: uuid.UUID, note_id: uuid.UUI
     Raises:
         NotFoundError: The note does not exist or belongs to another account.
     """
-    # TODO(F-07): session.scalar(_owned_notes(owner_id).where(Note.id == note_id));
-    #   None -> raise NotFoundError("Note not found").
-    raise NotImplementedError
+    note = await session.scalar(_owned_notes(owner_id).where(Note.id == note_id))
+    if note is None:
+        raise NotFoundError("Note not found")
+    return note
 
 
 async def create_note(
@@ -55,9 +58,11 @@ async def create_note(
     Raises:
         NotFoundError: The idea does not exist or belongs to another account.
     """
-    # TODO(F-07): await get_owned(session, Gift, owner_id, gift_id) first (Q-01, README
-    #   rule 4), then Note(gift_id=..., label=..., text=...), add, flush.
-    raise NotImplementedError
+    await get_owned(session, Gift, owner_id, gift_id)
+    note = Note(gift_id=gift_id, label=label, text=text)
+    session.add(note)
+    await session.flush()
+    return note
 
 
 async def update_note(
@@ -74,13 +79,17 @@ async def update_note(
     Raises:
         NotFoundError: The note or the idea does not exist or belongs to another account.
     """
-    # TODO(F-07): get_note, then get_owned(Gift, gift_id), and only then assign: a foreign
-    #   idea must leave the note untouched (test_note_cannot_go_to_a_foreign_idea[PUT]).
-    #   flush.
-    raise NotImplementedError
+    note = await get_note(session, owner_id, note_id)
+    await get_owned(session, Gift, owner_id, gift_id)
+    note.gift_id = gift_id
+    note.label = label
+    note.text = text
+    await session.flush()
+    return note
 
 
 async def delete_note(session: AsyncSession, owner_id: uuid.UUID, note_id: uuid.UUID) -> None:
     """Delete the owner's note."""
-    # TODO(F-07): get_note, session.delete, session.flush.
-    raise NotImplementedError
+    note = await get_note(session, owner_id, note_id)
+    await session.delete(note)
+    await session.flush()

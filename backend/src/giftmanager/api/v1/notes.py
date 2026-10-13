@@ -7,8 +7,8 @@ from fastapi import APIRouter, Query, status
 
 from giftmanager.core.auth import CurrentUser
 from giftmanager.core.db import SessionDep
-from giftmanager.schemas.common import Page, PageParams, problem_responses
-from giftmanager.schemas.note import NoteIn, NoteOut
+from giftmanager.schemas.common import Page, problem_responses
+from giftmanager.schemas.note import NoteIn, NoteListParams, NoteOut
 from giftmanager.services import note as note_service
 
 router = APIRouter(prefix="/notes", tags=["notes"])
@@ -31,14 +31,11 @@ _GIFT_NOTE = (
 async def list_notes(
     user: CurrentUser,
     session: SessionDep,
-    page: Annotated[PageParams, Query()],
-    gift_id: Annotated[
-        uuid.UUID | None, Query(description="Only the notes of this gift idea.")
-    ] = None,
+    page: Annotated[NoteListParams, Query()],
 ) -> Page[NoteOut]:
     """Return one page of the current account's notes."""
     notes, total = await note_service.list_notes(
-        session, user.id, gift_id=gift_id, limit=page.limit, offset=page.offset
+        session, user.id, gift_id=page.gift_id, limit=page.limit, offset=page.offset
     )
     return Page[NoteOut](
         items=[NoteOut.model_validate(n) for n in notes],

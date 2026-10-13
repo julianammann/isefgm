@@ -71,6 +71,18 @@ Server-side session. One cookie token maps to exactly one row; logging out delet
 | `last_seen_at` | TIMESTAMP WITH TIME ZONE | no | Last use (UTC), updated at most every five minutes. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## attachment
+
+Labelled link or image on a gift idea (F-07), told apart by kind. Visible only to the owner of the idea (Q-01); deleted together with the idea and the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. Also the list order: oldest attachment first. (PK) |
+| `gift_id` | UUID | no | Gift idea the attachment belongs to. Deleting the idea deletes it. (FK → gift.id) (Index) |
+| `kind` | VARCHAR(16) | no | `link` or `image`. |
+| `label` | VARCHAR(100) | no | Label, e.g. Thalia or Bild vom Laden. |
+| `url` | VARCHAR(2048) | yes | Absolute http or https URL. Required for links, NULL for images. |
+
 ## gift_person
 
 Possible recipients of a gift idea (F-04), n:m. Deleting the idea or the person removes only the link. Actual recipients belong to a gifting (F-06).
@@ -79,6 +91,17 @@ Possible recipients of a gift idea (F-04), n:m. Deleting the idea or the person 
 | --- | --- | --- | --- |
 | `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
 | `person_id` | UUID | no | Possible recipient. Deleting the person deletes the link. (PK) (FK → person.id) (Index) |
+
+## note
+
+Labelled note on a gift idea (F-07). Visible only to the owner of the idea (Q-01); deleted together with the idea and the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. Also the list order: oldest note first. (PK) |
+| `gift_id` | UUID | no | Gift idea the note belongs to. Deleting the idea deletes the note. (FK → gift.id) (Index) |
+| `label` | VARCHAR(100) | no | Label, e.g. Größe. |
+| `text` | TEXT | no | Text of the note, up to 2000 characters. |
 
 ## occasion
 
@@ -102,6 +125,20 @@ Possible occasions of a gift idea (F-04), n:m. Deleting the idea or the occasion
 | `gift_id` | UUID | no | Gift idea. Deleting it deletes the link. (PK) (FK → gift.id) |
 | `occasion_id` | UUID | no | Possible occasion. Deleting the occasion deletes the link. (PK) (FK → occasion.id) (Index) |
 
+## gifting
+
+Concrete use of a gift idea (F-06), with its own status, actual recipients, occasion and dates. Belongs to the account of the gift idea; deleted together with the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `gift_id` | UUID | no | CASCADE only for deleting the account (F-17), which deletes the gift in the same statement. Through the API an idea with giftings is not deletable: delete_gift answers 409 (test_idea_with_giftings_cannot_be_deleted). RESTRICT here would make test_deleting_the_account_deletes_its_giftings fail. (FK → gift.id) (Index) |
+| `status` | VARCHAR(16) | no | Progress of the gifting. Defaults to 'idea'. |
+| `occasion_id` | UUID | yes | Same reasoning as gift_id: the API answers 409 when an occasion in use is deleted (directly or as a derived birthday), the cascade only runs for F-17. (FK → occasion.id) (Index) |
+| `occasion_date` | DATE | yes | Date. Concrete date of the occasion, e.g. Christmas 2026 for a yearly occasion (Q-08: plain calendar date, no time zone). |
+| `given_on` | DATE | yes | Date. Day the gift was given; set exactly when status is `given`. |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
 ## person_occasion
 
 People an occasion concerns (F-04), n:m. Deleting the person or the occasion removes only the link.
@@ -110,3 +147,12 @@ People an occasion concerns (F-04), n:m. Deleting the person or the occasion rem
 | --- | --- | --- | --- |
 | `person_id` | UUID | no | Person the occasion concerns. Deleting the person deletes the link. (PK) (FK → person.id) |
 | `occasion_id` | UUID | no | Occasion. Deleting it deletes the link. (PK) (FK → occasion.id) (Index) |
+
+## gifting_person
+
+Actual recipients of a gifting (F-06), n:m. Several people share one joint gift. Deleting the gifting or the person removes only the link.
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `gifting_id` | UUID | no | Gifting. Deleting it deletes the link. (PK) (FK → gifting.id) |
+| `person_id` | UUID | no | Actual recipient. Deleting a person only removes them as a recipient, the gifting remains (test_deleting_a_recipient_removes_them_from_the_gifting). (PK) (FK → person.id) (Index) |

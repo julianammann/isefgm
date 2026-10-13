@@ -1031,26 +1031,6 @@
         "title": "OccasionTypeOut",
         "type": "object"
       },
-      "PageParams": {
-        "description": "Pagination for list endpoints (Q-05).",
-        "properties": {
-          "limit": {
-            "default": 50,
-            "maximum": 200.0,
-            "minimum": 1.0,
-            "title": "Limit",
-            "type": "integer"
-          },
-          "offset": {
-            "default": 0,
-            "minimum": 0.0,
-            "title": "Offset",
-            "type": "integer"
-          }
-        },
-        "title": "PageParams",
-        "type": "object"
-      },
       "Page_GiftOut_": {
         "properties": {
           "items": {
@@ -2554,10 +2534,25 @@
         "parameters": [
           {
             "in": "query",
-            "name": "page",
-            "required": true,
+            "name": "limit",
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/PageParams"
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
             }
           },
           {
@@ -2876,10 +2871,25 @@
         "parameters": [
           {
             "in": "query",
-            "name": "page",
-            "required": true,
+            "name": "limit",
+            "required": false,
             "schema": {
-              "$ref": "#/components/schemas/PageParams"
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
             }
           },
           {

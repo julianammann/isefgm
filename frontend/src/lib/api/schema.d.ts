@@ -1101,22 +1101,6 @@ export interface components {
              */
             system: boolean;
         };
-        /**
-         * PageParams
-         * @description Pagination for list endpoints (Q-05).
-         */
-        PageParams: {
-            /**
-             * Limit
-             * @default 50
-             */
-            limit: number;
-            /**
-             * Offset
-             * @default 0
-             */
-            offset: number;
-        };
         /** Page[GiftOut] */
         Page_GiftOut_: {
             /** Items */
@@ -2125,8 +2109,9 @@ export interface operations {
     };
     listLinks: {
         parameters: {
-            query: {
-                page: components["schemas"]["PageParams"];
+            query?: {
+                limit?: number;
+                offset?: number;
                 /** @description Only the links of this gift idea. */
                 gift_id?: string | null;
             };
@@ -2367,8 +2352,9 @@ export interface operations {
     };
     listNotes: {
         parameters: {
-            query: {
-                page: components["schemas"]["PageParams"];
+            query?: {
+                limit?: number;
+                offset?: number;
                 /** @description Only the notes of this gift idea. */
                 gift_id?: string | null;
             };

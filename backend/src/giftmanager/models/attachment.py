@@ -3,7 +3,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Uuid
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from giftmanager.models.base import Base
@@ -16,6 +16,11 @@ class AttachmentKind(enum.StrEnum):
     IMAGE = "image"
 
 
+def _kind_values(enum_cls: type[enum.Enum]) -> list[str]:
+    """Persist enum values, not member names."""
+    return [str(member.value) for member in enum_cls]
+
+
 class Attachment(Base):
     """Labelled link or image on a gift idea (F-07).
 
@@ -25,12 +30,14 @@ class Attachment(Base):
     """
 
     __tablename__ = "attachment"
-    # TODO(F-07): __table_args__ = (
-    #       CheckConstraint("kind <> 'link' OR url IS NOT NULL", name="link_has_url"),
-    #       -> ck_attachment_link_has_url (test_database_requires_a_url_for_a_link)
-    #       {"comment": "..."},
-    #   )
-    #   #29 adds a matching constraint for images (storage_path, mime_type, size_bytes).
+    __table_args__ = (
+        CheckConstraint("kind <> 'link' OR url IS NOT NULL", name="link_has_url"),
+        {
+            "comment": "Labelled link or image on a gift idea (F-07), told apart by kind. "
+            "Visible only to the owner of the idea (Q-01); deleted together with the idea "
+            "and the account (F-17)."
+        },
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -38,17 +45,23 @@ class Attachment(Base):
         default=uuid.uuid7,
         comment="Primary key, UUIDv7. Also the list order: oldest attachment first.",
     )
-
-    # TODO(F-07): Columns, each with comment=:
-    #   gift_id: Mapped[uuid.UUID]
-    #       ForeignKey("gift.id", ondelete="CASCADE"), index=True. Deleted with the idea and
-    #       with the account (test_deleting_the_idea_deletes_its_links).
-    #   kind: Mapped[AttachmentKind]
-    #       Enum(AttachmentKind, name="attachment_kind", native_enum=False, length=16,
-    #       create_constraint=True, values_callable=...) like Gift.category, so the
-    #       database stores `link`, not `LINK`. No default: the service always sets it.
-    #   label: Mapped[str]
-    #       String(100). Required, e.g. "Thalia" or "Bild vom Laden".
-    #   url: Mapped[str | None]
-    #       String(2048). Set for links (constraint above), NULL for images.
-    #   storage_path, mime_type, size_bytes: not yet, they come with the image upload (#29).
+    gift_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("gift.id", ondelete="CASCADE"),
+        index=True,
+        comment="Gift idea the attachment belongs to. Deleting the idea deletes it.",
+    )
+    kind: Mapped[AttachmentKind] = mapped_column(
+        Enum(
+            AttachmentKind,
+            name="attachment_kind",
+            native_enum=False,
+            length=16,
+            create_constraint=True,
+            values_callable=_kind_values,
+        ),
+        comment="`link` or `image`.",
+    )
+    label: Mapped[str] = mapped_column(String(100), comment="Label, e.g. Thalia or Bild vom Laden.")
+    url: Mapped[str | None] = mapped_column(
+        String(2048), comment="Absolute http or https URL. Required for links, NULL for images."
+    )

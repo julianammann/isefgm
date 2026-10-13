@@ -5,9 +5,15 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from giftmanager.schemas.common import Label
+from giftmanager.schemas.common import Label, PageParams
 
 NoteText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+class NoteListParams(PageParams):
+    """Pagination for the note list, optionally narrowed to one gift idea."""
+
+    gift_id: uuid.UUID | None = Field(default=None, description="Only the notes of this gift idea.")
 
 
 class NoteIn(BaseModel):

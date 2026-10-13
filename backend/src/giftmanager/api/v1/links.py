@@ -7,8 +7,8 @@ from fastapi import APIRouter, Query, status
 
 from giftmanager.core.auth import CurrentUser
 from giftmanager.core.db import SessionDep
-from giftmanager.schemas.common import Page, PageParams, problem_responses
-from giftmanager.schemas.link import LinkIn, LinkOut
+from giftmanager.schemas.common import Page, problem_responses
+from giftmanager.schemas.link import LinkIn, LinkListParams, LinkOut
 from giftmanager.services import link as link_service
 
 router = APIRouter(prefix="/links", tags=["links"])
@@ -32,14 +32,11 @@ _GIFT_NOTE = (
 async def list_links(
     user: CurrentUser,
     session: SessionDep,
-    page: Annotated[PageParams, Query()],
-    gift_id: Annotated[
-        uuid.UUID | None, Query(description="Only the links of this gift idea.")
-    ] = None,
+    page: Annotated[LinkListParams, Query()],
 ) -> Page[LinkOut]:
     """Return one page of the current account's links."""
     links, total = await link_service.list_links(
-        session, user.id, gift_id=gift_id, limit=page.limit, offset=page.offset
+        session, user.id, gift_id=page.gift_id, limit=page.limit, offset=page.offset
     )
     return Page[LinkOut](
         items=[LinkOut.model_validate(link) for link in links],
