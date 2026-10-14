@@ -124,6 +124,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/giftings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List giftings
+         * @description Returns the giftings of the current account, newest first, one page at a time. `total` counts all giftings of the account.
+         */
+        get: operations["listGiftings"];
+        put?: never;
+        /**
+         * Create gifting
+         * @description Turns a gift idea into a gifting in one step: only `gift_id` is required, the status defaults to `idea`. The idea is referenced, not copied, and stays in the idea list. A past gift is recorded directly with status `given`. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         */
+        post: operations["createGifting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/giftings/{gifting_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show gifting
+         * @description Returns one gifting of the current account. A gifting of another account returns 404, like a missing one.
+         */
+        get: operations["getGifting"];
+        /**
+         * Update gifting
+         * @description Replaces all fields of the gifting, including its recipients: a field left out is reset to null, its default or an empty list. Any status may follow any other. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gifting of another account returns 404, like a missing one.
+         */
+        put: operations["updateGifting"];
+        post?: never;
+        /**
+         * Delete gifting
+         * @description Deletes the gifting. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteGifting"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gifts": {
         parameters: {
             query?: never;
@@ -168,7 +220,7 @@ export interface paths {
         post?: never;
         /**
          * Delete gift idea
-         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one.
+         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteGift"];
         options?: never;
@@ -211,6 +263,110 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List links
+         * @description Returns the links of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page.
+         */
+        get: operations["listLinks"];
+        put?: never;
+        /**
+         * Create link
+         * @description Adds a labelled link to a gift idea of the current account. The URL is stored as entered. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. `url` must be an absolute http or https URL (422 otherwise).
+         */
+        post: operations["createLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/links/{link_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show link
+         * @description Returns one link of the current account. A link of another account returns 404, like a missing one.
+         */
+        get: operations["getLink"];
+        /**
+         * Update link
+         * @description Replaces all fields of the link. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. `url` must be an absolute http or https URL (422 otherwise). A link of another account returns 404, like a missing one.
+         */
+        put: operations["updateLink"];
+        post?: never;
+        /**
+         * Delete link
+         * @description Deletes the link. Cannot be undone. A link of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List notes
+         * @description Returns the notes of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page.
+         */
+        get: operations["listNotes"];
+        put?: never;
+        /**
+         * Create note
+         * @description Adds a labelled note to a gift idea of the current account. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved.
+         */
+        post: operations["createNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show note
+         * @description Returns one note of the current account. A note of another account returns 404, like a missing one.
+         */
+        get: operations["getNote"];
+        /**
+         * Update note
+         * @description Replaces all fields of the note. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. A note of another account returns 404, like a missing one.
+         */
+        put: operations["updateNote"];
+        post?: never;
+        /**
+         * Delete note
+         * @description Deletes the note. Cannot be undone. A note of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteNote"];
         options?: never;
         head?: never;
         patch?: never;
@@ -300,7 +456,7 @@ export interface paths {
         post?: never;
         /**
          * Delete occasion
-         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person.
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person. An occasion used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteOccasion"];
         options?: never;
@@ -346,13 +502,13 @@ export interface paths {
         get: operations["getPerson"];
         /**
          * Update person
-         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
          */
         put: operations["updatePerson"];
         post?: never;
         /**
          * Delete person
-         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one.
+         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
          */
         delete: operations["deletePerson"];
         options?: never;
@@ -505,6 +661,121 @@ export interface components {
              */
             title: string;
         };
+        /**
+         * GiftingIn
+         * @description Data of a gifting; used for create and for full update (PUT).
+         */
+        GiftingIn: {
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the account's gift idea this gifting uses. The idea's content is referenced, not copied.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Given On
+             * @description Day the gift was given, as a plain date (YYYY-MM-DD). Required for `given`; not stored with any other status.
+             * @example 2026-12-24
+             */
+            given_on?: string | null;
+            /**
+             * Occasion Date
+             * @description Concrete date of the occasion as a plain date (YYYY-MM-DD), e.g. Christmas 2026 for a yearly occasion. Required for `given`.
+             * @example 2026-12-24
+             */
+            occasion_date?: string | null;
+            /**
+             * Occasion Id
+             * @description ID of the account's occasion the gift is for. Required for `given`.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72
+             */
+            occasion_id?: string | null;
+            /**
+             * Person Ids
+             * @description IDs of the account's people who receive the gift (actual recipients), up to 100. Several people share one joint gift. At least one for `given`. Replaces the current recipients; empty or left out means none.
+             * @example [
+             *       "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+             *     ]
+             */
+            person_ids?: string[];
+            /**
+             * @description `idea`, `planned`, `acquired` or `given`; `idea` when left out. Any status may follow any other. `given` needs recipients, an occasion, its date and `given_on`, so a past gift can be recorded in one step.
+             * @default idea
+             * @example planned
+             */
+            status: components["schemas"]["GiftingStatus"];
+        };
+        /**
+         * GiftingOut
+         * @description A gifting as the frontend sees it.
+         */
+        GiftingOut: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * @description The gift idea this gifting uses.
+             * @example {
+             *       "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+             *       "title": "Raspberry Pi"
+             *     }
+             */
+            gift: components["schemas"]["LinkedGift"];
+            /**
+             * Given On
+             * @description Day the gift was given as a plain date; null unless `given`.
+             * @example 2026-12-24
+             */
+            given_on: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Gifting ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73
+             */
+            id: string;
+            /**
+             * @description Occasion the gift is for, or null.
+             * @example {
+             *       "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+             *       "name": "Weihnachten"
+             *     }
+             */
+            occasion: components["schemas"]["LinkedOccasion"] | null;
+            /**
+             * Occasion Date
+             * @description Concrete date of the occasion as a plain date, or null.
+             * @example 2026-12-24
+             */
+            occasion_date: string | null;
+            /**
+             * People
+             * @description Actual recipients, sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+            /**
+             * @description Progress of the gifting.
+             * @example planned
+             */
+            status: components["schemas"]["GiftingStatus"];
+        };
+        /**
+         * GiftingStatus
+         * @description Progress of a gifting (F-06). Any status may follow any other, also back from `given`.
+         * @enum {string}
+         */
+        GiftingStatus: "idea" | "planned" | "acquired" | "given";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -522,6 +793,82 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "degraded";
+        };
+        /**
+         * LinkIn
+         * @description Data of a link; used for create and for full update (PUT).
+         */
+        LinkIn: {
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the account's gift idea the link belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Label
+             * @description Label, 1 to 100 characters.
+             * @example Thalia
+             */
+            label: string;
+            /**
+             * Url
+             * @description Absolute http or https URL, up to 2048 characters.
+             * @example https://www.thalia.de/shop/home/artikeldetails/A1234
+             */
+            url: string;
+        };
+        /**
+         * LinkOut
+         * @description A link as the frontend sees it.
+         */
+        LinkOut: {
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the gift idea the link belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Link ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75
+             */
+            id: string;
+            /**
+             * Label
+             * @description Label.
+             * @example Thalia
+             */
+            label: string;
+            /**
+             * Url
+             * @description Absolute http or https URL.
+             * @example https://www.thalia.de/shop/home/artikeldetails/A1234
+             */
+            url: string;
+        };
+        /**
+         * LinkedGift
+         * @description The gift idea a gifting uses.
+         */
+        LinkedGift: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Gift idea ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            id: string;
+            /**
+             * Title
+             * @description Current title of the idea.
+             * @example Raspberry Pi
+             */
+            title: string;
         };
         /**
          * LinkedOccasion
@@ -579,6 +926,63 @@ export interface components {
              * @example correct-horse-battery
              */
             password: string;
+        };
+        /**
+         * NoteIn
+         * @description Data of a note; used for create and for full update (PUT).
+         */
+        NoteIn: {
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the account's gift idea the note belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Label
+             * @description Label, 1 to 100 characters.
+             * @example Größe
+             */
+            label: string;
+            /**
+             * Text
+             * @description Text, 1 to 2000 characters.
+             * @example M, eher weit
+             */
+            text: string;
+        };
+        /**
+         * NoteOut
+         * @description A note as the frontend sees it.
+         */
+        NoteOut: {
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the gift idea the note belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Note ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a74
+             */
+            id: string;
+            /**
+             * Label
+             * @description Label.
+             * @example Größe
+             */
+            label: string;
+            /**
+             * Text
+             * @description Text.
+             * @example M, eher weit
+             */
+            text: string;
         };
         /**
          * OccasionIn
@@ -701,6 +1105,39 @@ export interface components {
         Page_GiftOut_: {
             /** Items */
             items: components["schemas"]["GiftOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[GiftingOut] */
+        Page_GiftingOut_: {
+            /** Items */
+            items: components["schemas"]["GiftingOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[LinkOut] */
+        Page_LinkOut_: {
+            /** Items */
+            items: components["schemas"]["LinkOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[NoteOut] */
+        Page_NoteOut_: {
+            /** Items */
+            items: components["schemas"]["NoteOut"][];
             /** Limit */
             limit: number;
             /** Offset */
@@ -1139,6 +1576,247 @@ export interface operations {
             };
         };
     };
+    listGiftings: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_GiftingOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createGifting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftingOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getGifting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gifting_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftingOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateGifting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gifting_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftingOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteGifting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gifting_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     listGifts: {
         parameters: {
             query?: {
@@ -1369,6 +2047,15 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1416,6 +2103,492 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+        };
+    };
+    listLinks: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Only the links of this gift idea. */
+                gift_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_LinkOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listNotes: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Only the notes of this gift idea. */
+                gift_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_NoteOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                note_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

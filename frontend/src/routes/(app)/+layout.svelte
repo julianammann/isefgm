@@ -14,6 +14,7 @@
       <StatusDot status={data.status} />
       {data.user.display_name}
     </span>
+    <a class="text-sm underline" href={resolve('/persons')}>Personen</a>
     <a class="text-sm underline" href={resolve('/account')}>Konto</a>
     <a class="text-sm underline" href={resolve('/occasions')}>Anlässe</a>
     <form method="POST" action="/logout" use:enhance>
