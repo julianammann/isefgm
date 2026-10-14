@@ -7,6 +7,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
+import { listPersons } from '$lib/server/persons';
 import {
   createOccasion,
   deleteOccasion,
@@ -75,9 +76,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (!typesResult.ok) error(typesResult.status, typesResult.message);
   const occasionTypes = typesResult.data;
 
-  if (occasionTypes.length === 0) {
-    throw redirect(303, '/occasions/types?success=created');
-  }
+  const peopleResult = await listPersons(locals.api);
+  if (!peopleResult.ok) error(peopleResult.status, peopleResult.message);
+  const people = peopleResult.data;
 
   const editId = url.searchParams.get('edit');
   let editOccasion: (OccasionInput & { id: string }) | null = null;
@@ -97,7 +98,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const successKey = url.searchParams.get('success');
   const successMessage = isSuccessKey(successKey) ? successMessages[successKey] : null;
 
-  return { occasions, occasionTypes, editOccasion, successMessage };
+  return { occasions, occasionTypes, people, editOccasion, successMessage };
 };
 
 /** Handles form submissions for creating, updating, and deleting occasions. */

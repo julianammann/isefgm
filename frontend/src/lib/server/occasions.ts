@@ -6,8 +6,11 @@
 
 import type { components } from '$lib/api/schema';
 
+/** Payload for creating or updating an occasion. */
 export type Occasion = components['schemas']['OccasionOut'];
+/** A occasion as returned by the API. */
 export type OccasionInput = components['schemas']['OccasionIn'];
+/** A occasion type as returned by the API. */
 export type OccasionType = components['schemas']['OccasionTypeOut'];
 
 type Api = App.Locals['api'];
