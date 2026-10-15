@@ -15,6 +15,7 @@
       {data.user.display_name}
     </span>
     <a class="text-sm underline" href={resolve('/persons')}>Personen</a>
+    <a class="text-sm underline" href={resolve('/occasions')}>Anlässe</a>
     <a class="text-sm underline" href={resolve('/account')}>Konto</a>
     <form method="POST" action="/logout" use:enhance>
       <button type="submit" class="text-sm underline">Abmelden</button>
