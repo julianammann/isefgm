@@ -43,6 +43,11 @@ OPENAPI_TAGS = [
         "Weihnachten are system-wide and read-only; occasions are one-off or yearly and "
         "visible only to their account (Q-01).",
     },
+    {
+        "name": "full-list",
+        "description": "The complete list of the account's people, gift ideas and past gifts "
+        "as one HTML page (F-15), valid HTML (QZ-03).",
+    },
 ]
 
 

@@ -1837,6 +1837,38 @@
         ]
       }
     },
+    "/api/v1/full-list": {
+      "get": {
+        "description": "Returns all people, gift ideas (with links and notes) and past gifts (giftings with status `given`) of the current account as one HTML page. All text is escaped; links are only http or https URLs. The page is meant to be shown in the browser or printed.",
+        "operationId": "getFullList",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Complete list as HTML."
+          },
+          "401": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "summary": "Show complete list as HTML",
+        "tags": [
+          "full-list"
+        ]
+      }
+    },
     "/api/v1/giftings": {
       "get": {
         "description": "Returns the giftings of the current account, newest first, one page at a time. `total` counts all giftings of the account.",
@@ -3995,6 +4027,10 @@
     {
       "description": "Occasion types and occasions (F-03). The types Geburtstag and Weihnachten are system-wide and read-only; occasions are one-off or yearly and visible only to their account (Q-01).",
       "name": "occasions"
+    },
+    {
+      "description": "The complete list of the account's people, gift ideas and past gifts as one HTML page (F-15), valid HTML (QZ-03).",
+      "name": "full-list"
     }
   ]
 }
