@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geschenkliste von {{ owner_name }}</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.4; }
+table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
+th, td { border: 1px solid #999; padding: 0.3rem 0.5rem; text-align: left; vertical-align: top; }
+ul { margin: 0; padding-left: 1.2rem; }
+</style>
+</head>
+<body>
+<header>
+<h1>Geschenkliste von {{ owner_name }}</h1>
+<p>{{ people | length }} Personen, {{ gifts | length }} Geschenkideen, {{ given | length }} vergangene Geschenke</p>
+</header>
+<main>
+<section id="personen">
+<h2>Personen</h2>
+{% if people %}
+<table>
+<thead>
+<tr><th scope="col">Name</th><th scope="col">Geburtstag</th><th scope="col">Beziehung</th><th scope="col">Notizen</th></tr>
+</thead>
+<tbody>
+{% for person in people %}
+<tr>
+<td>{{ person.name }}</td>
+<td>{% if person.birthday %}<time datetime="{{ person.birthday.isoformat() }}">{{ person.birthday | german_date }}</time>{% endif %}</td>
+<td>{{ person.relationship or "" }}</td>
+<td>{{ person.notes or "" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Keine Personen.</p>
+{% endif %}
+</section>
+<section id="geschenkideen">
+<h2>Geschenkideen</h2>
+{% if gifts %}
+<table>
+<thead>
+<tr><th scope="col">Titel</th><th scope="col">Beschreibung</th><th scope="col">Preis</th><th scope="col">Kategorie</th><th scope="col">Für</th><th scope="col">Anlässe</th><th scope="col">Links</th><th scope="col">Notizen</th></tr>
+</thead>
+<tbody>
+{% for item in gifts %}
+<tr>
+<td>{{ item.gift.title }}</td>
+<td>{{ item.gift.description or "" }}</td>
+<td>{{ item.gift | price }}</td>
+<td>{{ item.gift.category | category }}</td>
+<td>{{ item.gift.people | map(attribute="name") | join(", ") }}</td>
+<td>{{ item.gift.occasions | map(attribute="name") | join(", ") }}</td>
+<td>{% if item.links %}<ul>{% for link in item.links %}<li><a href="{{ link.url }}" rel="noopener noreferrer">{{ link.label }}</a></li>{% endfor %}</ul>{% endif %}</td>
+<td>{% if item.notes %}<ul>{% for note in item.notes %}<li>{{ note.label }}: {{ note.text }}</li>{% endfor %}</ul>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Keine Geschenkideen.</p>
+{% endif %}
+</section>
+<section id="vergangene-geschenke">
+<h2>Vergangene Geschenke</h2>
+{% if given %}
+<table>
+<thead>
+<tr><th scope="col">Verschenkt am</th><th scope="col">Geschenk</th><th scope="col">An</th><th scope="col">Anlass</th></tr>
+</thead>
+<tbody>
+{% for gifting in given %}
+<tr>
+<td><time datetime="{{ gifting.given_on.isoformat() }}">{{ gifting.given_on | german_date }}</time></td>
+<td>{{ gifting.gift.title }}</td>
+<td>{{ gifting.people | map(attribute="name") | join(", ") }}</td>
+<td>{{ gifting.occasion.name if gifting.occasion else "" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Keine vergangenen Geschenke.</p>
+{% endif %}
+</section>
+</main>
+</body>
+</html>
