@@ -99,3 +99,23 @@ People the account gives gifts to (F-02). Every account sees only its own people
 | `GET /api/v1/people/{person_id}` | `getPerson` | Show person | Returns one person of the current account. A person of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `PUT /api/v1/people/{person_id}` | `updatePerson` | Update person | Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting. | 200, 401, 404, 422 |
 | `DELETE /api/v1/people/{person_id}` | `deletePerson` | Delete person | Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting. | 204, 401, 404, 422 |
+
+## share-links
+
+Read-only share links on chosen people (F-14). The token is shown once on creation and stored only as a hash; a link can expire and be deactivated at any time (Q-03).
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/share-links` | `listShareLinks` | List share links | Returns the share links of the current account, newest first, one page at a time. Tokens are not included; they are shown only once, on creation. | 200, 401, 422 |
+| `POST /api/v1/share-links` | `createShareLink` | Create share link | Creates a read-only share link on chosen people of the current account. The response holds the token, the only time it is returned: the server keeps just its SHA-256 hash. `person_ids` must name 1 to 100 people of the account; a person of another account returns 404, like a missing one, and nothing is saved. An `expires_at` that is set or changed must lie in the future (400 otherwise). | 201, 400, 401, 404, 422 |
+| `GET /api/v1/share-links/{share_link_id}` | `getShareLink` | Show share link | Returns one share link of the current account, without its token. A share link of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/share-links/{share_link_id}` | `updateShareLink` | Update share link | Replaces the people, expiry time and active flag of the share link. `active: false` deactivates it at once; the token stays the same. `person_ids` must name 1 to 100 people of the account; a person of another account returns 404, like a missing one, and nothing is saved. An `expires_at` that is set or changed must lie in the future (400 otherwise). A share link of another account returns 404, like a missing one. | 200, 400, 401, 404, 422 |
+| `DELETE /api/v1/share-links/{share_link_id}` | `deleteShareLink` | Delete share link | Deletes the share link; it no longer opens. Cannot be undone. A share link of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+
+## shared
+
+Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas; nothing can be changed (Q-01).
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/shared/{token}` | `getSharedList` | Open shared list | Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405. | 200, 404, 422 |
