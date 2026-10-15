@@ -1,7 +1,7 @@
 /**
  * Occasions page: list, create, update, delete (F-03).
  *
- *
+ * @module
  */
 
 import { error, fail, redirect } from '@sveltejs/kit';

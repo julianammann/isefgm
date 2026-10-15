@@ -1,7 +1,7 @@
 /**
  * Occasions data access (F-03).
  *
- *
+ * @module
  */
 
 import type { components } from '$lib/api/schema';
