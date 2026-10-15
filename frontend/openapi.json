@@ -1248,6 +1248,37 @@
         "title": "Page[PersonOut]",
         "type": "object"
       },
+      "Page_ShareLinkOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ShareLinkOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[ShareLinkOut]",
+        "type": "object"
+      },
       "PersonIn": {
         "description": "Data of a person; used for create and for full update (PUT).",
         "properties": {
@@ -1494,6 +1525,428 @@
           "display_name"
         ],
         "title": "RegisterIn",
+        "type": "object"
+      },
+      "ShareLinkCreated": {
+        "description": "A new share link together with its token, which is returned only this once.",
+        "properties": {
+          "active": {
+            "description": "False once the link is deactivated.",
+            "examples": [
+              true
+            ],
+            "title": "Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-15T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expiry time (UTC), or null if the link does not expire.",
+            "examples": [
+              "2026-12-24T22:59:59Z"
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "description": "Share link ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a80"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "people": {
+            "description": "People whose gift ideas the link shows, sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "token": {
+            "description": "Secret token of the link (256 bits, URL-safe). Only its hash is stored, so it cannot be shown again; the frontend builds the shared URL from it.",
+            "examples": [
+              "q3Xb2k9VtL0mR8sY1nWc4eJ7uA5hZ6oP-dFgQiKjTx0"
+            ],
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "people",
+          "active",
+          "expires_at",
+          "created_at",
+          "token"
+        ],
+        "title": "ShareLinkCreated",
+        "type": "object"
+      },
+      "ShareLinkIn": {
+        "description": "Data of a share link; used for create and for full update (PUT).",
+        "properties": {
+          "active": {
+            "default": true,
+            "description": "False deactivates the link at once; true opens it again.",
+            "examples": [
+              true
+            ],
+            "title": "Active",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expiry time with time zone, optional. Must lie in the future when it is set or changed. Null means the link does not expire.",
+            "examples": [
+              "2026-12-24T23:59:59+01:00"
+            ],
+            "title": "Expires At"
+          },
+          "person_ids": {
+            "description": "IDs of the account's people whose gift ideas the link shows, 1 to 100. Replaces the current selection.",
+            "examples": [
+              [
+                "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+              ]
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Person Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "person_ids"
+        ],
+        "title": "ShareLinkIn",
+        "type": "object"
+      },
+      "ShareLinkOut": {
+        "description": "A share link as its owner sees it, without the token.",
+        "properties": {
+          "active": {
+            "description": "False once the link is deactivated.",
+            "examples": [
+              true
+            ],
+            "title": "Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-15T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expiry time (UTC), or null if the link does not expire.",
+            "examples": [
+              "2026-12-24T22:59:59Z"
+            ],
+            "title": "Expires At"
+          },
+          "id": {
+            "description": "Share link ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a80"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "people": {
+            "description": "People whose gift ideas the link shows, sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "people",
+          "active",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "ShareLinkOut",
+        "type": "object"
+      },
+      "SharedGiftOut": {
+        "description": "A gift idea in the shared view, without notes, giftings or occasions.",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/GiftCategory",
+            "description": "Kind of gift.",
+            "examples": [
+              "tech"
+            ]
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 4217 currency code, or null when no price is set.",
+            "examples": [
+              "EUR"
+            ],
+            "title": "Currency"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text description, or null.",
+            "examples": [
+              "Technik, f\u00fcr IT-Begeisterte"
+            ],
+            "title": "Description"
+          },
+          "links": {
+            "description": "Web links on the idea, oldest first.",
+            "examples": [
+              [
+                {
+                  "label": "Thalia",
+                  "url": "https://www.thalia.de/"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SharedLinkOut"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "price_from": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lower end of the price range in `currency`, as a string, or null.",
+            "examples": [
+              "10.00"
+            ],
+            "title": "Price From"
+          },
+          "price_to": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Upper end of the price range in `currency`, as a string, or null.",
+            "examples": [
+              "100.00"
+            ],
+            "title": "Price To"
+          },
+          "title": {
+            "description": "Title.",
+            "examples": [
+              "Raspberry Pi"
+            ],
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "price_from",
+          "price_to",
+          "currency",
+          "category",
+          "links"
+        ],
+        "title": "SharedGiftOut",
+        "type": "object"
+      },
+      "SharedLinkOut": {
+        "description": "A web link on a shared gift idea.",
+        "properties": {
+          "label": {
+            "description": "Label.",
+            "examples": [
+              "Thalia"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "url": {
+            "description": "Absolute http or https URL.",
+            "examples": [
+              "https://www.thalia.de/shop/home/artikeldetails/A1234"
+            ],
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "url"
+        ],
+        "title": "SharedLinkOut",
+        "type": "object"
+      },
+      "SharedListOut": {
+        "description": "What a valid share link shows: the chosen people and their gift ideas.",
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Expiry time (UTC) of the link, or null.",
+            "examples": [
+              "2026-12-24T22:59:59Z"
+            ],
+            "title": "Expires At"
+          },
+          "owner_name": {
+            "description": "Display name of the account that shared the list.",
+            "examples": [
+              "Anna"
+            ],
+            "title": "Owner Name",
+            "type": "string"
+          },
+          "people": {
+            "description": "Shared people, sorted by name.",
+            "examples": [
+              [
+                {
+                  "gifts": [],
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SharedPersonOut"
+            },
+            "title": "People",
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner_name",
+          "expires_at",
+          "people"
+        ],
+        "title": "SharedListOut",
+        "type": "object"
+      },
+      "SharedPersonOut": {
+        "description": "A shared person: only the name, no birthday, relationship or notes.",
+        "properties": {
+          "gifts": {
+            "description": "Gift ideas meant for the person, newest first.",
+            "examples": [
+              []
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SharedGiftOut"
+            },
+            "title": "Gifts",
+            "type": "array"
+          },
+          "name": {
+            "description": "Name.",
+            "examples": [
+              "Lena"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "gifts"
+        ],
+        "title": "SharedPersonOut",
         "type": "object"
       },
       "UserOut": {
@@ -3977,6 +4430,397 @@
           "people"
         ]
       }
+    },
+    "/api/v1/share-links": {
+      "get": {
+        "description": "Returns the share links of the current account, newest first, one page at a time. Tokens are not included; they are shown only once, on creation.",
+        "operationId": "listShareLinks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ShareLinkOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List share links",
+        "tags": [
+          "share-links"
+        ]
+      },
+      "post": {
+        "description": "Creates a read-only share link on chosen people of the current account. The response holds the token, the only time it is returned: the server keeps just its SHA-256 hash. `person_ids` must name 1 to 100 people of the account; a person of another account returns 404, like a missing one, and nothing is saved. An `expires_at` that is set or changed must lie in the future (400 otherwise).",
+        "operationId": "createShareLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareLinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create share link",
+        "tags": [
+          "share-links"
+        ]
+      }
+    },
+    "/api/v1/share-links/{share_link_id}": {
+      "delete": {
+        "description": "Deletes the share link; it no longer opens. Cannot be undone. A share link of another account returns 404, like a missing one.",
+        "operationId": "deleteShareLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "share_link_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Share Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete share link",
+        "tags": [
+          "share-links"
+        ]
+      },
+      "get": {
+        "description": "Returns one share link of the current account, without its token. A share link of another account returns 404, like a missing one.",
+        "operationId": "getShareLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "share_link_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Share Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show share link",
+        "tags": [
+          "share-links"
+        ]
+      },
+      "put": {
+        "description": "Replaces the people, expiry time and active flag of the share link. `active: false` deactivates it at once; the token stays the same. `person_ids` must name 1 to 100 people of the account; a person of another account returns 404, like a missing one, and nothing is saved. An `expires_at` that is set or changed must lie in the future (400 otherwise). A share link of another account returns 404, like a missing one.",
+        "operationId": "updateShareLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "share_link_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Share Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareLinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update share link",
+        "tags": [
+          "share-links"
+        ]
+      }
+    },
+    "/api/v1/shared/{token}": {
+      "get": {
+        "description": "Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.",
+        "operationId": "getSharedList",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open shared list",
+        "tags": [
+          "shared"
+        ]
+      }
     }
   },
   "tags": [
@@ -3995,6 +4839,14 @@
     {
       "description": "Occasion types and occasions (F-03). The types Geburtstag and Weihnachten are system-wide and read-only; occasions are one-off or yearly and visible only to their account (Q-01).",
       "name": "occasions"
+    },
+    {
+      "description": "Read-only share links on chosen people (F-14). The token is shown once on creation and stored only as a hash; a link can expire and be deactivated at any time (Q-03).",
+      "name": "share-links"
+    },
+    {
+      "description": "Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+      "name": "shared"
     }
   ]
 }

@@ -43,6 +43,17 @@ OPENAPI_TAGS = [
         "Weihnachten are system-wide and read-only; occasions are one-off or yearly and "
         "visible only to their account (Q-01).",
     },
+    {
+        "name": "share-links",
+        "description": "Read-only share links on chosen people (F-14). The token is shown "
+        "once on creation and stored only as a hash; a link can expire and be deactivated "
+        "at any time (Q-03).",
+    },
+    {
+        "name": "shared",
+        "description": "Public view behind a valid share link, no login needed (F-14). Shows "
+        "only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+    },
 ]
 
 
