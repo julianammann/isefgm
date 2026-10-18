@@ -15,6 +15,7 @@ from giftmanager.models.occasion import (
 )
 from giftmanager.models.person import Person
 from giftmanager.models.share_link import ShareLink, share_link_person
+from giftmanager.models.task import Task, TaskStatus
 from giftmanager.models.user import User, UserSession, UserStatus
 
 __all__ = [
@@ -33,6 +34,8 @@ __all__ = [
     "Person",
     "Recurrence",
     "ShareLink",
+    "Task",
+    "TaskStatus",
     "TimestampMixin",
     "User",
     "UserSession",

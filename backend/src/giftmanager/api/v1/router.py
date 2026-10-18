@@ -12,6 +12,7 @@ from giftmanager.api.v1 import (
     occasions,
     people,
     share_links,
+    tasks,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -22,6 +23,7 @@ router.include_router(occasions.types_router)
 router.include_router(occasions.router)
 router.include_router(gifts.router)
 router.include_router(giftings.router)
+router.include_router(tasks.router)
 router.include_router(notes.router)
 router.include_router(links.router)
 router.include_router(share_links.router)

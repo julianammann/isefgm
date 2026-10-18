@@ -27,7 +27,7 @@ Create, log in to, log out of and delete an account (F-01, F-17). The session li
 | `POST /api/v1/giftings` | `createGifting` | Create gifting | Turns a gift idea into a gifting in one step: only `gift_id` is required, the status defaults to `idea`. The idea is referenced, not copied, and stays in the idea list. A past gift is recorded directly with status `given`. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
 | `GET /api/v1/giftings/{gifting_id}` | `getGifting` | Show gifting | Returns one gifting of the current account. A gifting of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `PUT /api/v1/giftings/{gifting_id}` | `updateGifting` | Update gifting | Replaces all fields of the gifting, including its recipients: a field left out is reset to null, its default or an empty list. Any status may follow any other. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gifting of another account returns 404, like a missing one. | 200, 401, 404, 422 |
-| `DELETE /api/v1/giftings/{gifting_id}` | `deleteGifting` | Delete gifting | Deletes the gifting. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+| `DELETE /api/v1/giftings/{gifting_id}` | `deleteGifting` | Delete gifting | Deletes the gifting together with its tasks. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one. | 204, 401, 404, 422 |
 
 ## gifts
 
@@ -119,3 +119,15 @@ Public view behind a valid share link, no login needed (F-14). Shows only the ch
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
 | `GET /api/v1/shared/{token}` | `getSharedList` | Open shared list | Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405. | 200, 404, 422 |
+
+## tasks
+
+
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/tasks` | `listTasks` | List tasks | Returns the tasks of the current account, one page at a time: earliest due date first, tasks without one last, the same due date in creation order. `gifting_id` narrows the list to one gifting; a gifting of another account gives an empty page. | 200, 401, 422 |
+| `POST /api/v1/tasks` | `createTask` | Create task | Adds a task to a gifting of the current account. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
+| `GET /api/v1/tasks/{task_id}` | `getTask` | Show task | Returns one task of the current account. A task of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/tasks/{task_id}` | `updateTask` | Update task | Replaces all fields of the task; a left-out `due_on` removes the due date. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved. A task of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `DELETE /api/v1/tasks/{task_id}` | `deleteTask` | Delete task | Deletes the task. Cannot be undone. A task of another account returns 404, like a missing one. | 204, 401, 404, 422 |
