@@ -44,6 +44,17 @@ OPENAPI_TAGS = [
         "visible only to their account (Q-01).",
     },
     {
+        "name": "share-links",
+        "description": "Read-only share links on chosen people (F-14). The token is shown "
+        "once on creation and stored only as a hash; a link can expire and be deactivated "
+        "at any time (Q-03).",
+    },
+    {
+        "name": "shared",
+        "description": "Public view behind a valid share link, no login needed (F-14). Shows "
+        "only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+    },
+    {
         "name": "full-list",
         "description": "The complete list of the account's people, gift ideas and past gifts "
         "as one HTML page (F-15), valid HTML (QZ-03).",

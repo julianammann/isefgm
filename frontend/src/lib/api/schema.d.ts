@@ -536,6 +536,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/share-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List share links
+         * @description Returns the share links of the current account, newest first, one page at a time. Tokens are not included; they are shown only once, on creation.
+         */
+        get: operations["listShareLinks"];
+        put?: never;
+        /**
+         * Create share link
+         * @description Creates a read-only share link on chosen people of the current account. The response holds the token, the only time it is returned: the server keeps just its SHA-256 hash. `person_ids` must name 1 to 100 people of the account; a person of another account returns 404, like a missing one, and nothing is saved. An `expires_at` that is set or changed must lie in the future (400 otherwise).
+         */
+        post: operations["createShareLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/share-links/{share_link_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show share link
+         * @description Returns one share link of the current account, without its token. A share link of another account returns 404, like a missing one.
+         */
+        get: operations["getShareLink"];
+        /**
+         * Update share link
+         * @description Replaces the people, expiry time and active flag of the share link. `active: false` deactivates it at once; the token stays the same. `person_ids` must name 1 to 100 people of the account; a person of another account returns 404, like a missing one, and nothing is saved. An `expires_at` that is set or changed must lie in the future (400 otherwise). A share link of another account returns 404, like a missing one.
+         */
+        put: operations["updateShareLink"];
+        post?: never;
+        /**
+         * Delete share link
+         * @description Deletes the share link; it no longer opens. Cannot be undone. A share link of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteShareLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shared/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open shared list
+         * @description Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.
+         */
+        get: operations["getSharedList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1198,6 +1270,17 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[ShareLinkOut] */
+        Page_ShareLinkOut_: {
+            /** Items */
+            items: components["schemas"]["ShareLinkOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
         /**
          * PersonIn
          * @description Data of a person; used for create and for full update (PUT).
@@ -1321,6 +1404,242 @@ export interface components {
              * @example correct-horse-battery
              */
             password: string;
+        };
+        /**
+         * ShareLinkCreated
+         * @description A new share link together with its token, which is returned only this once.
+         */
+        ShareLinkCreated: {
+            /**
+             * Active
+             * @description False once the link is deactivated.
+             * @example true
+             */
+            active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-15T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * @description Expiry time (UTC), or null if the link does not expire.
+             * @example 2026-12-24T22:59:59Z
+             */
+            expires_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Share link ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a80
+             */
+            id: string;
+            /**
+             * People
+             * @description People whose gift ideas the link shows, sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+            /**
+             * Token
+             * @description Secret token of the link (256 bits, URL-safe). Only its hash is stored, so it cannot be shown again; the frontend builds the shared URL from it.
+             * @example q3Xb2k9VtL0mR8sY1nWc4eJ7uA5hZ6oP-dFgQiKjTx0
+             */
+            token: string;
+        };
+        /**
+         * ShareLinkIn
+         * @description Data of a share link; used for create and for full update (PUT).
+         */
+        ShareLinkIn: {
+            /**
+             * Active
+             * @description False deactivates the link at once; true opens it again.
+             * @default true
+             * @example true
+             */
+            active: boolean;
+            /**
+             * Expires At
+             * @description Expiry time with time zone, optional. Must lie in the future when it is set or changed. Null means the link does not expire.
+             * @example 2026-12-24T23:59:59+01:00
+             */
+            expires_at?: string | null;
+            /**
+             * Person Ids
+             * @description IDs of the account's people whose gift ideas the link shows, 1 to 100. Replaces the current selection.
+             * @example [
+             *       "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+             *     ]
+             */
+            person_ids: string[];
+        };
+        /**
+         * ShareLinkOut
+         * @description A share link as its owner sees it, without the token.
+         */
+        ShareLinkOut: {
+            /**
+             * Active
+             * @description False once the link is deactivated.
+             * @example true
+             */
+            active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-15T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * @description Expiry time (UTC), or null if the link does not expire.
+             * @example 2026-12-24T22:59:59Z
+             */
+            expires_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Share link ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a80
+             */
+            id: string;
+            /**
+             * People
+             * @description People whose gift ideas the link shows, sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+        };
+        /**
+         * SharedGiftOut
+         * @description A gift idea in the shared view, without notes, giftings or occasions.
+         */
+        SharedGiftOut: {
+            /**
+             * @description Kind of gift.
+             * @example tech
+             */
+            category: components["schemas"]["GiftCategory"];
+            /**
+             * Currency
+             * @description ISO 4217 currency code, or null when no price is set.
+             * @example EUR
+             */
+            currency: string | null;
+            /**
+             * Description
+             * @description Free-text description, or null.
+             * @example Technik, für IT-Begeisterte
+             */
+            description: string | null;
+            /**
+             * Links
+             * @description Web links on the idea, oldest first.
+             * @example [
+             *       {
+             *         "label": "Thalia",
+             *         "url": "https://www.thalia.de/"
+             *       }
+             *     ]
+             */
+            links: components["schemas"]["SharedLinkOut"][];
+            /**
+             * Price From
+             * @description Lower end of the price range in `currency`, as a string, or null.
+             * @example 10.00
+             */
+            price_from: string | null;
+            /**
+             * Price To
+             * @description Upper end of the price range in `currency`, as a string, or null.
+             * @example 100.00
+             */
+            price_to: string | null;
+            /**
+             * Title
+             * @description Title.
+             * @example Raspberry Pi
+             */
+            title: string;
+        };
+        /**
+         * SharedLinkOut
+         * @description A web link on a shared gift idea.
+         */
+        SharedLinkOut: {
+            /**
+             * Label
+             * @description Label.
+             * @example Thalia
+             */
+            label: string;
+            /**
+             * Url
+             * @description Absolute http or https URL.
+             * @example https://www.thalia.de/shop/home/artikeldetails/A1234
+             */
+            url: string;
+        };
+        /**
+         * SharedListOut
+         * @description What a valid share link shows: the chosen people and their gift ideas.
+         */
+        SharedListOut: {
+            /**
+             * Expires At
+             * @description Expiry time (UTC) of the link, or null.
+             * @example 2026-12-24T22:59:59Z
+             */
+            expires_at: string | null;
+            /**
+             * Owner Name
+             * @description Display name of the account that shared the list.
+             * @example Anna
+             */
+            owner_name: string;
+            /**
+             * People
+             * @description Shared people, sorted by name.
+             * @example [
+             *       {
+             *         "gifts": [],
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["SharedPersonOut"][];
+        };
+        /**
+         * SharedPersonOut
+         * @description A shared person: only the name, no birthday, relationship or notes.
+         */
+        SharedPersonOut: {
+            /**
+             * Gifts
+             * @description Gift ideas meant for the person, newest first.
+             * @example []
+             */
+            gifts: components["schemas"]["SharedGiftOut"][];
+            /**
+             * Name
+             * @description Name.
+             * @example Lena
+             */
+            name: string;
         };
         /**
          * UserOut
@@ -3201,6 +3520,305 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listShareLinks: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ShareLinkOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createShareLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareLinkCreated"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getShareLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                share_link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareLinkOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateShareLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                share_link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareLinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareLinkOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteShareLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                share_link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSharedList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedListOut"];
                 };
             };
             /** @description Not Found */

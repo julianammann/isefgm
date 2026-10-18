@@ -58,6 +58,19 @@ Person the account owner gives gifts to (F-02). Visible only to its owner (Q-01)
 | `notes` | TEXT | yes | Free-text notes, e.g. hobbies or sizes. Optional. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## share_link
+
+Read-only share link on chosen people of an account (F-14). Opens only while active and not expired; only the hash of its token is stored (Q-03). Deleted together with the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | no | Account the share link belongs to. Deleted together with the account. (FK → user_account.id) (Index) |
+| `token_hash` | VARCHAR(64) | no | SHA-256 of the token in the link. The token itself is shown once and never stored. (unique) |
+| `active` | BOOLEAN | no | False once the owner deactivates the link; it then no longer opens. |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | yes | Expiry time (UTC), optional. The link no longer opens afterwards. |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
 ## user_session
 
 Server-side session. One cookie token maps to exactly one row; logging out deletes the row.
@@ -115,6 +128,15 @@ Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete
 | `name` | VARCHAR(100) | no | Title, e.g. Hochzeitstag. |
 | `date` | DATE | no | Date as a plain calendar date (Q-08). First occurrence for yearly ones. |
 | `recurrence` | VARCHAR(16) | no | `none` (once) or `yearly` (every year on the same day). |
+
+## share_link_person
+
+People whose gift ideas a share link shows (F-14), n:m. Deleting the link or the person removes only the row. Sharing a person does not share their master data.
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `share_link_id` | UUID | no | Share link. Deleting it deletes the row. (PK) (FK → share_link.id) |
+| `person_id` | UUID | no | Shared person. Deleting the person removes them from the link. (PK) (FK → person.id) (Index) |
 
 ## gift_occasion
 
