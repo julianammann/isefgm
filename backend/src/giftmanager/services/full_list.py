@@ -14,7 +14,6 @@ from giftmanager.models import (
     GiftingStatus,
     Note,
     Person,
-    User,
 )
 from giftmanager.services.ownership import owned
 
@@ -32,7 +31,6 @@ class ListedGift:
 class FullList:
     """Everything the account has: people, gift ideas and gifts already given."""
 
-    owner_name: str
     people: list[Person]
     gifts: list[ListedGift]
     given: list[Gifting]
@@ -40,7 +38,6 @@ class FullList:
 
 async def get_full_list(session: AsyncSession, owner_id: uuid.UUID) -> FullList:
     """Load the owner's people, gift ideas with links and notes, and given gifts."""
-    owner_name = await session.scalar(select(User.display_name).where(User.id == owner_id))
     people = await session.scalars(
         owned(Person, owner_id).order_by(func.lower(Person.name), Person.id)
     )
@@ -70,7 +67,6 @@ async def get_full_list(session: AsyncSession, owner_id: uuid.UUID) -> FullList:
     for note in notes:
         notes_by_gift.setdefault(note.gift_id, []).append(note)
     return FullList(
-        owner_name=owner_name or "",
         people=list(people),
         gifts=[
             ListedGift(

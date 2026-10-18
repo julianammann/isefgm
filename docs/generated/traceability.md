@@ -329,16 +329,11 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-14 | `tests/test_share_links.py::test_shared_view_is_read_only[DELETE]` | passed |
 | F-14 | `tests/test_share_links.py::test_shared_view_follows_later_changes` | passed |
 | F-14 | `tests/test_share_links.py::test_deleting_the_account_deletes_its_share_links` | passed |
-| F-15 | `tests/test_full_list.py::test_empty_list_is_valid_html` | passed |
-| F-15 | `tests/test_full_list.py::test_list_shows_people_ideas_and_past_gifts` | passed |
-| F-15 | `tests/test_full_list.py::test_user_input_is_escaped` | passed |
-| F-15 | `tests/test_full_list.py::test_list_shows_only_the_own_account` | passed |
+| F-15 | `tests/test_full_list.py::test_empty_account_gets_empty_lists` | passed |
+| F-15 | `tests/test_full_list.py::test_list_holds_people_ideas_and_past_gifts` | passed |
+| F-15 | `tests/test_full_list.py::test_past_gifts_are_only_given_ones_latest_first` | passed |
+| F-15 | `tests/test_full_list.py::test_list_shows_nothing_of_another_account` | passed |
 | F-15 | `tests/test_full_list.py::test_list_requires_login` | passed |
-| F-15 | `tests/test_full_list.py::test_price_range_is_written_the_german_way[10-100-10,00 bis 100,00 EUR]` | passed |
-| F-15 | `tests/test_full_list.py::test_price_range_is_written_the_german_way[25-25-25,00 EUR]` | passed |
-| F-15 | `tests/test_full_list.py::test_price_range_is_written_the_german_way[15-None-ab 15,00 EUR]` | passed |
-| F-15 | `tests/test_full_list.py::test_price_range_is_written_the_german_way[None-1234.5-bis 1234,50 EUR]` | passed |
-| F-15 | `tests/test_full_list.py::test_price_range_is_written_the_german_way[None-None-]` | passed |
 | F-17 | `tests/test_auth.py::test_delete_account_removes_user_and_sessions` | passed |
 | F-17 | `tests/test_giftings.py::test_deleting_the_account_deletes_its_giftings` | passed |
 | F-17 | `tests/test_gifts.py::test_deleting_the_account_deletes_its_gifts` | passed |
@@ -352,7 +347,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_auth.py::test_logout_all_leaves_other_users_logged_in` | passed |
 | Q-01 | `tests/test_auth.py::test_logout_all_without_session_is_unauthorized` | passed |
 | Q-01 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
-| Q-01 | `tests/test_full_list.py::test_list_shows_only_the_own_account` | passed |
+| Q-01 | `tests/test_full_list.py::test_list_shows_nothing_of_another_account` | passed |
 | Q-01 | `tests/test_full_list.py::test_list_requires_login` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_require_login` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_of_another_account_are_invisible[GET]` | passed |
@@ -435,7 +430,6 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_config.py::test_app_env_defaults_to_production` | passed |
 | Q-03 | `tests/test_config.py::test_registration_is_closed_by_default` | passed |
 | Q-03 | `tests/test_create_user.py::test_validates_like_the_registration_endpoint` | passed |
-| Q-03 | `tests/test_full_list.py::test_user_input_is_escaped` | passed |
 | Q-03 | `tests/test_logging.py::test_valid_request_id_is_reused[uuid]` | passed |
 | Q-03 | `tests/test_logging.py::test_valid_request_id_is_reused[64-chars]` | passed |
 | Q-03 | `tests/test_logging.py::test_invalid_request_id_is_replaced[too-long]` | passed |
@@ -506,8 +500,6 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-02-29-2028-02-29]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
 | Q-09 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |
-| QZ-03 | `tests/test_full_list.py::test_empty_list_is_valid_html` | passed |
-| QZ-03 | `tests/test_full_list.py::test_list_shows_people_ideas_and_past_gifts` | passed |
 
 ## Tests without a requirement
 

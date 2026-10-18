@@ -19,11 +19,11 @@ Create, log in to, log out of and delete an account (F-01, F-17). The session li
 
 ## full-list
 
-The complete list of the account's people, gift ideas and past gifts as one HTML page (F-15), valid HTML (QZ-03).
+The complete list of the account's people, gift ideas and past gifts in one response (F-15). Visible only to its account (Q-01).
 
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
-| `GET /api/v1/full-list` | `getFullList` | Show complete list as HTML | Returns all people, gift ideas (with links and notes) and past gifts (giftings with status `given`) of the current account as one HTML page. All text is escaped; links are only http or https URLs. The page is meant to be shown in the browser or printed. | 200, 401 |
+| `GET /api/v1/full-list` | `getFullList` | Show complete list | Returns all people, all gift ideas with their links and notes, and all past gifts (giftings with status `given`) of the current account in one response. The frontend renders it as one HTML page. Not paginated on purpose: F-15 asks for the complete list; all rows are loaded in a fixed number of queries. | 200, 401 |
 
 ## giftings
 

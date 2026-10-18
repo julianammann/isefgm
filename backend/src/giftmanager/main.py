@@ -57,7 +57,7 @@ OPENAPI_TAGS = [
     {
         "name": "full-list",
         "description": "The complete list of the account's people, gift ideas and past gifts "
-        "as one HTML page (F-15), valid HTML (QZ-03).",
+        "in one response (F-15). Visible only to its account (Q-01).",
     },
 ]
 
