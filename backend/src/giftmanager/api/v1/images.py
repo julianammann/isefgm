@@ -66,8 +66,9 @@ async def list_images(
     operation_id="createImage",
     summary="Upload image",
     description="Adds a labelled image to a gift idea of the current account. Accepts JPEG, "
-    "PNG and WebP up to 5 MB and 24 megapixels, judged by the content, not by the file name "
-    "or type (415 for anything else, 413 if larger). The image is turned upright, shrunk to "
+    "PNG and WebP up to 5 MB, judged by the content, not by the file name or type (415 for "
+    "anything else). Larger files, or more than 24 megapixels for JPEG, 16 for PNG and 10 "
+    "for WebP, return 413. The image is turned upright, shrunk to "
     "at most 2000 px on its long side and stored as WebP without EXIF or XMP metadata. An "
     "idea holds at most 5 images (409). While too many uploads are in progress the API "
     "answers 503 with Retry-After. `gift_id` must be a gift idea of the account; an idea of "

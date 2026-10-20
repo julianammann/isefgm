@@ -1,5 +1,6 @@
 """Re-encoding of uploaded images (F-07, Q-03): format check, limits, WebP without metadata."""
 
+import struct
 from io import BytesIO
 from typing import Any
 
@@ -14,7 +15,7 @@ from giftmanager.core.errors import (
     ServiceUnavailableError,
     UnsupportedMediaTypeError,
 )
-from tests.images import make_image, open_image
+from tests.images import make_image, open_image, png_header_only
 
 
 def noisy_jpeg(size: tuple[int, int] = (300, 200)) -> bytes:
@@ -162,12 +163,50 @@ def test_more_than_5_mb_is_rejected() -> None:
 
 
 @pytest.mark.requirement("F-07", "Q-03")
-def test_more_than_24_megapixels_is_rejected() -> None:
+@pytest.mark.parametrize(
+    ("fmt", "largest", "too_large"),
+    [
+        ("JPEG", (6000, 4000), (6001, 4000)),  # 24 MP
+        ("PNG", (4000, 4000), (4001, 4000)),  # 16 MP
+        ("WEBP", (4000, 2500), (4001, 2500)),  # 10 MP
+    ],
+)
+def test_pixel_limit_depends_on_the_format(
+    fmt: str, largest: tuple[int, int], too_large: tuple[int, int]
+) -> None:
+    assert open_image(imaging.to_webp(make_image(fmt, largest, mode="L"))).format == "WEBP"
     with pytest.raises(ContentTooLargeError):
-        imaging.to_webp(make_image("PNG", (5000, 5000), mode="L"))
+        imaging.to_webp(make_image(fmt, too_large, mode="L"))
 
-    out = open_image(imaging.to_webp(make_image("JPEG", (6000, 4000), mode="L")))
-    assert out.size == (2000, 1333)
+
+@pytest.mark.requirement("F-07", "Q-03")
+def test_huge_header_is_rejected_as_too_large() -> None:
+    # Pillow itself refuses about 179 MP and more while opening; that is a 413 too.
+    with pytest.raises(ContentTooLargeError):
+        imaging.to_webp(png_header_only(20000, 20000))
+
+
+@pytest.mark.requirement("F-07")
+@pytest.mark.parametrize("fmt", ["JPEG", "PNG", "WEBP"])
+def test_broken_exif_is_ignored(fmt: str) -> None:
+    out = open_image(imaging.to_webp(make_image(fmt, (300, 100), exif=b"Exif\x00\x00garbage")))
+
+    assert out.size == (300, 100)
+    assert "exif" not in out.info
+
+
+@pytest.mark.requirement("F-07")
+def test_16_bit_greyscale_keeps_its_tones() -> None:
+    tones_16 = b"".join(struct.pack("<H", v * 257) for v in range(256))  # 0 .. 65535
+    gradient = Image.frombytes("I;16", (256, 1), tones_16)
+    buffer = BytesIO()
+    gradient.save(buffer, "PNG")
+
+    tones = open_image(imaging.to_webp(buffer.getvalue())).convert("L").tobytes()
+
+    assert min(tones) <= 3
+    assert max(tones) >= 252
+    assert abs(tones[128] - 128) <= 4
 
 
 @pytest.mark.requirement("F-07")

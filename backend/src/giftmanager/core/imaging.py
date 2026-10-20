@@ -1,5 +1,6 @@
 """Re-encoding of uploaded images (F-07, Q-03): checked by content, stored as WebP only."""
 
+import contextlib
 from io import BytesIO
 from typing import Final
 
@@ -13,8 +14,6 @@ from giftmanager.core.errors import (
 )
 
 MAX_UPLOAD_BYTES: Final = 5 * 1024 * 1024
-# Checked from the header before decoding: a small file can unpack to a huge bitmap.
-MAX_PIXELS: Final = 24_000_000
 MAX_SIDE: Final = 2000
 WEBP_QUALITY: Final = 85
 MIME_TYPE: Final = "image/webp"
@@ -23,8 +22,13 @@ MIME_TYPE: Final = "image/webp"
 # comes in through the JPEG opener.
 _FORMATS: Final = ("JPEG", "PNG", "WEBP")
 
-# A 24 MP image takes about 100 MiB once decoded, and the api container has 512 MiB of
-# which Argon2 may hold 192 MiB (core/security.py). So one image at a time.
+# Checked from the header before decoding: a small file can unpack to a huge bitmap.
+# Measured peak of to_webp at these limits (python:3.14-slim, Pillow 13): JPEG +50 MiB
+# (decoded at a reduced scale), PNG up to +170 MiB, WebP up to +190 MiB (Pillow's decoder
+# holds two full canvases). With the app and three Argon2 hashes (192 MiB, core/security.py)
+# that stays inside the api container's 512 MiB, but only for one image at a time.
+MAX_PIXELS: Final = {"JPEG": 24_000_000, "MPO": 24_000_000, "PNG": 16_000_000, "WEBP": 10_000_000}
+
 _processing_limiter = CapacityLimiter(1)
 
 # A waiting upload holds the request's pooled DB connection (CurrentUser already queried),
@@ -39,25 +43,39 @@ def to_webp(data: bytes) -> bytes:
     The ICC colour profile is kept; EXIF and XMP are dropped. Transparency is kept.
 
     Raises:
-        ContentTooLargeError: More than 5 MB or more than 24 megapixels.
+        ContentTooLargeError: More than 5 MB, or more pixels than `MAX_PIXELS` allows for
+            the format.
         UnsupportedMediaTypeError: Not a JPEG, PNG or WebP image, or a broken one.
     """
     if len(data) > MAX_UPLOAD_BYTES:
         raise ContentTooLargeError("Images may be at most 5 MB")
     try:
         image = Image.open(BytesIO(data), formats=_FORMATS)
-        if image.width * image.height > MAX_PIXELS:
-            raise ContentTooLargeError("Images may have at most 24 megapixels")
+        limit = MAX_PIXELS[str(image.format)]
+        if image.width * image.height > limit:
+            raise ContentTooLargeError(
+                f"{image.format} images may have at most {limit / 1_000_000:g} megapixels"
+            )
         icc_profile = image.info.get("icc_profile")
         image.draft("RGB", (MAX_SIDE, MAX_SIDE))  # JPEG only: decode at a reduced scale
         image.load()
+    except Image.DecompressionBombError as exc:
+        # Pillow's own limit, far above ours, hit while reading the header.
+        raise ContentTooLargeError("Image has too many pixels") from exc
     except (OSError, SyntaxError, ValueError) as exc:
         raise UnsupportedMediaTypeError("File is not a JPEG, PNG or WebP image") from exc
 
-    image = image.convert("RGBA" if image.has_transparency_data else "RGB")
+    if image.mode.startswith("I"):
+        # 16-bit greyscale: converting straight to RGB would clip every tone to white.
+        image = Image.eval(image.convert("I"), lambda v: v / 256).convert("L")
+    mode = "RGBA" if image.has_transparency_data else "RGB"
+    if image.mode != mode:  # a same-mode convert would copy the full bitmap for nothing
+        image = image.convert(mode)
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.Resampling.LANCZOS)
-    # Shrunk first, so turning it upright copies the small image, not the full one.
-    image = ImageOps.exif_transpose(image)
+    # Shrunk first, so turning it upright copies the small image, not the full one. A
+    # broken EXIF block only loses the orientation, as in a browser.
+    with contextlib.suppress(OSError, SyntaxError, ValueError):
+        image = ImageOps.exif_transpose(image)
 
     out = BytesIO()
     image.save(out, "WEBP", quality=WEBP_QUALITY, icc_profile=icc_profile)

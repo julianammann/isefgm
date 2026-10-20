@@ -19,7 +19,7 @@ from giftmanager.services import gift as gift_service
 from giftmanager.services import image as image_service
 from tests.accounts import log_in_new_user
 from tests.conftest import FixedClock
-from tests.images import make_image, open_image
+from tests.images import make_image, open_image, png_header_only
 from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 # No test may write to the real UPLOADS_DIR.
@@ -197,6 +197,10 @@ async def test_misleading_name_and_type_are_ignored(client: AsyncClient, anna: U
         pytest.param(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\n", 415, "Unsupported Media Type", id="pdf"),
         pytest.param(b"hello", 415, "Unsupported Media Type", id="text"),
         pytest.param(b"\xff" * (5 * 1024 * 1024 + 1), 413, "Content Too Large", id="over-5-mb"),
+        pytest.param(png_header_only(20000, 20000), 413, "Content Too Large", id="huge-header"),
+        pytest.param(
+            make_image("WEBP", (4001, 2500)), 413, "Content Too Large", id="webp-over-10-mp"
+        ),
     ],
 )
 async def test_invalid_files_are_rejected(
@@ -216,6 +220,15 @@ async def test_invalid_files_are_rejected(
     assert r.json()["title"] == title
     assert await session.scalar(select(func.count()).select_from(Attachment)) == 0
     assert stored_files(uploads_dir) == []
+
+
+@pytest.mark.requirement("F-07")
+async def test_image_with_broken_exif_is_accepted(client: AsyncClient, anna: User) -> None:
+    broken = make_image("JPEG", (300, 100), exif=b"Exif\x00\x00garbage")
+
+    r = await upload(client, await create_gift(client), data=broken)
+
+    assert r.status_code == 201
 
 
 @pytest.mark.requirement("F-07")

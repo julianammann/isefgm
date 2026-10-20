@@ -72,12 +72,17 @@ def _remove(paths: list[Path]) -> None:
             path.unlink(missing_ok=True)
 
 
+# SQLAlchemy fires both events for a SAVEPOINT too; only the outer transaction decides.
 def _after_commit(session: Session) -> None:
+    if session.in_nested_transaction():
+        return
     session.info.pop(_ON_ROLLBACK, None)
     _remove(session.info.pop(_AFTER_COMMIT, []))
 
 
 def _after_rollback(session: Session) -> None:
+    if session.in_nested_transaction():
+        return
     session.info.pop(_AFTER_COMMIT, None)
     _remove(session.info.pop(_ON_ROLLBACK, []))
 

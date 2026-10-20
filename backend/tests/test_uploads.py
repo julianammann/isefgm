@@ -98,3 +98,67 @@ async def test_account_files_are_removed_after_commit(
 
     assert not (uploads_dir / str(OWNER)).exists()
     assert (uploads_dir / other).exists()
+
+
+# A SAVEPOINT inside the transaction is not the commit or rollback of the transaction.
+
+
+@pytest.mark.requirement("F-07")
+async def test_released_savepoint_does_not_delete_yet(
+    session: AsyncSession, uploads_dir: Path
+) -> None:
+    path = uploads.new_storage_path(OWNER)
+    await uploads.write(session, path, b"webp bytes")
+    await session.commit()
+
+    await session.begin()
+    async with session.begin_nested():
+        uploads.delete_after_commit(session, path)
+    assert (uploads_dir / path).exists()
+    await session.rollback()
+
+    assert (uploads_dir / path).exists()
+
+
+@pytest.mark.requirement("F-07")
+async def test_released_savepoint_keeps_new_files_tracked(
+    session: AsyncSession, uploads_dir: Path
+) -> None:
+    path = uploads.new_storage_path(OWNER)
+    await session.begin()
+    async with session.begin_nested():
+        await uploads.write(session, path, b"webp bytes")
+
+    await session.rollback()
+
+    assert not (uploads_dir / path).exists()
+
+
+@pytest.mark.requirement("F-07")
+async def test_savepoint_rollback_keeps_files_of_the_transaction(
+    session: AsyncSession, uploads_dir: Path
+) -> None:
+    path = uploads.new_storage_path(OWNER)
+    await session.begin()
+    await uploads.write(session, path, b"webp bytes")
+    with pytest.raises(RuntimeError):
+        async with session.begin_nested():
+            raise RuntimeError("inner work failed")
+
+    await session.commit()
+
+    assert (uploads_dir / path).exists()
+
+
+@pytest.mark.requirement("F-07")
+async def test_rollback_with_an_open_savepoint_removes_new_files(
+    session: AsyncSession, uploads_dir: Path
+) -> None:
+    path = uploads.new_storage_path(OWNER)
+    await session.begin()
+    await uploads.write(session, path, b"webp bytes")
+    await session.begin_nested()
+
+    await session.rollback()
+
+    assert not (uploads_dir / path).exists()
