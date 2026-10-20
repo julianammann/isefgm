@@ -1,5 +1,6 @@
 """Labelled images on gift ideas (F-07): upload, delivery and foreign access (Q-01, Q-03)."""
 
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core import imaging
 from giftmanager.models import Attachment, AttachmentKind, Gift, User
+from giftmanager.services import auth as auth_service
+from giftmanager.services import gift as gift_service
+from giftmanager.services import image as image_service
 from tests.accounts import log_in_new_user
 from tests.images import make_image, open_image
 from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
@@ -396,3 +400,76 @@ async def test_list_filtered_to_a_foreign_gift_is_empty(
     r = await client.get(IMAGES, params={"gift_id": str(foreign.id)})
 
     assert r.json() == {"items": [], "total": 0, "limit": 50, "offset": 0}
+
+
+# --- Files go with their image, idea and account (F-07, F-17) -------------------
+# The client fixture never commits, so these tests call the service and commit themselves.
+
+
+@pytest.mark.requirement("F-07")
+async def test_deleting_an_image_removes_its_file_after_commit(
+    client: AsyncClient, session: AsyncSession, anna: User, uploads_dir: Path
+) -> None:
+    image = await create_image(client, await create_gift(client))
+    [stored] = stored_files(uploads_dir)
+
+    await image_service.delete_image(session, anna.id, uuid.UUID(image["id"]))
+    assert stored.exists()
+    await session.commit()
+
+    assert not stored.exists()
+
+
+@pytest.mark.requirement("F-07")
+async def test_deleting_a_gift_removes_its_image_files(
+    client: AsyncClient, session: AsyncSession, anna: User, uploads_dir: Path
+) -> None:
+    book = await create_gift(client, "Buch")
+    await create_image(client, book, "Eins")
+    await create_image(client, book, "Zwei")
+    game = await create_gift(client, "Spiel")
+    await create_image(client, game)
+    before = stored_files(uploads_dir)
+
+    await gift_service.delete_gift(session, anna.id, uuid.UUID(book))
+    await session.commit()
+
+    [kept] = stored_files(uploads_dir)
+    assert kept in before
+    game_image = await session.scalar(
+        select(Attachment).where(Attachment.gift_id == uuid.UUID(game))
+    )
+    assert game_image is not None
+    assert kept == uploads_dir / str(game_image.storage_path)
+
+
+@pytest.mark.requirement("F-07", "F-17")
+async def test_deleting_the_account_removes_all_its_files(
+    client: AsyncClient, session: AsyncSession, anna: User, uploads_dir: Path
+) -> None:
+    book = await create_gift(client)
+    await create_image(client, book)
+    await create_image(client, book)
+    other = uploads_dir / str(uuid.uuid4()) / "bild.webp"
+    other.parent.mkdir()
+    other.write_bytes(b"webp bytes")
+
+    await auth_service.delete_account(session, anna)
+    await session.commit()
+
+    assert not (uploads_dir / str(anna.id)).exists()
+    assert other.exists()
+
+
+@pytest.mark.requirement("F-07")
+async def test_deleting_a_gift_over_http_deletes_its_images(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    book = await create_gift(client)
+    image = await create_image(client, book)
+
+    assert (await client.delete(f"{GIFTS}/{book}")).status_code == 204
+    session.expire_all()
+
+    assert (await client.get(f"{IMAGES}/{image['id']}")).status_code == 404
+    assert await session.scalar(select(func.count()).select_from(Attachment)) == 0

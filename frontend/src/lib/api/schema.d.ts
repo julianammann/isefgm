@@ -220,7 +220,7 @@ export interface paths {
         post?: never;
         /**
          * Delete gift idea
-         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.
+         * @description Deletes the gift idea with its notes, links and images. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteGift"];
         options?: never;

@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from giftmanager.core import uploads
 from giftmanager.core.errors import ConflictError
 from giftmanager.core.security import (
     UNKNOWN_USER_HASH,
@@ -145,6 +146,10 @@ async def revoke_all_sessions(session: AsyncSession, user: User) -> None:
 
 
 async def delete_account(session: AsyncSession, user: User) -> None:
-    """F-17: the row goes, every owned row follows via ON DELETE CASCADE."""
+    """F-17: the row goes, every owned row follows via ON DELETE CASCADE.
+
+    The account's uploaded images go once the deletion has committed.
+    """
+    uploads.delete_account_files_after_commit(session, user.id)
     await session.delete(user)
     await session.flush()
