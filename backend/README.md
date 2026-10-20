@@ -30,6 +30,8 @@ FastAPI-Backend des Geschenke-Managers. Python 3.14, vollständig async, strikt 
     db.py            Engine (lazy), Session-Factory, SessionDep (eine Transaktion pro Request)
     errors.py        DomainError, NotFoundError, ConflictError, Problem-Details-Handler
     security.py      Argon2id-Hashing (pwdlib), Session-Token erzeugen und hashen
+    imaging.py       Bild-Uploads mit Pillow prüfen und als WebP neu kodieren, Grenzen, Warteschlange
+    uploads.py       Bilddateien unter UPLOADS_DIR, Löschen erst nach dem Commit
     logging.py       structlog-Konfiguration, Request-ID-Middleware
   models/            SQLAlchemy-Modelle; base.py mit Naming Conventions und TimestampMixin, user.py als Vorlage. Schema: docs/datenmodell.md
   schemas/           Pydantic-Schemas (Request/Response); common.py mit Page[T] und PageParams
