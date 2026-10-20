@@ -1945,6 +1945,22 @@
             ],
             "title": "Description"
           },
+          "images": {
+            "description": "Images on the idea, oldest first.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76",
+                  "label": "Bild vom Laden"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SharedImageOut"
+            },
+            "title": "Images",
+            "type": "array"
+          },
           "links": {
             "description": "Web links on the idea, oldest first.",
             "examples": [
@@ -2009,9 +2025,38 @@
           "price_to",
           "currency",
           "category",
-          "links"
+          "links",
+          "images"
         ],
         "title": "SharedGiftOut",
+        "type": "object"
+      },
+      "SharedImageOut": {
+        "description": "An image on a shared gift idea; the file comes from `/shared/{token}/images/{id}`.",
+        "properties": {
+          "id": {
+            "description": "Image ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label.",
+            "examples": [
+              "Bild vom Laden"
+            ],
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "SharedImageOut",
         "type": "object"
       },
       "SharedLinkOut": {
@@ -5520,7 +5565,7 @@
     },
     "/api/v1/shared/{token}": {
       "get": {
-        "description": "Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.",
+        "description": "Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links and images. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.",
         "operationId": "getSharedList",
         "parameters": [
           {
@@ -5566,6 +5611,65 @@
           }
         },
         "summary": "Open shared list",
+        "tags": [
+          "shared"
+        ]
+      }
+    },
+    "/api/v1/shared/{token}/images/{image_id}": {
+      "get": {
+        "description": "Public, no login needed: returns the WebP file of an image on one of the gift ideas the share link shows, marked `Cache-Control: private, no-store`. An unknown, deactivated or expired token, or an image the link does not show, returns the same 404 as the shared list.",
+        "operationId": "getSharedImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "image_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Image Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/webp": {}
+            },
+            "description": "The image as WebP."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch shared image file",
         "tags": [
           "shared"
         ]
@@ -5935,7 +6039,7 @@
       "name": "share-links"
     },
     {
-      "description": "Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+      "description": "Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas with web links and images; nothing can be changed (Q-01).",
       "name": "shared"
     }
   ]

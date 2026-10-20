@@ -23,10 +23,11 @@ from giftmanager.services.ownership import get_all_owned, get_owned, owned, pagi
 
 @dataclass
 class SharedGift:
-    """A shared gift idea with its web links."""
+    """A shared gift idea with its web links and images."""
 
     gift: Gift
     links: list[Attachment]
+    images: list[Attachment]
 
 
 @dataclass
@@ -144,7 +145,7 @@ async def open_share_link(session: AsyncSession, token: str, *, now: datetime) -
 
 
 async def get_shared_list(session: AsyncSession, token: str, *, now: datetime) -> SharedList:
-    """Return the people of a valid share link with their gift ideas and web links."""
+    """Return the people of a valid share link with their gift ideas, web links and images."""
     share_link = await open_share_link(session, token, now=now)
     owner_name = await session.scalar(
         select(User.display_name).where(User.id == share_link.owner_id)
@@ -162,17 +163,19 @@ async def get_shared_list(session: AsyncSession, token: str, *, now: datetime) -
         )
     ).all()
     gift_ids = {gift.id for _, gift in rows}
-    links = await session.scalars(
-        select(Attachment)
-        .where(Attachment.gift_id.in_(gift_ids), Attachment.kind == AttachmentKind.LINK)
-        .order_by(Attachment.id)
+    attachments = await session.scalars(
+        select(Attachment).where(Attachment.gift_id.in_(gift_ids)).order_by(Attachment.id)
     )
-    links_by_gift: dict[uuid.UUID, list[Attachment]] = {}
-    for link in links:
-        links_by_gift.setdefault(link.gift_id, []).append(link)
+    by_gift: dict[tuple[uuid.UUID, AttachmentKind], list[Attachment]] = {}
+    for attachment in attachments:
+        by_gift.setdefault((attachment.gift_id, attachment.kind), []).append(attachment)
     gifts_by_person: dict[uuid.UUID, list[SharedGift]] = {}
     for person_id, gift in rows:
-        shared_gift = SharedGift(gift=gift, links=links_by_gift.get(gift.id, []))
+        shared_gift = SharedGift(
+            gift=gift,
+            links=by_gift.get((gift.id, AttachmentKind.LINK), []),
+            images=by_gift.get((gift.id, AttachmentKind.IMAGE), []),
+        )
         gifts_by_person.setdefault(person_id, []).append(shared_gift)
     return SharedList(
         owner_name=owner_name or "",
@@ -182,3 +185,31 @@ async def get_shared_list(session: AsyncSession, token: str, *, now: datetime) -
             for person in share_link.people
         ],
     )
+
+
+async def get_shared_image(
+    session: AsyncSession, token: str, image_id: uuid.UUID, *, now: datetime
+) -> Attachment:
+    """Return an image on one of the gift ideas a valid share link shows.
+
+    Raises:
+        NotFoundError: The link is unknown, deactivated or expired, or the image is not on
+            an idea it shows. Always the same error, so the answer does not tell them apart.
+    """
+    share_link = await open_share_link(session, token, now=now)
+    image = await session.scalar(
+        select(Attachment)
+        .join(Gift, Gift.id == Attachment.gift_id)
+        .join(gift_person, gift_person.c.gift_id == Gift.id)
+        .where(
+            Attachment.id == image_id,
+            Attachment.kind == AttachmentKind.IMAGE,
+            Gift.owner_id == share_link.owner_id,
+            gift_person.c.person_id.in_([person.id for person in share_link.people]),
+        )
+        # An idea for two shared people joins twice.
+        .limit(1)
+    )
+    if image is None:
+        raise NotFoundError("Share link not found")
+    return image

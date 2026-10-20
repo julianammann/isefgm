@@ -649,9 +649,29 @@ export interface paths {
         };
         /**
          * Open shared list
-         * @description Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.
+         * @description Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links and images. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.
          */
         get: operations["getSharedList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/shared/{token}/images/{image_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch shared image file
+         * @description Public, no login needed: returns the WebP file of an image on one of the gift ideas the share link shows, marked `Cache-Control: private, no-store`. An unknown, deactivated or expired token, or an image the link does not show, returns the same 404 as the shared list.
+         */
+        get: operations["getSharedImage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1744,6 +1764,17 @@ export interface components {
              */
             description: string | null;
             /**
+             * Images
+             * @description Images on the idea, oldest first.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76",
+             *         "label": "Bild vom Laden"
+             *       }
+             *     ]
+             */
+            images: components["schemas"]["SharedImageOut"][];
+            /**
              * Links
              * @description Web links on the idea, oldest first.
              * @example [
@@ -1772,6 +1803,25 @@ export interface components {
              * @example Raspberry Pi
              */
             title: string;
+        };
+        /**
+         * SharedImageOut
+         * @description An image on a shared gift idea; the file comes from `/shared/{token}/images/{id}`.
+         */
+        SharedImageOut: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Image ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76
+             */
+            id: string;
+            /**
+             * Label
+             * @description Label.
+             * @example Bild vom Laden
+             */
+            label: string;
         };
         /**
          * SharedLinkOut
@@ -4396,6 +4446,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SharedListOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSharedImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image as WebP. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/webp": unknown;
                 };
             };
             /** @description Not Found */

@@ -58,7 +58,8 @@ OPENAPI_TAGS = [
     {
         "name": "shared",
         "description": "Public view behind a valid share link, no login needed (F-14). Shows "
-        "only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+        "only the chosen people by name and their gift ideas with web links and images; "
+        "nothing can be changed (Q-01).",
     },
 ]
 

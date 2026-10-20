@@ -1,12 +1,13 @@
 """Labelled images on gift ideas (F-07): upload, delivery and foreign access (Q-01, Q-03)."""
 
 import uuid
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
 import pytest
 from anyio import CapacityLimiter
-from httpx import AsyncClient, Response
+from httpx import AsyncClient, Cookies, Response
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +18,7 @@ from giftmanager.services import auth as auth_service
 from giftmanager.services import gift as gift_service
 from giftmanager.services import image as image_service
 from tests.accounts import log_in_new_user
+from tests.conftest import FixedClock
 from tests.images import make_image, open_image
 from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
@@ -26,6 +28,9 @@ pytestmark = pytest.mark.usefixtures("uploads_dir")
 IMAGES = "/api/v1/images"
 GIFTS = "/api/v1/gifts"
 LINKS = "/api/v1/links"
+PEOPLE = "/api/v1/people"
+SHARE_LINKS = "/api/v1/share-links"
+SHARED = "/api/v1/shared"
 UNKNOWN_ID = "0192f6a0-0000-7000-8000-000000000000"
 JPEG = make_image("JPEG")
 SVG = b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'
@@ -473,3 +478,123 @@ async def test_deleting_a_gift_over_http_deletes_its_images(
 
     assert (await client.get(f"{IMAGES}/{image['id']}")).status_code == 404
     assert await session.scalar(select(func.count()).select_from(Attachment)) == 0
+
+
+# --- Shared view (F-14) --------------------------------------------------------
+
+SHARE_LINK_NOT_FOUND = {
+    "type": "about:blank",
+    "title": "Not Found",
+    "status": 404,
+    "detail": "Share link not found",
+}
+
+
+async def create_person(client: AsyncClient, name: str) -> str:
+    return (await client.post(PEOPLE, json={"name": name})).json()["id"]
+
+
+async def create_gift_for(client: AsyncClient, title: str, people: list[str]) -> str:
+    return (await client.post(GIFTS, json={"title": title, "person_ids": people})).json()["id"]
+
+
+async def share(client: AsyncClient, people: list[str], **fields: object) -> dict[str, Any]:
+    r = await client.post(SHARE_LINKS, json={"person_ids": people, **fields})
+    assert r.status_code == 201
+    return r.json()
+
+
+@pytest.mark.requirement("F-14", "Q-01")
+async def test_shared_view_lists_the_images_of_shared_ideas(
+    client: AsyncClient, anna: User, clock: FixedClock
+) -> None:
+    lena = await create_person(client, "Lena")
+    tom = await create_person(client, "Tom")
+    first = await create_image(client, await create_gift_for(client, "Buch", [lena]), "Laden")
+    secret = await create_gift_for(client, "Geheim", [tom])
+    await create_image(client, secret, "Nicht teilen")
+    created = await share(client, [lena])
+    client.cookies.clear()
+
+    shared = (await client.get(f"{SHARED}/{created['token']}")).json()
+
+    [book] = shared["people"][0]["gifts"]
+    assert book["images"] == [{"id": first["id"], "label": "Laden"}]
+    assert "Nicht teilen" not in str(shared)
+
+
+@pytest.mark.requirement("F-14", "Q-03")
+async def test_shared_image_can_be_fetched_with_the_token(
+    client: AsyncClient, anna: User, clock: FixedClock, uploads_dir: Path
+) -> None:
+    lena = await create_person(client, "Lena")
+    image = await create_image(client, await create_gift_for(client, "Buch", [lena]))
+    created = await share(client, [lena])
+    client.cookies.clear()
+
+    r = await client.get(f"{SHARED}/{created['token']}/images/{image['id']}")
+
+    assert r.status_code == 200
+    [stored] = stored_files(uploads_dir)
+    assert r.content == stored.read_bytes()
+    assert r.headers["content-type"] == "image/webp"
+    assert r.headers["cache-control"] == "private, no-store"
+
+
+@pytest.mark.requirement("F-14")
+async def test_shared_image_of_an_idea_for_two_shared_people(
+    client: AsyncClient, anna: User, clock: FixedClock
+) -> None:
+    lena = await create_person(client, "Lena")
+    max_ = await create_person(client, "Max")
+    image = await create_image(client, await create_gift_for(client, "Spiel", [lena, max_]))
+    created = await share(client, [lena, max_])
+    client.cookies.clear()
+
+    r = await client.get(f"{SHARED}/{created['token']}/images/{image['id']}")
+
+    assert r.status_code == 200
+
+
+@pytest.mark.requirement("F-14", "Q-01", "Q-03")
+@pytest.mark.parametrize(
+    "case",
+    ["unknown-token", "expired", "deactivated", "idea-not-shared", "other-account", "link-id"],
+)
+async def test_shared_image_is_refused(
+    client: AsyncClient, session: AsyncSession, anna: User, clock: FixedClock, case: str
+) -> None:
+    lena = await create_person(client, "Lena")
+    tom = await create_person(client, "Tom")
+    book = await create_gift_for(client, "Buch", [lena])
+    shared_image = await create_image(client, book)
+    hidden_image = await create_image(client, await create_gift_for(client, "Geheim", [tom]))
+    link = await client.post(LINKS, json={"gift_id": book, "label": "Shop", "url": "https://a.de"})
+    created = await share(client, [lena], expires_at="2026-01-02T12:00:00+00:00")
+    token, image_id = created["token"], shared_image["id"]
+
+    match case:
+        case "unknown-token":
+            token = "unbekannt"
+        case "expired":
+            clock.advance(timedelta(days=2))
+        case "deactivated":
+            body = {"person_ids": [lena], "active": False}
+            assert (
+                await client.put(f"{SHARE_LINKS}/{created['id']}", json=body)
+            ).status_code == 200
+        case "idea-not-shared":
+            image_id = hidden_image["id"]
+        case "other-account":
+            owner = Cookies(client.cookies)
+            await log_in_new_user(client, session, "peter@example.com")
+            image_id = (await create_image(client, await create_gift(client, "Peters Idee")))["id"]
+            client.cookies = owner
+        case _:
+            image_id = link.json()["id"]
+    client.cookies.clear()
+
+    r = await client.get(f"{SHARED}/{token}/images/{image_id}")
+
+    assert r.status_code == 404
+    assert r.json() == SHARE_LINK_NOT_FOUND
