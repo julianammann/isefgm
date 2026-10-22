@@ -130,6 +130,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `create-user` | `uv run python -m giftmanager.create_user` | Konto anlegen, auch bei geschlossener Registrierung; fragt das Passwort ab. `mise run create-user -- --email anna@example.org --display-name Anna`, auf dem Server `docker compose exec api python -m giftmanager.create_user …` |
 | `seed` | `uv run python -m giftmanager.seed` | Testkonten `test1@example.org` und `test2@example.org` mit je 100 Personen, 20 Anlässen und 1.000 Geschenkideen (QZ-02, synthetisch per Faker) neu anlegen; fragt ein Passwort für alle Konten ab. Wiederholbar: vorhandene Testkonten werden samt Daten gelöscht. Auf dem Server `docker compose exec api python -m giftmanager.seed` |
 | `openapi` | `uv run python -m giftmanager.export_openapi > ../frontend/openapi.json` | |
+| `measure` | `uv run python scripts/qz02_measure.py` | QZ-02: je Listen-Endpoint ein Aufwärmlauf und 30 Messungen gegen den laufenden, geseedeten Stack (`docker compose up --build`, dann `seed`); gibt Median, p95 und Max als Markdown-Tabelle aus und endet mit 1, wenn ein p95 über 2 s liegt. Fragt das Passwort von `test1@example.org` ab |
 | `docs` | `uv run python -m giftmanager.export_docs ../docs/generated` | API-, Datenbank- und Konfigurationsdoku aus dem Code (MS 4) |
 | `apidocs` | `uv run python docs/build.py ../docs/site/backend` | Code-Referenz als Markdown für die VitePress-Seite; ganze Seite: `mise run apidocs:serve` im Root |
 
