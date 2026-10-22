@@ -1380,6 +1380,144 @@
         "title": "OccasionTypeOut",
         "type": "object"
       },
+      "OverviewGifting": {
+        "description": "A gifting in the person view, together with its tasks.",
+        "properties": {
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-04T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "gift": {
+            "$ref": "#/components/schemas/LinkedGift",
+            "description": "The gift idea this gifting uses.",
+            "examples": [
+              {
+                "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+                "title": "Raspberry Pi"
+              }
+            ]
+          },
+          "given_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Day the gift was given as a plain date; null unless `given`.",
+            "examples": [
+              "2026-12-24"
+            ],
+            "title": "Given On"
+          },
+          "id": {
+            "description": "Gifting ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occasion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkedOccasion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Occasion the gift is for, or null.",
+            "examples": [
+              {
+                "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+                "name": "Weihnachten"
+              }
+            ]
+          },
+          "occasion_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Concrete date of the occasion as a plain date, or null.",
+            "examples": [
+              "2026-12-24"
+            ],
+            "title": "Occasion Date"
+          },
+          "people": {
+            "description": "Actual recipients, sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GiftingStatus",
+            "description": "Progress of the gifting.",
+            "examples": [
+              "planned"
+            ]
+          },
+          "tasks": {
+            "description": "Tasks of the gifting, earliest due date first, tasks without one last.",
+            "examples": [
+              [
+                {
+                  "created_at": "2026-10-04T09:30:00Z",
+                  "due_on": "2026-12-20",
+                  "gifting_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73",
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75",
+                  "status": "open",
+                  "title": "Karte schreiben"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/TaskOut"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "gift",
+          "status",
+          "people",
+          "occasion",
+          "occasion_date",
+          "given_on",
+          "created_at",
+          "tasks"
+        ],
+        "title": "OverviewGifting",
+        "type": "object"
+      },
       "Page_GiftOut_": {
         "properties": {
           "items": {
@@ -1595,6 +1733,37 @@
           "offset"
         ],
         "title": "Page[OccasionTypeOut]",
+        "type": "object"
+      },
+      "Page_OverviewGifting_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewGifting"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[OverviewGifting]",
         "type": "object"
       },
       "Page_PersonOut_": {
@@ -1843,6 +2012,67 @@
           "created_at"
         ],
         "title": "PersonOut",
+        "type": "object"
+      },
+      "PersonOverviewOut": {
+        "description": "The person view (F-09). Every list is one page with the same `limit` and `offset`.",
+        "properties": {
+          "giftings": {
+            "$ref": "#/components/schemas/Page_OverviewGifting_",
+            "description": "Giftings for the person not given yet; `status` is the procurement state (`idea`, `planned` or `acquired`). Next occasion date first, those without one last.",
+            "examples": [
+              {
+                "items": [],
+                "limit": 50,
+                "offset": 0,
+                "total": 0
+              }
+            ]
+          },
+          "given": {
+            "$ref": "#/components/schemas/Page_OverviewGifting_",
+            "description": "Past gifts: giftings with status `given` the person received, latest `given_on` first.",
+            "examples": [
+              {
+                "items": [],
+                "limit": 50,
+                "offset": 0,
+                "total": 0
+              }
+            ]
+          },
+          "ideas": {
+            "$ref": "#/components/schemas/Page_GiftOut_",
+            "description": "Gift ideas meant for the person (possible recipient) without a gifting for them yet, newest first.",
+            "examples": [
+              {
+                "items": [],
+                "limit": 50,
+                "offset": 0,
+                "total": 0
+              }
+            ]
+          },
+          "occasions": {
+            "$ref": "#/components/schemas/Page_OccasionOut_",
+            "description": "Occasions that concern the person, sorted by date.",
+            "examples": [
+              {
+                "items": [],
+                "limit": 50,
+                "offset": 0,
+                "total": 0
+              }
+            ]
+          }
+        },
+        "required": [
+          "given",
+          "giftings",
+          "ideas",
+          "occasions"
+        ],
+        "title": "PersonOverviewOut",
         "type": "object"
       },
       "Problem": {
@@ -5489,6 +5719,93 @@
           }
         },
         "summary": "Update person",
+        "tags": [
+          "people"
+        ]
+      }
+    },
+    "/api/v1/people/{person_id}/overview": {
+      "get": {
+        "description": "Returns what the person view shows (F-09): past gifts (`given`) and the giftings not given yet with their procurement state (`giftings`), both with occasion and tasks, the gift ideas meant for the person and not used for them yet (`ideas`) and the occasions that concern them (`occasions`). Every list is one page with the same `limit` and `offset` and its own `total`; all rows are loaded in a fixed number of queries. A person of another account returns 404, like a missing one.",
+        "operationId": "getPersonOverview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "person_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Person Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show person view",
         "tags": [
           "people"
         ]
