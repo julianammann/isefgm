@@ -37,6 +37,243 @@
         "title": "Body_createImage",
         "type": "object"
       },
+      "FullListGift": {
+        "description": "A gift idea in the complete list, together with its links and notes.",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/GiftCategory",
+            "description": "Kind of gift.",
+            "examples": [
+              "tech"
+            ]
+          },
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-04T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 4217 currency code, or null when no price is set.",
+            "examples": [
+              "EUR"
+            ],
+            "title": "Currency"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free-text description, or null.",
+            "examples": [
+              "Technik, f\u00fcr IT-Begeisterte"
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "description": "Gift idea ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "links": {
+            "description": "Web links on the idea, oldest first.",
+            "examples": [
+              [
+                {
+                  "gift_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75",
+                  "label": "Thalia",
+                  "url": "https://www.thalia.de/shop/home/artikeldetails/A1234"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkOut"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "notes": {
+            "description": "Notes on the idea, oldest first.",
+            "examples": [
+              [
+                {
+                  "gift_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a74",
+                  "label": "Gr\u00f6\u00dfe",
+                  "text": "M, eher weit"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/NoteOut"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "occasions": {
+            "description": "Occasions the idea is meant for, sorted by date.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+                  "name": "Weihnachten"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedOccasion"
+            },
+            "title": "Occasions",
+            "type": "array"
+          },
+          "people": {
+            "description": "People the idea is meant for (possible recipients), sorted by name.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LinkedPerson"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "price_from": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lower end of the price range in `currency`, as a string, or null.",
+            "examples": [
+              "10.00"
+            ],
+            "title": "Price From"
+          },
+          "price_to": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Upper end of the price range in `currency`, as a string, or null.",
+            "examples": [
+              "100.00"
+            ],
+            "title": "Price To"
+          },
+          "title": {
+            "description": "Title.",
+            "examples": [
+              "Raspberry Pi"
+            ],
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "price_from",
+          "price_to",
+          "currency",
+          "category",
+          "people",
+          "occasions",
+          "created_at",
+          "links",
+          "notes"
+        ],
+        "title": "FullListGift",
+        "type": "object"
+      },
+      "FullListOut": {
+        "description": "The complete list of an account: people, gift ideas and past gifts (F-15).",
+        "properties": {
+          "gifts": {
+            "description": "All gift ideas of the account with their links and notes, sorted by title.",
+            "examples": [
+              []
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FullListGift"
+            },
+            "title": "Gifts",
+            "type": "array"
+          },
+          "given": {
+            "description": "Past gifts: all giftings with status `given`, most recently given first.",
+            "examples": [
+              []
+            ],
+            "items": {
+              "$ref": "#/components/schemas/GiftingOut"
+            },
+            "title": "Given",
+            "type": "array"
+          },
+          "people": {
+            "description": "All people of the account, sorted by name.",
+            "examples": [
+              [
+                {
+                  "birthday": "1994-03-17",
+                  "created_at": "2026-10-04T09:30:00Z",
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+                  "name": "Lena",
+                  "relationship": "Schwester"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PersonOut"
+            },
+            "title": "People",
+            "type": "array"
+          }
+        },
+        "required": [
+          "people",
+          "gifts",
+          "given"
+        ],
+        "title": "FullListOut",
+        "type": "object"
+      },
       "GiftCategory": {
         "description": "Kind of gift; the aggregated feature for suggestions (F-16).",
         "enum": [
@@ -2644,6 +2881,38 @@
         "summary": "Create account",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/full-list": {
+      "get": {
+        "description": "Returns all people, all gift ideas with their links and notes, and all past gifts (giftings with status `given`) of the current account in one response. The frontend renders it as one HTML page. Not paginated on purpose: F-15 asks for the complete list; all rows are loaded in a fixed number of queries.",
+        "operationId": "getFullList",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FullListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "summary": "Show complete list",
+        "tags": [
+          "full-list"
         ]
       }
     },
@@ -6041,6 +6310,10 @@
     {
       "description": "Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas with web links and images; nothing can be changed (Q-01).",
       "name": "shared"
+    },
+    {
+      "description": "The complete list of the account's people, gift ideas and past gifts in one response (F-15). Visible only to its account (Q-01).",
+      "name": "full-list"
     }
   ]
 }

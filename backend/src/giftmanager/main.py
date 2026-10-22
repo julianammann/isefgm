@@ -61,6 +61,11 @@ OPENAPI_TAGS = [
         "only the chosen people by name and their gift ideas with web links and images; "
         "nothing can be changed (Q-01).",
     },
+    {
+        "name": "full-list",
+        "description": "The complete list of the account's people, gift ideas and past gifts "
+        "in one response (F-15). Visible only to its account (Q-01).",
+    },
 ]
 
 

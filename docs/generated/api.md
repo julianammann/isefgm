@@ -17,6 +17,14 @@ Create, log in to, log out of and delete an account (F-01, F-17). The session li
 | `GET /api/v1/auth/me` | `authMe` | Current account | Returns the account of the current session. The frontend calls it on every page request to determine the login state. | 200, 401 |
 | `POST /api/v1/auth/register` | `authRegister` | Create account | Creates an account and logs it in right away: the response sets the session cookie. Returns 403 while registration is closed (`REGISTRATION_ENABLED`). The e-mail address is stored lowercased; an address that is already registered returns 409. When too many logins and registrations are already being checked, returns 503 at once with a Retry-After header; retry a few seconds later. | 201, 403, 409, 422, 503 |
 
+## full-list
+
+The complete list of the account's people, gift ideas and past gifts in one response (F-15). Visible only to its account (Q-01).
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/full-list` | `getFullList` | Show complete list | Returns all people, all gift ideas with their links and notes, and all past gifts (giftings with status `given`) of the current account in one response. The frontend renders it as one HTML page. Not paginated on purpose: F-15 asks for the complete list; all rows are loaded in a fixed number of queries. | 200, 401 |
+
 ## giftings
 
 

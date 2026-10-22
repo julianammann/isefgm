@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from giftmanager.api.v1 import (
     auth,
+    full_list,
     giftings,
     gifts,
     health,
@@ -30,3 +31,4 @@ router.include_router(links.router)
 router.include_router(images.router)
 router.include_router(share_links.router)
 router.include_router(share_links.shared_router)
+router.include_router(full_list.router)

@@ -454,6 +454,11 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-14 | `tests/test_share_links.py::test_shared_view_is_read_only[DELETE]` | passed |
 | F-14 | `tests/test_share_links.py::test_shared_view_follows_later_changes` | passed |
 | F-14 | `tests/test_share_links.py::test_deleting_the_account_deletes_its_share_links` | passed |
+| F-15 | `tests/test_full_list.py::test_empty_account_gets_empty_lists` | passed |
+| F-15 | `tests/test_full_list.py::test_list_holds_people_ideas_and_past_gifts` | passed |
+| F-15 | `tests/test_full_list.py::test_past_gifts_are_only_given_ones_latest_first` | passed |
+| F-15 | `tests/test_full_list.py::test_list_shows_nothing_of_another_account` | passed |
+| F-15 | `tests/test_full_list.py::test_list_requires_login` | passed |
 | F-17 | `tests/test_auth.py::test_delete_account_removes_user_and_sessions` | passed |
 | F-17 | `tests/test_giftings.py::test_deleting_the_account_deletes_its_giftings` | passed |
 | F-17 | `tests/test_gifts.py::test_deleting_the_account_deletes_its_gifts` | passed |
@@ -470,6 +475,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_auth.py::test_logout_all_leaves_other_users_logged_in` | passed |
 | Q-01 | `tests/test_auth.py::test_logout_all_without_session_is_unauthorized` | passed |
 | Q-01 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
+| Q-01 | `tests/test_full_list.py::test_list_shows_nothing_of_another_account` | passed |
+| Q-01 | `tests/test_full_list.py::test_list_requires_login` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_require_login` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_of_another_account_are_invisible[GET]` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_of_another_account_are_invisible[PUT]` | passed |

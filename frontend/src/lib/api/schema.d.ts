@@ -124,6 +124,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/full-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show complete list
+         * @description Returns all people, all gift ideas with their links and notes, and all past gifts (giftings with status `given`) of the current account in one response. The frontend renders it as one HTML page. Not paginated on purpose: F-15 asks for the complete list; all rows are loaded in a fixed number of queries.
+         */
+        get: operations["getFullList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/giftings": {
         parameters: {
             query?: never;
@@ -756,6 +776,141 @@ export interface components {
              * @example Bild vom Laden
              */
             label: string;
+        };
+        /**
+         * FullListGift
+         * @description A gift idea in the complete list, together with its links and notes.
+         */
+        FullListGift: {
+            /**
+             * @description Kind of gift.
+             * @example tech
+             */
+            category: components["schemas"]["GiftCategory"];
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Currency
+             * @description ISO 4217 currency code, or null when no price is set.
+             * @example EUR
+             */
+            currency: string | null;
+            /**
+             * Description
+             * @description Free-text description, or null.
+             * @example Technik, für IT-Begeisterte
+             */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Gift idea ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            id: string;
+            /**
+             * Links
+             * @description Web links on the idea, oldest first.
+             * @example [
+             *       {
+             *         "gift_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75",
+             *         "label": "Thalia",
+             *         "url": "https://www.thalia.de/shop/home/artikeldetails/A1234"
+             *       }
+             *     ]
+             */
+            links: components["schemas"]["LinkOut"][];
+            /**
+             * Notes
+             * @description Notes on the idea, oldest first.
+             * @example [
+             *       {
+             *         "gift_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a74",
+             *         "label": "Größe",
+             *         "text": "M, eher weit"
+             *       }
+             *     ]
+             */
+            notes: components["schemas"]["NoteOut"][];
+            /**
+             * Occasions
+             * @description Occasions the idea is meant for, sorted by date.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+             *         "name": "Weihnachten"
+             *       }
+             *     ]
+             */
+            occasions: components["schemas"]["LinkedOccasion"][];
+            /**
+             * People
+             * @description People the idea is meant for (possible recipients), sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+            /**
+             * Price From
+             * @description Lower end of the price range in `currency`, as a string, or null.
+             * @example 10.00
+             */
+            price_from: string | null;
+            /**
+             * Price To
+             * @description Upper end of the price range in `currency`, as a string, or null.
+             * @example 100.00
+             */
+            price_to: string | null;
+            /**
+             * Title
+             * @description Title.
+             * @example Raspberry Pi
+             */
+            title: string;
+        };
+        /**
+         * FullListOut
+         * @description The complete list of an account: people, gift ideas and past gifts (F-15).
+         */
+        FullListOut: {
+            /**
+             * Gifts
+             * @description All gift ideas of the account with their links and notes, sorted by title.
+             * @example []
+             */
+            gifts: components["schemas"]["FullListGift"][];
+            /**
+             * Given
+             * @description Past gifts: all giftings with status `given`, most recently given first.
+             * @example []
+             */
+            given: components["schemas"]["GiftingOut"][];
+            /**
+             * People
+             * @description All people of the account, sorted by name.
+             * @example [
+             *       {
+             *         "birthday": "1994-03-17",
+             *         "created_at": "2026-10-04T09:30:00Z",
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena",
+             *         "relationship": "Schwester"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["PersonOut"][];
         };
         /**
          * GiftCategory
@@ -2234,6 +2389,35 @@ export interface operations {
             };
             /** @description Service Unavailable */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getFullList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FullListOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
