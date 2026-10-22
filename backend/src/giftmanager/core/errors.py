@@ -44,6 +44,20 @@ class ConflictError(DomainError):
     title = "Conflict"
 
 
+class ContentTooLargeError(DomainError):
+    """An upload exceeds a size limit, in bytes or in pixels."""
+
+    status_code = 413
+    title = "Content Too Large"
+
+
+class UnsupportedMediaTypeError(DomainError):
+    """An upload is not one of the accepted image formats, judged by its content."""
+
+    status_code = 415
+    title = "Unsupported Media Type"
+
+
 class ServiceUnavailableError(DomainError):
     """Too much work is already queued; the client should retry shortly."""
 

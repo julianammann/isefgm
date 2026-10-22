@@ -1,6 +1,42 @@
 {
   "components": {
     "schemas": {
+      "Body_createImage": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "JPEG, PNG or WebP, up to 5 MB.",
+            "title": "File",
+            "type": "string"
+          },
+          "gift_id": {
+            "description": "ID of the account's gift idea the image belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label, 1 to 100 characters.",
+            "examples": [
+              "Bild vom Laden"
+            ],
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gift_id",
+          "label",
+          "file"
+        ],
+        "title": "Body_createImage",
+        "type": "object"
+      },
       "FullListGift": {
         "description": "A gift idea in the complete list, together with its links and notes.",
         "properties": {
@@ -784,6 +820,82 @@
         "title": "HealthOut",
         "type": "object"
       },
+      "ImageLabelIn": {
+        "description": "The one editable field of an image; the file itself cannot be replaced.",
+        "properties": {
+          "label": {
+            "description": "Label, 1 to 100 characters.",
+            "examples": [
+              "Bild vom Laden"
+            ],
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "ImageLabelIn",
+        "type": "object"
+      },
+      "ImageOut": {
+        "description": "An image as the frontend sees it; the file comes from `/images/{id}/content`.",
+        "properties": {
+          "gift_id": {
+            "description": "ID of the gift idea the image belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70"
+            ],
+            "format": "uuid",
+            "title": "Gift Id",
+            "type": "string"
+          },
+          "id": {
+            "description": "Image ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label.",
+            "examples": [
+              "Bild vom Laden"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "mime_type": {
+            "description": "Media type of the stored file, always image/webp.",
+            "examples": [
+              "image/webp"
+            ],
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "size_bytes": {
+            "description": "Size of the stored file in bytes.",
+            "examples": [
+              184320
+            ],
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "gift_id",
+          "label",
+          "mime_type",
+          "size_bytes"
+        ],
+        "title": "ImageOut",
+        "type": "object"
+      },
       "LinkIn": {
         "description": "Data of a link; used for create and for full update (PUT).",
         "properties": {
@@ -1330,6 +1442,37 @@
         "title": "Page[GiftingOut]",
         "type": "object"
       },
+      "Page_ImageOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImageOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[ImageOut]",
+        "type": "object"
+      },
       "Page_LinkOut_": {
         "properties": {
           "items": {
@@ -1514,6 +1657,37 @@
           "offset"
         ],
         "title": "Page[ShareLinkOut]",
+        "type": "object"
+      },
+      "Page_TaskOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[TaskOut]",
         "type": "object"
       },
       "PersonIn": {
@@ -2008,6 +2182,22 @@
             ],
             "title": "Description"
           },
+          "images": {
+            "description": "Images on the idea, oldest first.",
+            "examples": [
+              [
+                {
+                  "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76",
+                  "label": "Bild vom Laden"
+                }
+              ]
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SharedImageOut"
+            },
+            "title": "Images",
+            "type": "array"
+          },
           "links": {
             "description": "Web links on the idea, oldest first.",
             "examples": [
@@ -2072,9 +2262,38 @@
           "price_to",
           "currency",
           "category",
-          "links"
+          "links",
+          "images"
         ],
         "title": "SharedGiftOut",
+        "type": "object"
+      },
+      "SharedImageOut": {
+        "description": "An image on a shared gift idea; the file comes from `/shared/{token}/images/{id}`.",
+        "properties": {
+          "id": {
+            "description": "Image ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label.",
+            "examples": [
+              "Bild vom Laden"
+            ],
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "SharedImageOut",
         "type": "object"
       },
       "SharedLinkOut": {
@@ -2185,6 +2404,144 @@
         ],
         "title": "SharedPersonOut",
         "type": "object"
+      },
+      "TaskIn": {
+        "description": "Data of a task; used for create and for full update (PUT).",
+        "properties": {
+          "due_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Day the task should be done by, as a plain date (YYYY-MM-DD). Left out or null means no due date.",
+            "examples": [
+              "2026-12-20"
+            ],
+            "title": "Due On"
+          },
+          "gifting_id": {
+            "description": "ID of the account's gifting the task belongs to. Any status of the gifting will do, from `idea` on.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73"
+            ],
+            "format": "uuid",
+            "title": "Gifting Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus",
+            "default": "open",
+            "description": "`open`, `in_progress`, `done` or `discarded`; `open` when left out. Any status may follow any other.",
+            "examples": [
+              "in_progress"
+            ]
+          },
+          "title": {
+            "description": "What to do, 1 to 200 characters.",
+            "examples": [
+              "Karte schreiben"
+            ],
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gifting_id",
+          "title"
+        ],
+        "title": "TaskIn",
+        "type": "object"
+      },
+      "TaskOut": {
+        "description": "A task as the frontend sees it.",
+        "properties": {
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-04T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "due_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Day the task should be done by as a plain date, or null.",
+            "examples": [
+              "2026-12-20"
+            ],
+            "title": "Due On"
+          },
+          "gifting_id": {
+            "description": "ID of the gifting the task belongs to.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73"
+            ],
+            "format": "uuid",
+            "title": "Gifting Id",
+            "type": "string"
+          },
+          "id": {
+            "description": "Task ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus",
+            "description": "Progress of the task.",
+            "examples": [
+              "in_progress"
+            ]
+          },
+          "title": {
+            "description": "What to do.",
+            "examples": [
+              "Karte schreiben"
+            ],
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "gifting_id",
+          "title",
+          "status",
+          "due_on",
+          "created_at"
+        ],
+        "title": "TaskOut",
+        "type": "object"
+      },
+      "TaskStatus": {
+        "description": "Progress of a task (F-08). Any status may follow any other.",
+        "enum": [
+          "open",
+          "in_progress",
+          "done",
+          "discarded"
+        ],
+        "title": "TaskStatus",
+        "type": "string"
       },
       "UserOut": {
         "description": "Account as the frontend sees it, without the password hash.",
@@ -2688,7 +3045,7 @@
     },
     "/api/v1/giftings/{gifting_id}": {
       "delete": {
-        "description": "Deletes the gifting. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one.",
+        "description": "Deletes the gifting together with its tasks. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one.",
         "operationId": "deleteGifting",
         "parameters": [
           {
@@ -3006,7 +3363,7 @@
     },
     "/api/v1/gifts/{gift_id}": {
       "delete": {
-        "description": "Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.",
+        "description": "Deletes the gift idea with its notes, links and images. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.",
         "operationId": "deleteGift",
         "parameters": [
           {
@@ -3246,6 +3603,443 @@
         "summary": "Database reachable",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/images": {
+      "get": {
+        "description": "Returns the images of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page.",
+        "operationId": "listImages",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Only the images of this gift idea.",
+            "in": "query",
+            "name": "gift_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the images of this gift idea.",
+              "title": "Gift Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ImageOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List images",
+        "tags": [
+          "images"
+        ]
+      },
+      "post": {
+        "description": "Adds a labelled image to a gift idea of the current account. Accepts JPEG, PNG and WebP up to 5 MB, judged by the content, not by the file name or type (415 for anything else). Larger files, or more than 24 megapixels for JPEG, 16 for PNG and 10 for WebP, return 413. The image is turned upright, shrunk to at most 2000 px on its long side and stored as WebP without EXIF or XMP metadata. An idea holds at most 5 images (409). While too many uploads are in progress the API answers 503 with Retry-After. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved.",
+        "operationId": "createImage",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_createImage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Upload image",
+        "tags": [
+          "images"
+        ]
+      }
+    },
+    "/api/v1/images/{image_id}": {
+      "delete": {
+        "description": "Deletes the image and its file. Cannot be undone. An image of another account returns 404, like a missing one.",
+        "operationId": "deleteImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "image_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Image Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete image",
+        "tags": [
+          "images"
+        ]
+      },
+      "get": {
+        "description": "Returns the details of one image of the current account; the file itself comes from `/images/{image_id}/content`. An image of another account returns 404, like a missing one.",
+        "operationId": "getImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "image_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Image Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show image",
+        "tags": [
+          "images"
+        ]
+      },
+      "put": {
+        "description": "Replaces the label of the image. The file and the gift idea cannot be changed; upload a new image instead. An image of another account returns 404, like a missing one.",
+        "operationId": "updateImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "image_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Image Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageLabelIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update image label",
+        "tags": [
+          "images"
+        ]
+      }
+    },
+    "/api/v1/images/{image_id}/content": {
+      "get": {
+        "description": "Returns the stored WebP file of one image of the current account, marked `Cache-Control: private, no-store`. An image of another account returns 404, like a missing one.",
+        "operationId": "getImageContent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "image_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Image Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/webp": {}
+            },
+            "description": "The image as WebP."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch image file",
+        "tags": [
+          "images"
         ]
       }
     },
@@ -5040,7 +5834,7 @@
     },
     "/api/v1/shared/{token}": {
       "get": {
-        "description": "Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.",
+        "description": "Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links and images. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.",
         "operationId": "getSharedList",
         "parameters": [
           {
@@ -5090,6 +5884,402 @@
           "shared"
         ]
       }
+    },
+    "/api/v1/shared/{token}/images/{image_id}": {
+      "get": {
+        "description": "Public, no login needed: returns the WebP file of an image on one of the gift ideas the share link shows, marked `Cache-Control: private, no-store`. An unknown, deactivated or expired token, or an image the link does not show, returns the same 404 as the shared list.",
+        "operationId": "getSharedImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "image_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Image Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/webp": {}
+            },
+            "description": "The image as WebP."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch shared image file",
+        "tags": [
+          "shared"
+        ]
+      }
+    },
+    "/api/v1/tasks": {
+      "get": {
+        "description": "Returns the tasks of the current account, one page at a time: earliest due date first, tasks without one last, the same due date in creation order. `gifting_id` narrows the list to one gifting; a gifting of another account gives an empty page.",
+        "operationId": "listTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Only the tasks of this gifting.",
+            "in": "query",
+            "name": "gifting_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the tasks of this gifting.",
+              "title": "Gifting Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_TaskOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List tasks",
+        "tags": [
+          "tasks"
+        ]
+      },
+      "post": {
+        "description": "Adds a task to a gifting of the current account. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved.",
+        "operationId": "createTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create task",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/api/v1/tasks/{task_id}": {
+      "delete": {
+        "description": "Deletes the task. Cannot be undone. A task of another account returns 404, like a missing one.",
+        "operationId": "deleteTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete task",
+        "tags": [
+          "tasks"
+        ]
+      },
+      "get": {
+        "description": "Returns one task of the current account. A task of another account returns 404, like a missing one.",
+        "operationId": "getTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show task",
+        "tags": [
+          "tasks"
+        ]
+      },
+      "put": {
+        "description": "Replaces all fields of the task; a left-out `due_on` removes the due date. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved. A task of another account returns 404, like a missing one.",
+        "operationId": "updateTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update task",
+        "tags": [
+          "tasks"
+        ]
+      }
     }
   },
   "tags": [
@@ -5110,11 +6300,15 @@
       "name": "occasions"
     },
     {
+      "description": "Labelled images on gift ideas (F-07): JPEG, PNG or WebP up to 5 MB, stored as WebP without metadata, at most 5 per idea. Files are served only to the owner's session or through a valid share link (Q-01, Q-03).",
+      "name": "images"
+    },
+    {
       "description": "Read-only share links on chosen people (F-14). The token is shown once on creation and stored only as a hash; a link can expire and be deactivated at any time (Q-03).",
       "name": "share-links"
     },
     {
-      "description": "Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+      "description": "Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas with web links and images; nothing can be changed (Q-01).",
       "name": "shared"
     },
     {

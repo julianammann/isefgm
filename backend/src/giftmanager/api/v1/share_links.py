@@ -4,13 +4,16 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Query, status
+from fastapi.responses import FileResponse
 
+from giftmanager.api.v1.images import IMAGE_FILE_RESPONSE, image_response
 from giftmanager.core.auth import CurrentUser
 from giftmanager.core.clock import ClockDep
 from giftmanager.core.db import SessionDep
 from giftmanager.schemas.common import Page, PageParams, problem_responses
 from giftmanager.schemas.share_link import (
     SharedGiftOut,
+    SharedImageOut,
     SharedLinkOut,
     SharedListOut,
     SharedPersonOut,
@@ -135,7 +138,8 @@ async def delete_share_link(
     operation_id="getSharedList",
     summary="Open shared list",
     description="Public, read-only view behind a share link, no login needed. Returns the "
-    "chosen people with only their names and the gift ideas meant for them, with web links. "
+    "chosen people with only their names and the gift ideas meant for them, with web links "
+    "and images. "
     "An unknown, deactivated or expired token returns the same 404, so the response does not "
     "tell them apart. Other methods return 405.",
     responses=problem_responses(404),
@@ -158,6 +162,7 @@ async def get_shared_list(token: str, session: SessionDep, clock: ClockDep) -> S
                         currency=g.gift.currency,
                         category=g.gift.category,
                         links=[SharedLinkOut.model_validate(link) for link in g.links],
+                        images=[SharedImageOut.model_validate(image) for image in g.images],
                     )
                     for g in p.gifts
                 ],
@@ -165,3 +170,22 @@ async def get_shared_list(token: str, session: SessionDep, clock: ClockDep) -> S
             for p in shared.people
         ],
     )
+
+
+@shared_router.get(
+    "/{token}/images/{image_id}",
+    operation_id="getSharedImage",
+    summary="Fetch shared image file",
+    description="Public, no login needed: returns the WebP file of an image on one of the gift "
+    "ideas the share link shows, marked `Cache-Control: private, no-store`. An unknown, "
+    "deactivated or expired token, or an image the link does not show, returns the same 404 "
+    "as the shared list.",
+    response_class=FileResponse,
+    responses=IMAGE_FILE_RESPONSE | problem_responses(404),
+)
+async def get_shared_image(
+    token: str, image_id: uuid.UUID, session: SessionDep, clock: ClockDep
+) -> FileResponse:
+    """Return the file of an image the share link shows."""
+    image = await share_link_service.get_shared_image(session, token, image_id, now=clock.now())
+    return image_response(image)

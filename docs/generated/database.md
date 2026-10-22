@@ -95,6 +95,9 @@ Labelled link or image on a gift idea (F-07), told apart by kind. Visible only t
 | `kind` | VARCHAR(16) | no | `link` or `image`. |
 | `label` | VARCHAR(100) | no | Label, e.g. Thalia or Bild vom Laden. |
 | `url` | VARCHAR(2048) | yes | Absolute http or https URL. Required for links, NULL for images. |
+| `storage_path` | VARCHAR(255) | yes | Path of the WebP file relative to UPLOADS_DIR, `<owner_id>/<random>.webp`. Required for images, NULL for links. (unique) |
+| `mime_type` | VARCHAR(100) | yes | Media type of the stored file, always image/webp. Required for images, NULL for links. |
+| `size_bytes` | INTEGER | yes | Size of the stored file in bytes. Required for images, NULL for links. |
 
 ## gift_person
 
@@ -178,3 +181,16 @@ Actual recipients of a gifting (F-06), n:m. Several people share one joint gift.
 | --- | --- | --- | --- |
 | `gifting_id` | UUID | no | Gifting. Deleting it deletes the link. (PK) (FK → gifting.id) |
 | `person_id` | UUID | no | Actual recipient. Deleting a person only removes them as a recipient, the gifting remains (test_deleting_a_recipient_removes_them_from_the_gifting). (PK) (FK → person.id) (Index) |
+
+## task
+
+To-do of a gifting (F-08), already possible in the idea phase. Visible only to the owner of the gift idea (Q-01); deleted together with the gifting and the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. Orders tasks with the same due date: oldest first. (PK) |
+| `gifting_id` | UUID | no | Gifting the task belongs to. Deleting the gifting deletes the task. (FK → gifting.id) (Index) |
+| `title` | VARCHAR(200) | no | What to do, e.g. Karte schreiben. |
+| `status` | VARCHAR(16) | no | Progress of the task. Defaults to 'open'. |
+| `due_on` | DATE | yes | Date. Day the task should be done by (Q-08: plain calendar date, no time zone). |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |

@@ -35,7 +35,7 @@ The complete list of the account's people, gift ideas and past gifts in one resp
 | `POST /api/v1/giftings` | `createGifting` | Create gifting | Turns a gift idea into a gifting in one step: only `gift_id` is required, the status defaults to `idea`. The idea is referenced, not copied, and stays in the idea list. A past gift is recorded directly with status `given`. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
 | `GET /api/v1/giftings/{gifting_id}` | `getGifting` | Show gifting | Returns one gifting of the current account. A gifting of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `PUT /api/v1/giftings/{gifting_id}` | `updateGifting` | Update gifting | Replaces all fields of the gifting, including its recipients: a field left out is reset to null, its default or an empty list. Any status may follow any other. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gifting of another account returns 404, like a missing one. | 200, 401, 404, 422 |
-| `DELETE /api/v1/giftings/{gifting_id}` | `deleteGifting` | Delete gifting | Deletes the gifting. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+| `DELETE /api/v1/giftings/{gifting_id}` | `deleteGifting` | Delete gifting | Deletes the gifting together with its tasks. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one. | 204, 401, 404, 422 |
 
 ## gifts
 
@@ -47,7 +47,7 @@ The complete list of the account's people, gift ideas and past gifts in one resp
 | `POST /api/v1/gifts` | `createGift` | Create gift idea | Creates a gift idea for the current account. Only the title is required, so an idea can be captured in one step: empty optional fields are stored as null and `category` defaults to `other`. `currency` is stored only with a price, EUR if none is given. The creation time is set by the server. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
 | `GET /api/v1/gifts/{gift_id}` | `getGift` | Show gift idea | Returns one gift idea of the current account. A gift idea of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `PUT /api/v1/gifts/{gift_id}` | `updateGift` | Update gift idea | Replaces all fields of the gift idea, including its links: a field left out is reset to null, its default or an empty list. The frontend sends the whole form. `person_ids` and `occasion_ids` link the idea to people and occasions of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gift idea of another account returns 404, like a missing one. | 200, 401, 404, 422 |
-| `DELETE /api/v1/gifts/{gift_id}` | `deleteGift` | Delete gift idea | Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409. | 204, 401, 404, 409, 422 |
+| `DELETE /api/v1/gifts/{gift_id}` | `deleteGift` | Delete gift idea | Deletes the gift idea with its notes, links and images. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409. | 204, 401, 404, 409, 422 |
 
 ## health
 
@@ -57,6 +57,19 @@ Liveness and readiness for container healthchecks and Traefik.
 | --- | --- | --- | --- | --- |
 | `GET /api/v1/health/live` | `healthLive` | Process is up | Answers as soon as the process accepts requests; does not touch the database. Target of the container healthcheck. | 200 |
 | `GET /api/v1/health/ready` | `healthReady` | Database reachable | Runs `SELECT 1`. Without a database it returns `status: degraded` with HTTP 200, so that Traefik keeps the container in rotation while it is still starting. | 200 |
+
+## images
+
+Labelled images on gift ideas (F-07): JPEG, PNG or WebP up to 5 MB, stored as WebP without metadata, at most 5 per idea. Files are served only to the owner's session or through a valid share link (Q-01, Q-03).
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/images` | `listImages` | List images | Returns the images of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page. | 200, 401, 422 |
+| `POST /api/v1/images` | `createImage` | Upload image | Adds a labelled image to a gift idea of the current account. Accepts JPEG, PNG and WebP up to 5 MB, judged by the content, not by the file name or type (415 for anything else). Larger files, or more than 24 megapixels for JPEG, 16 for PNG and 10 for WebP, return 413. The image is turned upright, shrunk to at most 2000 px on its long side and stored as WebP without EXIF or XMP metadata. An idea holds at most 5 images (409). While too many uploads are in progress the API answers 503 with Retry-After. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 409, 413, 415, 422, 503 |
+| `GET /api/v1/images/{image_id}` | `getImage` | Show image | Returns the details of one image of the current account; the file itself comes from `/images/{image_id}/content`. An image of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/images/{image_id}` | `updateImage` | Update image label | Replaces the label of the image. The file and the gift idea cannot be changed; upload a new image instead. An image of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `DELETE /api/v1/images/{image_id}` | `deleteImage` | Delete image | Deletes the image and its file. Cannot be undone. An image of another account returns 404, like a missing one. | 204, 401, 404, 422 |
+| `GET /api/v1/images/{image_id}/content` | `getImageContent` | Fetch image file | Returns the stored WebP file of one image of the current account, marked `Cache-Control: private, no-store`. An image of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 
 ## links
 
@@ -122,8 +135,21 @@ Read-only share links on chosen people (F-14). The token is shown once on creati
 
 ## shared
 
-Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas; nothing can be changed (Q-01).
+Public view behind a valid share link, no login needed (F-14). Shows only the chosen people by name and their gift ideas with web links and images; nothing can be changed (Q-01).
 
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
-| `GET /api/v1/shared/{token}` | `getSharedList` | Open shared list | Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405. | 200, 404, 422 |
+| `GET /api/v1/shared/{token}` | `getSharedList` | Open shared list | Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links and images. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405. | 200, 404, 422 |
+| `GET /api/v1/shared/{token}/images/{image_id}` | `getSharedImage` | Fetch shared image file | Public, no login needed: returns the WebP file of an image on one of the gift ideas the share link shows, marked `Cache-Control: private, no-store`. An unknown, deactivated or expired token, or an image the link does not show, returns the same 404 as the shared list. | 200, 404, 422 |
+
+## tasks
+
+
+
+| Endpoint | operationId | Purpose | Behaviour | Status |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/tasks` | `listTasks` | List tasks | Returns the tasks of the current account, one page at a time: earliest due date first, tasks without one last, the same due date in creation order. `gifting_id` narrows the list to one gifting; a gifting of another account gives an empty page. | 200, 401, 422 |
+| `POST /api/v1/tasks` | `createTask` | Create task | Adds a task to a gifting of the current account. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |
+| `GET /api/v1/tasks/{task_id}` | `getTask` | Show task | Returns one task of the current account. A task of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `PUT /api/v1/tasks/{task_id}` | `updateTask` | Update task | Replaces all fields of the task; a left-out `due_on` removes the due date. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved. A task of another account returns 404, like a missing one. | 200, 401, 404, 422 |
+| `DELETE /api/v1/tasks/{task_id}` | `deleteTask` | Delete task | Deletes the task. Cannot be undone. A task of another account returns 404, like a missing one. | 204, 401, 404, 422 |

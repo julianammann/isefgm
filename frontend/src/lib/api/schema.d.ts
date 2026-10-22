@@ -188,7 +188,7 @@ export interface paths {
         post?: never;
         /**
          * Delete gifting
-         * @description Deletes the gifting. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one.
+         * @description Deletes the gifting together with its tasks. The idea, the people and the occasion stay. Cannot be undone. A gifting of another account returns 404, like a missing one.
          */
         delete: operations["deleteGifting"];
         options?: never;
@@ -240,7 +240,7 @@ export interface paths {
         post?: never;
         /**
          * Delete gift idea
-         * @description Deletes the gift idea. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.
+         * @description Deletes the gift idea with its notes, links and images. Cannot be undone. A gift idea of another account returns 404, like a missing one. A gift idea used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteGift"];
         options?: never;
@@ -280,6 +280,78 @@ export interface paths {
          * @description Runs `SELECT 1`. Without a database it returns `status: degraded` with HTTP 200, so that Traefik keeps the container in rotation while it is still starting.
          */
         get: operations["healthReady"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List images
+         * @description Returns the images of the current account, oldest first, one page at a time. `gift_id` narrows the list to one idea; an idea of another account gives an empty page.
+         */
+        get: operations["listImages"];
+        put?: never;
+        /**
+         * Upload image
+         * @description Adds a labelled image to a gift idea of the current account. Accepts JPEG, PNG and WebP up to 5 MB, judged by the content, not by the file name or type (415 for anything else). Larger files, or more than 24 megapixels for JPEG, 16 for PNG and 10 for WebP, return 413. The image is turned upright, shrunk to at most 2000 px on its long side and stored as WebP without EXIF or XMP metadata. An idea holds at most 5 images (409). While too many uploads are in progress the API answers 503 with Retry-After. `gift_id` must be a gift idea of the account; an idea of another account returns 404, like a missing one, and nothing is saved.
+         */
+        post: operations["createImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/images/{image_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show image
+         * @description Returns the details of one image of the current account; the file itself comes from `/images/{image_id}/content`. An image of another account returns 404, like a missing one.
+         */
+        get: operations["getImage"];
+        /**
+         * Update image label
+         * @description Replaces the label of the image. The file and the gift idea cannot be changed; upload a new image instead. An image of another account returns 404, like a missing one.
+         */
+        put: operations["updateImage"];
+        post?: never;
+        /**
+         * Delete image
+         * @description Deletes the image and its file. Cannot be undone. An image of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/images/{image_id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch image file
+         * @description Returns the stored WebP file of one image of the current account, marked `Cache-Control: private, no-store`. An image of another account returns 404, like a missing one.
+         */
+        get: operations["getImageContent"];
         put?: never;
         post?: never;
         delete?: never;
@@ -597,7 +669,7 @@ export interface paths {
         };
         /**
          * Open shared list
-         * @description Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.
+         * @description Public, read-only view behind a share link, no login needed. Returns the chosen people with only their names and the gift ideas meant for them, with web links and images. An unknown, deactivated or expired token returns the same 404, so the response does not tell them apart. Other methods return 405.
          */
         get: operations["getSharedList"];
         put?: never;
@@ -608,10 +680,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/shared/{token}/images/{image_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch shared image file
+         * @description Public, no login needed: returns the WebP file of an image on one of the gift ideas the share link shows, marked `Cache-Control: private, no-store`. An unknown, deactivated or expired token, or an image the link does not show, returns the same 404 as the shared list.
+         */
+        get: operations["getSharedImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List tasks
+         * @description Returns the tasks of the current account, one page at a time: earliest due date first, tasks without one last, the same due date in creation order. `gifting_id` narrows the list to one gifting; a gifting of another account gives an empty page.
+         */
+        get: operations["listTasks"];
+        put?: never;
+        /**
+         * Create task
+         * @description Adds a task to a gifting of the current account. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved.
+         */
+        post: operations["createTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show task
+         * @description Returns one task of the current account. A task of another account returns 404, like a missing one.
+         */
+        get: operations["getTask"];
+        /**
+         * Update task
+         * @description Replaces all fields of the task; a left-out `due_on` removes the due date. `gifting_id` must be a gifting of the account, in any status from `idea` on; a gifting of another account returns 404, like a missing one, and nothing is saved. A task of another account returns 404, like a missing one.
+         */
+        put: operations["updateTask"];
+        post?: never;
+        /**
+         * Delete task
+         * @description Deletes the task. Cannot be undone. A task of another account returns 404, like a missing one.
+         */
+        delete: operations["deleteTask"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Body_createImage */
+        Body_createImage: {
+            /**
+             * File
+             * @description JPEG, PNG or WebP, up to 5 MB.
+             */
+            file: string;
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the account's gift idea the image belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Label
+             * @description Label, 1 to 100 characters.
+             * @example Bild vom Laden
+             */
+            label: string;
+        };
         /**
          * FullListGift
          * @description A gift idea in the complete list, together with its links and notes.
@@ -1022,6 +1187,56 @@ export interface components {
             status: "ok" | "degraded";
         };
         /**
+         * ImageLabelIn
+         * @description The one editable field of an image; the file itself cannot be replaced.
+         */
+        ImageLabelIn: {
+            /**
+             * Label
+             * @description Label, 1 to 100 characters.
+             * @example Bild vom Laden
+             */
+            label: string;
+        };
+        /**
+         * ImageOut
+         * @description An image as the frontend sees it; the file comes from `/images/{id}/content`.
+         */
+        ImageOut: {
+            /**
+             * Gift Id
+             * Format: uuid
+             * @description ID of the gift idea the image belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70
+             */
+            gift_id: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Image ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76
+             */
+            id: string;
+            /**
+             * Label
+             * @description Label.
+             * @example Bild vom Laden
+             */
+            label: string;
+            /**
+             * Mime Type
+             * @description Media type of the stored file, always image/webp.
+             * @example image/webp
+             */
+            mime_type: string;
+            /**
+             * Size Bytes
+             * @description Size of the stored file in bytes.
+             * @example 184320
+             */
+            size_bytes: number;
+        };
+        /**
          * LinkIn
          * @description Data of a link; used for create and for full update (PUT).
          */
@@ -1350,6 +1565,17 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[ImageOut] */
+        Page_ImageOut_: {
+            /** Items */
+            items: components["schemas"]["ImageOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
         /** Page[LinkOut] */
         Page_LinkOut_: {
             /** Items */
@@ -1409,6 +1635,17 @@ export interface components {
         Page_ShareLinkOut_: {
             /** Items */
             items: components["schemas"]["ShareLinkOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[TaskOut] */
+        Page_TaskOut_: {
+            /** Items */
+            items: components["schemas"]["TaskOut"][];
             /** Limit */
             limit: number;
             /** Offset */
@@ -1682,6 +1919,17 @@ export interface components {
              */
             description: string | null;
             /**
+             * Images
+             * @description Images on the idea, oldest first.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76",
+             *         "label": "Bild vom Laden"
+             *       }
+             *     ]
+             */
+            images: components["schemas"]["SharedImageOut"][];
+            /**
              * Links
              * @description Web links on the idea, oldest first.
              * @example [
@@ -1710,6 +1958,25 @@ export interface components {
              * @example Raspberry Pi
              */
             title: string;
+        };
+        /**
+         * SharedImageOut
+         * @description An image on a shared gift idea; the file comes from `/shared/{token}/images/{id}`.
+         */
+        SharedImageOut: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Image ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76
+             */
+            id: string;
+            /**
+             * Label
+             * @description Label.
+             * @example Bild vom Laden
+             */
+            label: string;
         };
         /**
          * SharedLinkOut
@@ -1776,6 +2043,87 @@ export interface components {
              */
             name: string;
         };
+        /**
+         * TaskIn
+         * @description Data of a task; used for create and for full update (PUT).
+         */
+        TaskIn: {
+            /**
+             * Due On
+             * @description Day the task should be done by, as a plain date (YYYY-MM-DD). Left out or null means no due date.
+             * @example 2026-12-20
+             */
+            due_on?: string | null;
+            /**
+             * Gifting Id
+             * Format: uuid
+             * @description ID of the account's gifting the task belongs to. Any status of the gifting will do, from `idea` on.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73
+             */
+            gifting_id: string;
+            /**
+             * @description `open`, `in_progress`, `done` or `discarded`; `open` when left out. Any status may follow any other.
+             * @default open
+             * @example in_progress
+             */
+            status: components["schemas"]["TaskStatus"];
+            /**
+             * Title
+             * @description What to do, 1 to 200 characters.
+             * @example Karte schreiben
+             */
+            title: string;
+        };
+        /**
+         * TaskOut
+         * @description A task as the frontend sees it.
+         */
+        TaskOut: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Due On
+             * @description Day the task should be done by as a plain date, or null.
+             * @example 2026-12-20
+             */
+            due_on: string | null;
+            /**
+             * Gifting Id
+             * Format: uuid
+             * @description ID of the gifting the task belongs to.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73
+             */
+            gifting_id: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Task ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75
+             */
+            id: string;
+            /**
+             * @description Progress of the task.
+             * @example in_progress
+             */
+            status: components["schemas"]["TaskStatus"];
+            /**
+             * Title
+             * @description What to do.
+             * @example Karte schreiben
+             */
+            title: string;
+        };
+        /**
+         * TaskStatus
+         * @description Progress of a task (F-08). Any status may follow any other.
+         * @enum {string}
+         */
+        TaskStatus: "open" | "in_progress" | "done" | "discarded";
         /**
          * UserOut
          * @description Account as the frontend sees it, without the password hash.
@@ -2606,6 +2954,334 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOut"];
+                };
+            };
+        };
+    };
+    listImages: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Only the images of this gift idea. */
+                gift_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ImageOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_createImage"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImageLabelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getImageContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image as WebP. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/webp": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3954,6 +4630,290 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SharedListOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSharedImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                image_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image as WebP. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/webp": unknown;
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listTasks: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Only the tasks of this gifting. */
+                gifting_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TaskOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    updateTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deleteTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
                 };
             };
             /** @description Not Found */
