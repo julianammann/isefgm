@@ -270,6 +270,7 @@ async def test_shared_view_shows_only_the_chosen_people_and_their_ideas(
                         "currency": "EUR",
                         "category": "tech",
                         "links": [],
+                        "images": [],
                     },
                     {
                         "title": "Buch",
@@ -279,6 +280,7 @@ async def test_shared_view_shows_only_the_chosen_people_and_their_ideas(
                         "currency": None,
                         "category": "other",
                         "links": [{"label": "Thalia", "url": THALIA}],
+                        "images": [],
                     },
                 ],
             },
@@ -293,6 +295,7 @@ async def test_shared_view_shows_only_the_chosen_people_and_their_ideas(
                         "currency": "EUR",
                         "category": "tech",
                         "links": [],
+                        "images": [],
                     }
                 ],
             },

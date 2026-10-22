@@ -95,6 +95,9 @@ Labelled link or image on a gift idea (F-07), told apart by kind. Visible only t
 | `kind` | VARCHAR(16) | no | `link` or `image`. |
 | `label` | VARCHAR(100) | no | Label, e.g. Thalia or Bild vom Laden. |
 | `url` | VARCHAR(2048) | yes | Absolute http or https URL. Required for links, NULL for images. |
+| `storage_path` | VARCHAR(255) | yes | Path of the WebP file relative to UPLOADS_DIR, `<owner_id>/<random>.webp`. Required for images, NULL for links. (unique) |
+| `mime_type` | VARCHAR(100) | yes | Media type of the stored file, always image/webp. Required for images, NULL for links. |
+| `size_bytes` | INTEGER | yes | Size of the stored file in bytes. Required for images, NULL for links. |
 
 ## gift_person
 

@@ -77,6 +77,17 @@ class SharedLinkOut(BaseModel):
     )
 
 
+class SharedImageOut(BaseModel):
+    """An image on a shared gift idea; the file comes from `/shared/{token}/images/{id}`."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID = Field(
+        description="Image ID (UUIDv7).", examples=["0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76"]
+    )
+    label: str = Field(description="Label.", examples=["Bild vom Laden"])
+
+
 class SharedGiftOut(BaseModel):
     """A gift idea in the shared view, without notes, giftings or occasions."""
 
@@ -99,6 +110,10 @@ class SharedGiftOut(BaseModel):
     links: list[SharedLinkOut] = Field(
         description="Web links on the idea, oldest first.",
         examples=[[{"label": "Thalia", "url": "https://www.thalia.de/"}]],
+    )
+    images: list[SharedImageOut] = Field(
+        description="Images on the idea, oldest first.",
+        examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76", "label": "Bild vom Laden"}]],
     )
 
 

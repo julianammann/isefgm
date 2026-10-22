@@ -44,6 +44,12 @@ OPENAPI_TAGS = [
         "visible only to their account (Q-01).",
     },
     {
+        "name": "images",
+        "description": "Labelled images on gift ideas (F-07): JPEG, PNG or WebP up to 5 MB, "
+        "stored as WebP without metadata, at most 5 per idea. Files are served only to the "
+        "owner's session or through a valid share link (Q-01, Q-03).",
+    },
+    {
         "name": "share-links",
         "description": "Read-only share links on chosen people (F-14). The token is shown "
         "once on creation and stored only as a hash; a link can expire and be deactivated "
@@ -52,7 +58,8 @@ OPENAPI_TAGS = [
     {
         "name": "shared",
         "description": "Public view behind a valid share link, no login needed (F-14). Shows "
-        "only the chosen people by name and their gift ideas; nothing can be changed (Q-01).",
+        "only the chosen people by name and their gift ideas with web links and images; "
+        "nothing can be changed (Q-01).",
     },
 ]
 
