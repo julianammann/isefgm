@@ -287,9 +287,9 @@
   >
     <h2 id="delete-gifting-heading" class="font-semibold">Beschenkung löschen?</h2>
     <p class="mt-2 text-sm">
-      Die Beschenkung zu „{giftingToDelete?.gift.title}“{#if giftingToDelete?.people.length}
-        für {giftingToDelete.people.map((person) => person.name).join(', ')}{/if} wird endgültig gelöscht.
-      Die Geschenkidee, die Personen und der Anlass bleiben erhalten.
+      Die Beschenkung zu „{giftingToDelete?.gift.title}“{giftingToDelete?.people.length
+        ? ` für ${giftingToDelete.people.map((person) => person.name).join(', ')}`
+        : ''} wird endgültig gelöscht. Die Geschenkidee, die Personen und der Anlass bleiben erhalten.
     </p>
     <form
       method="POST"
