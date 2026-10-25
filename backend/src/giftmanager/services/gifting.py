@@ -121,7 +121,7 @@ async def update_gifting(
 
 
 async def delete_gifting(session: AsyncSession, owner_id: uuid.UUID, gifting_id: uuid.UUID) -> None:
-    """Delete the owner's gifting; the idea, people and occasion stay."""
+    """Delete the owner's gifting and its tasks; the idea, people and occasion stay."""
     gifting = await get_gifting(session, owner_id, gifting_id)
     await session.delete(gifting)
     await session.flush()

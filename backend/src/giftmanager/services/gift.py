@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from giftmanager.core.errors import ConflictError
 from giftmanager.models import Gift, GiftCategory, Occasion, Person
 from giftmanager.services import gifting as gifting_service
+from giftmanager.services import image as image_service
 from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
 
@@ -102,7 +103,7 @@ async def _reload_links(session: AsyncSession, gift: Gift) -> None:
 
 
 async def delete_gift(session: AsyncSession, owner_id: uuid.UUID, gift_id: uuid.UUID) -> None:
-    """Delete the owner's gift idea.
+    """Delete the owner's gift idea; its image files go once the deletion has committed.
 
     Raises:
         ConflictError: The idea is used by at least one gifting and cannot be deleted.
@@ -110,5 +111,6 @@ async def delete_gift(session: AsyncSession, owner_id: uuid.UUID, gift_id: uuid.
     gift = await get_gift(session, owner_id, gift_id)
     if await gifting_service.is_gift_in_use(session, gift.id):
         raise ConflictError("Gift idea is used by a gifting and cannot be deleted.")
+    await image_service.delete_files_of_gift(session, gift.id)
     await session.delete(gift)
     await session.flush()

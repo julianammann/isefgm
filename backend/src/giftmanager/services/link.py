@@ -1,7 +1,8 @@
 """Labelled links on gift ideas (F-07). No HTTP in here.
 
-Links are the rows of `attachment` with kind `link`; images (#29) share the table. An
-attachment has no owner_id; this module scopes its queries through gift.owner_id.
+Links are the rows of `attachment` with kind `link`; images share the table
+(services/image.py). An attachment has no owner_id; this module scopes its queries through
+gift.owner_id.
 """
 
 import uuid

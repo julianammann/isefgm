@@ -106,8 +106,8 @@ async def update_gifting(
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="deleteGifting",
     summary="Delete gifting",
-    description="Deletes the gifting. The idea, the people and the occasion stay. Cannot be "
-    "undone." + _NOT_FOUND_NOTE,
+    description="Deletes the gifting together with its tasks. The idea, the people and the "
+    "occasion stay. Cannot be undone." + _NOT_FOUND_NOTE,
     responses=problem_responses(401, 404),
 )
 async def delete_gifting(gifting_id: uuid.UUID, user: CurrentUser, session: SessionDep) -> None:

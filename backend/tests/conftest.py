@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from testcontainers.postgres import PostgresContainer
 
 from giftmanager.core.clock import get_clock
+from giftmanager.core.config import get_settings
 from giftmanager.core.db import get_session
 from giftmanager.main import app
 
@@ -76,6 +77,13 @@ def clock() -> Iterator[FixedClock]:
     app.dependency_overrides[get_clock] = lambda: fixed
     yield fixed
     app.dependency_overrides.pop(get_clock, None)
+
+
+@pytest.fixture
+def uploads_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Point UPLOADS_DIR at an empty temporary directory for the test."""
+    monkeypatch.setattr(get_settings(), "uploads_dir", tmp_path)
+    return tmp_path
 
 
 # --- Requirement traceability (QZ-01, Q-09) -----------------------------------

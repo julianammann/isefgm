@@ -58,6 +58,19 @@ Person the account owner gives gifts to (F-02). Visible only to its owner (Q-01)
 | `notes` | TEXT | yes | Free-text notes, e.g. hobbies or sizes. Optional. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## share_link
+
+Read-only share link on chosen people of an account (F-14). Opens only while active and not expired; only the hash of its token is stored (Q-03). Deleted together with the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | no | Account the share link belongs to. Deleted together with the account. (FK → user_account.id) (Index) |
+| `token_hash` | VARCHAR(64) | no | SHA-256 of the token in the link. The token itself is shown once and never stored. (unique) |
+| `active` | BOOLEAN | no | False once the owner deactivates the link; it then no longer opens. |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | yes | Expiry time (UTC), optional. The link no longer opens afterwards. |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
 ## user_session
 
 Server-side session. One cookie token maps to exactly one row; logging out deletes the row.
@@ -82,6 +95,9 @@ Labelled link or image on a gift idea (F-07), told apart by kind. Visible only t
 | `kind` | VARCHAR(16) | no | `link` or `image`. |
 | `label` | VARCHAR(100) | no | Label, e.g. Thalia or Bild vom Laden. |
 | `url` | VARCHAR(2048) | yes | Absolute http or https URL. Required for links, NULL for images. |
+| `storage_path` | VARCHAR(255) | yes | Path of the WebP file relative to UPLOADS_DIR, `<owner_id>/<random>.webp`. Required for images, NULL for links. (unique) |
+| `mime_type` | VARCHAR(100) | yes | Media type of the stored file, always image/webp. Required for images, NULL for links. |
+| `size_bytes` | INTEGER | yes | Size of the stored file in bytes. Required for images, NULL for links. |
 
 ## gift_person
 
@@ -115,6 +131,15 @@ Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete
 | `name` | VARCHAR(100) | no | Title, e.g. Hochzeitstag. |
 | `date` | DATE | no | Date as a plain calendar date (Q-08). First occurrence for yearly ones. |
 | `recurrence` | VARCHAR(16) | no | `none` (once) or `yearly` (every year on the same day). |
+
+## share_link_person
+
+People whose gift ideas a share link shows (F-14), n:m. Deleting the link or the person removes only the row. Sharing a person does not share their master data.
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `share_link_id` | UUID | no | Share link. Deleting it deletes the row. (PK) (FK → share_link.id) |
+| `person_id` | UUID | no | Shared person. Deleting the person removes them from the link. (PK) (FK → person.id) (Index) |
 
 ## gift_occasion
 
@@ -156,3 +181,16 @@ Actual recipients of a gifting (F-06), n:m. Several people share one joint gift.
 | --- | --- | --- | --- |
 | `gifting_id` | UUID | no | Gifting. Deleting it deletes the link. (PK) (FK → gifting.id) |
 | `person_id` | UUID | no | Actual recipient. Deleting a person only removes them as a recipient, the gifting remains (test_deleting_a_recipient_removes_them_from_the_gifting). (PK) (FK → person.id) (Index) |
+
+## task
+
+To-do of a gifting (F-08), already possible in the idea phase. Visible only to the owner of the gift idea (Q-01); deleted together with the gifting and the account (F-17).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. Orders tasks with the same due date: oldest first. (PK) |
+| `gifting_id` | UUID | no | Gifting the task belongs to. Deleting the gifting deletes the task. (FK → gifting.id) (Index) |
+| `title` | VARCHAR(200) | no | What to do, e.g. Karte schreiben. |
+| `status` | VARCHAR(16) | no | Progress of the task. Defaults to 'open'. |
+| `due_on` | DATE | yes | Date. Day the task should be done by (Q-08: plain calendar date, no time zone). |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
