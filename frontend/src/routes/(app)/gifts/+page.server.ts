@@ -166,10 +166,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   };
 };
 
+/**
+ * `create` / `update`: validate the form and save the gift idea; field errors return with 400.
+ *
+ * `delete`: removes the gift idea; confirmation happens in the page dialog. 409 while a
+ * gifting still uses it.
+ *
+ * `createGifting` / `updateGifting` / `deleteGifting`: the same flow for giftings.
+ */
 export const actions: Actions = {
   // ── Gift ideas (F-05) ─────────────────────────────────────────
-  // `create` / `update`: validate the form and save the idea; field errors return with 400.
-  // `delete`: removes the idea; confirmation happens in the page dialog.
 
   create: async ({ request, locals }) => {
     const { values, errors } = parseForm(await request.formData());
