@@ -24,7 +24,7 @@ const given: GiftingOut = {
 };
 
 describe('toGiftingIn', () => {
-  it('übernimmt den vollständigen aktuellen Stand', () => {
+  it('copies the complete current state', () => {
     expect(toGiftingIn(given)).toEqual({
       gift_id: 'gift1',
       person_ids: ['p1'],
@@ -35,7 +35,7 @@ describe('toGiftingIn', () => {
     });
   });
 
-  it('ändert nur die übergebenen Felder', () => {
+  it('changes only the given fields', () => {
     const body = toGiftingIn(given, { status: 'acquired' });
     expect(body.status).toBe('acquired');
     expect(body.person_ids).toEqual(['p1']);
@@ -44,7 +44,7 @@ describe('toGiftingIn', () => {
 });
 
 describe('giftingFromForm', () => {
-  it('setzt Status idea als Standard und leere Felder auf null', () => {
+  it('defaults the status to idea and empty fields to null', () => {
     expect(giftingFromForm(new FormData(), 'gift1')).toEqual({
       gift_id: 'gift1',
       person_ids: [],
@@ -57,7 +57,7 @@ describe('giftingFromForm', () => {
 });
 
 describe('groupByGift', () => {
-  it('gruppiert Beschenkungen je Idee', () => {
+  it('groups giftings by gift idea', () => {
     const other = { ...given, id: 'g2', gift: { id: 'gift2', title: 'Buch' } };
     const grouped = groupByGift([given, other, { ...given, id: 'g3' }]);
     expect(grouped.gift1.map((g) => g.id)).toEqual(['g1', 'g3']);
@@ -84,7 +84,7 @@ function createApi(handler: (request: Request) => Promise<Response>) {
 }
 
 describe('listGiftings', () => {
-  it('lädt alle Seiten', async () => {
+  it('loads every page', async () => {
     const { api, requests } = createApi(async (request) => {
       const offset = new URL(request.url).searchParams.get('offset');
       if (offset === '0') return jsonResponse({ items: [given], offset: 0, limit: 1, total: 2 });
@@ -98,7 +98,7 @@ describe('listGiftings', () => {
 });
 
 describe('createGifting', () => {
-  it('sendet POST mit JSON', async () => {
+  it('sends POST with JSON', async () => {
     const { api, requests } = createApi(async () => jsonResponse(given, 201));
     const body = toGiftingIn(given);
 
@@ -108,7 +108,7 @@ describe('createGifting', () => {
     await expect(requests[0].clone().json()).resolves.toEqual(body);
   });
 
-  it('liefert 422 bei unvollständiger Beschenkung', async () => {
+  it('returns 422 for an incomplete given gifting', async () => {
     const { api } = createApi(async () => jsonResponse({ detail: [] }, 422));
 
     await expect(createGifting(api, { gift_id: 'gift1', status: 'given' })).resolves.toMatchObject({
@@ -119,7 +119,7 @@ describe('createGifting', () => {
 });
 
 describe('updateGifting', () => {
-  it('sendet PUT an die Beschenkung', async () => {
+  it('sends PUT to the gifting', async () => {
     const { api, requests } = createApi(async () => jsonResponse(given));
 
     await expect(updateGifting(api, 'g1', toGiftingIn(given))).resolves.toEqual({
@@ -132,7 +132,7 @@ describe('updateGifting', () => {
 });
 
 describe('deleteGifting', () => {
-  it('liefert 404 für eine unbekannte Beschenkung', async () => {
+  it('returns 404 for an unknown gifting', async () => {
     const { api } = createApi(async () => jsonResponse({ detail: 'Not found' }, 404));
 
     await expect(deleteGifting(api, 'g1')).resolves.toEqual({

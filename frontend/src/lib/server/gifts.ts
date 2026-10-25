@@ -103,19 +103,20 @@ export async function deleteGift(api: Api, id: string): Promise<Result<null>> {
   }
 }
 
-// ── Formular-Mapping ────────────────────────────────────────────
+// ── Form mapping ────────────────────────────────────────────────
 
-/** Leerer Wert → null (Backend speichert leere optionale Felder als null). */
+/** Returns the trimmed form value, or null if it is empty; the backend stores empty optional fields as null. */
 export function text(form: FormData, name: string): string | null {
   const v = form.get(name);
   return typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
 }
 
+/** Returns all non-empty values of a multi-value form field, e.g. checked checkboxes. */
 export function ids(form: FormData, name: string): string[] {
   return form.getAll(name).filter((v): v is string => typeof v === 'string' && v !== '');
 }
 
-/** PUT ersetzt alle Felder – daher immer das vollständige Formular abbilden. */
+/** Maps the gift idea form to `GiftIn`; always maps every field, because PUT replaces all of them. */
 export function giftFromForm(form: FormData): GiftIn {
   return {
     title: text(form, 'title') ?? '',

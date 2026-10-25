@@ -71,7 +71,7 @@
   let giftingToDelete = $state<Gifting | null>(null);
 
   type Status = 'idea' | 'planned' | 'acquired' | 'given';
-  // Q-07: Status immer als Text + Symbol, Farbe nur zusätzlich.
+  // Q-07: always show the status as text and symbol; colour is only an addition.
   const STATUS: Record<Status, { label: string; icon: string }> = {
     idea: { label: 'Idee', icon: '○' },
     planned: { label: 'Geplant', icon: '◔' },
@@ -182,7 +182,7 @@
               </div>
             </div>
 
-            <!-- Beschenkungen (F-06) -->
+            <!-- Giftings (F-06) -->
             <section class="mt-5 border-t pt-4" aria-label={`Beschenkungen für ${gift.title}`}>
               <h4 class="font-semibold">Beschenkungen</h4>
               {#if giftings.length}

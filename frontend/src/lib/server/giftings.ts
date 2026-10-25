@@ -115,16 +115,16 @@ export async function deleteGifting(api: Api, id: string): Promise<Result<null>>
   }
 }
 
-// ── Hilfsfunktionen ─────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────
 
-/** Beschenkungen je Idee gruppieren (für die Anzeige unter der jeweiligen Idee). */
+/** Groups giftings by gift idea id, so each idea can list its own giftings. */
 export function groupByGift(giftings: GiftingOut[]): Record<string, GiftingOut[]> {
   const grouped: Record<string, GiftingOut[]> = {};
   for (const g of giftings) (grouped[g.gift.id] ??= []).push(g);
   return grouped;
 }
 
-/** Aktuellen Stand in GiftingIn überführen; PUT ersetzt alle Felder, `patch` ändert nur das Gewünschte. */
+/** Turns a gifting into a complete `GiftingIn`; PUT replaces all fields, `patch` changes only the given ones. */
 export function toGiftingIn(current: GiftingOut, patch: Partial<GiftingIn> = {}): GiftingIn {
   return {
     gift_id: current.gift.id,
@@ -137,6 +137,7 @@ export function toGiftingIn(current: GiftingOut, patch: Partial<GiftingIn> = {})
   };
 }
 
+/** Maps the gifting form to `GiftingIn` for the given gift idea; the status defaults to `idea`. */
 export function giftingFromForm(form: FormData, giftId: string): GiftingIn {
   return {
     gift_id: giftId,

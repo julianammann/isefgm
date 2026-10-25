@@ -36,7 +36,7 @@ function createApi(handler: (request: Request) => Promise<Response>) {
 }
 
 describe('giftFromForm', () => {
-  it('benötigt nur den Titel und setzt Standardwerte', () => {
+  it('needs only the title and sets the defaults', () => {
     const f = new FormData();
     f.set('title', '  Raspberry Pi ');
     expect(giftFromForm(f)).toEqual({
@@ -51,14 +51,14 @@ describe('giftFromForm', () => {
     });
   });
 
-  it('wandelt Dezimalkomma in Punkt', () => {
+  it('turns a decimal comma into a point', () => {
     const f = new FormData();
     f.set('title', 'Buch');
     f.set('price_from', '10,50');
     expect(giftFromForm(f).price_from).toBe('10.50');
   });
 
-  it('normalisiert den Währungscode auf Großbuchstaben', () => {
+  it('normalises the currency code to capital letters', () => {
     const f = new FormData();
     f.set('title', 'Buch');
     f.set('price_from', '10');
@@ -68,7 +68,7 @@ describe('giftFromForm', () => {
 });
 
 describe('listGifts', () => {
-  it('lädt alle Seiten mit der Anzahl geladener Ideen als nächstem Offset', async () => {
+  it('loads every page using the number of collected ideas as the next offset', async () => {
     const second = { ...gift, id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71', title: 'Buch' };
     const { api, requests } = createApi(async (request) => {
       const offset = new URL(request.url).searchParams.get('offset');
@@ -83,7 +83,7 @@ describe('listGifts', () => {
     ]);
   });
 
-  it('liefert den Backend-Fehler einer fehlgeschlagenen Seite', async () => {
+  it('returns the backend error for a failed page request', async () => {
     const { api } = createApi(async () => jsonResponse({ detail: 'Unauthorized' }, 401));
 
     await expect(listGifts(api)).resolves.toEqual({
@@ -95,7 +95,7 @@ describe('listGifts', () => {
 });
 
 describe('createGift', () => {
-  it('sendet POST mit JSON und liefert die angelegte Idee', async () => {
+  it('sends POST with JSON and returns the created idea', async () => {
     const { api, requests } = createApi(async () => jsonResponse(gift, 201));
 
     await expect(createGift(api, { title: 'Raspberry Pi', category: 'tech' })).resolves.toEqual({
@@ -110,7 +110,7 @@ describe('createGift', () => {
     });
   });
 
-  it('wandelt einen Netzwerkfehler in 502', async () => {
+  it('maps a network failure to 502', async () => {
     const { api } = createApi(async () => {
       throw new TypeError('Failed to fetch');
     });
@@ -123,7 +123,7 @@ describe('createGift', () => {
 });
 
 describe('updateGift', () => {
-  it('sendet PUT an die Idee', async () => {
+  it('sends PUT to the idea', async () => {
     const { api, requests } = createApi(async () => jsonResponse(gift));
 
     await expect(
@@ -138,7 +138,7 @@ describe('updateGift', () => {
 });
 
 describe('deleteGift', () => {
-  it('löscht eine Idee bei leerer Erfolgsantwort', async () => {
+  it('deletes an idea with an empty success response', async () => {
     const { api, requests } = createApi(async () => new Response(null, { status: 204 }));
 
     await expect(deleteGift(api, gift.id)).resolves.toEqual({ ok: true, data: null });
@@ -146,7 +146,7 @@ describe('deleteGift', () => {
     expect(new URL(requests[0].url).pathname).toBe(`/api/v1/gifts/${gift.id}`);
   });
 
-  it('liefert 409, wenn eine Beschenkung die Idee verwendet', async () => {
+  it('returns 409 if a gifting still uses the idea', async () => {
     const { api } = createApi(async () => jsonResponse({ detail: 'in use' }, 409));
 
     await expect(deleteGift(api, gift.id)).resolves.toEqual({

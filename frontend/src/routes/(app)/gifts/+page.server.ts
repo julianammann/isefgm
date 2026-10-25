@@ -167,7 +167,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
-  // ── Geschenkideen (F-05) ──────────────────────────────────────
+  // ── Gift ideas (F-05) ─────────────────────────────────────────
   // `create` / `update`: validate the form and save the idea; field errors return with 400.
   // `delete`: removes the idea; confirmation happens in the page dialog.
 
@@ -196,7 +196,7 @@ export const actions: Actions = {
     throw redirect(303, '/gifts?success=deleted');
   },
 
-  // ── Beschenkungen (F-06) ──────────────────────────────────────
+  // ── Giftings (F-06) ───────────────────────────────────────────
   // Same flow as the gift ideas; the form keys are prefixed so both dialogs keep their state.
 
   createGifting: async ({ request, locals }) => {
