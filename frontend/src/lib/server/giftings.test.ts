@@ -1,9 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import { createApiClient } from '$lib/api/client';
 import {
+  createGifting,
+  deleteGifting,
   giftingFromForm,
   groupByGift,
-  listAllGiftings,
+  listGiftings,
   toGiftingIn,
+  updateGifting,
   type GiftingOut
 } from './giftings';
 
@@ -60,17 +65,80 @@ describe('groupByGift', () => {
   });
 });
 
-describe('listAllGiftings', () => {
-  it('lädt alle Seiten', async () => {
-    const page = (items: GiftingOut[], total: number) =>
-      new Response(JSON.stringify({ items, total, limit: 1, offset: 0 }), { status: 200 });
-    const fetch = vi
-      .fn()
-      .mockResolvedValueOnce(page([given], 2))
-      .mockResolvedValueOnce(page([{ ...given, id: 'g2' }], 2));
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
 
-    const all = await listAllGiftings(fetch, 1);
-    expect(all.map((g) => g.id)).toEqual(['g1', 'g2']);
-    expect(fetch).toHaveBeenCalledTimes(2);
+function createApi(handler: (request: Request) => Promise<Response>) {
+  const requests: Request[] = [];
+  const fetchFn: typeof fetch = (input, init) => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    requests.push(request);
+    return handler(request);
+  };
+
+  return { api: createApiClient(fetchFn, 'http://api.test'), requests };
+}
+
+describe('listGiftings', () => {
+  it('lädt alle Seiten', async () => {
+    const { api, requests } = createApi(async (request) => {
+      const offset = new URL(request.url).searchParams.get('offset');
+      if (offset === '0') return jsonResponse({ items: [given], offset: 0, limit: 1, total: 2 });
+      return jsonResponse({ items: [{ ...given, id: 'g2' }], offset: 1, limit: 1, total: 2 });
+    });
+
+    const result = await listGiftings(api);
+    expect(result.ok && result.data.map((g) => g.id)).toEqual(['g1', 'g2']);
+    expect(requests).toHaveLength(2);
+  });
+});
+
+describe('createGifting', () => {
+  it('sendet POST mit JSON', async () => {
+    const { api, requests } = createApi(async () => jsonResponse(given, 201));
+    const body = toGiftingIn(given);
+
+    await expect(createGifting(api, body)).resolves.toEqual({ ok: true, data: given });
+    expect(requests[0].method).toBe('POST');
+    expect(new URL(requests[0].url).pathname).toBe('/api/v1/giftings');
+    await expect(requests[0].clone().json()).resolves.toEqual(body);
+  });
+
+  it('liefert 422 bei unvollständiger Beschenkung', async () => {
+    const { api } = createApi(async () => jsonResponse({ detail: [] }, 422));
+
+    await expect(createGifting(api, { gift_id: 'gift1', status: 'given' })).resolves.toMatchObject({
+      ok: false,
+      status: 422
+    });
+  });
+});
+
+describe('updateGifting', () => {
+  it('sendet PUT an die Beschenkung', async () => {
+    const { api, requests } = createApi(async () => jsonResponse(given));
+
+    await expect(updateGifting(api, 'g1', toGiftingIn(given))).resolves.toEqual({
+      ok: true,
+      data: given
+    });
+    expect(requests[0].method).toBe('PUT');
+    expect(new URL(requests[0].url).pathname).toBe('/api/v1/giftings/g1');
+  });
+});
+
+describe('deleteGifting', () => {
+  it('liefert 404 für eine unbekannte Beschenkung', async () => {
+    const { api } = createApi(async () => jsonResponse({ detail: 'Not found' }, 404));
+
+    await expect(deleteGifting(api, 'g1')).resolves.toEqual({
+      ok: false,
+      status: 404,
+      message: 'Beschenkung nicht gefunden.'
+    });
   });
 });

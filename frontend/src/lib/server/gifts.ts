@@ -1,47 +1,107 @@
-import type { components } from '$lib/api/schema'; // Pfad an Lage von schema.d.ts anpassen
+/**
+ * Gift ideas data access (F-04, F-05).
+ *
+ * Wraps the gift idea endpoints of the backend (`/api/v1/gifts`). All functions take the
+ * typed API client from `locals.api` and return a `Result`, so routes never deal with
+ * HTTP details themselves.
+ *
+ * @module
+ */
 
+import type { components } from '$lib/api/schema';
+
+/** Payload for creating or updating a gift idea. */
 export type GiftIn = components['schemas']['GiftIn'];
+/** A gift idea as returned by the API. */
 export type GiftOut = components['schemas']['GiftOut'];
+/** Possible categories of a gift idea. */
 export type GiftCategory = components['schemas']['GiftCategory'];
-type GiftPage = components['schemas']['Page_GiftOut_'];
-type Fetch = typeof globalThis.fetch;
 
-const BASE = '/api/v1/gifts';
+type Api = App.Locals['api'];
 
-export class ApiError extends Error {
-  constructor(public readonly status: number) {
-    super(`API-Fehler ${status}`);
+type Failure = { ok: false; status: number; message: string };
+
+/** Outcome of a data access call; on failure carries the HTTP status and a display message. */
+export type Result<T> = { ok: true; data: T } | Failure;
+
+/** Display messages per HTTP status; the backend's own `detail` texts are English and not shown. */
+const messages: Record<number, string> = {
+  401: 'Sitzung abgelaufen. Bitte erneut anmelden.',
+  404: 'Geschenkidee nicht gefunden.',
+  409: 'Die Idee wird von mindestens einer Beschenkung verwendet und kann nicht gelöscht werden.',
+  422: 'Die Eingaben sind ungültig.',
+  502: 'Das Backend ist nicht erreichbar.'
+};
+
+function fail(status: number): Failure {
+  return {
+    ok: false,
+    status,
+    message: messages[status] ?? 'Unerwarteter Fehler. Bitte später erneut versuchen.'
+  };
+}
+
+/** Awaits an API call and turns its response into a `Result`; network errors become 502. */
+async function send<T>(request: Promise<{ data?: T; response: Response }>): Promise<Result<T>> {
+  try {
+    const { data, response } = await request;
+    if (!response.ok) return fail(response.status);
+    if (data === undefined) {
+      return {
+        ok: false,
+        status: 502,
+        message: 'Das Backend hat eine unerwartete Antwort geliefert.'
+      };
+    }
+    return { ok: true, data };
+  } catch (cause) {
+    if (cause instanceof TypeError) return fail(502);
+    throw cause;
   }
 }
 
-/** Request-Helper – an das Muster aus persons.ts angleichen, falls dort bereits einer existiert. */
-export async function api<T>(fetch: Fetch, url: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: init.body ? { 'content-type': 'application/json' } : undefined
-  });
-  if (!res.ok) throw new ApiError(res.status);
-  return (res.status === 204 ? undefined : await res.json()) as T;
-}
-
-/** Loads every gift page so the overview does not silently stop at the first 100 ideas. */
-export async function listAllGifts(fetch: Fetch, pageSize = 100): Promise<GiftOut[]> {
-  const items: GiftOut[] = [];
+/** Returns all gift ideas of the current account, newest first; reads every page of the list. */
+export async function listGifts(api: Api): Promise<Result<GiftOut[]>> {
+  const gifts: GiftOut[] = [];
   for (;;) {
-    const page = await api<GiftPage>(fetch, `${BASE}?limit=${pageSize}&offset=${items.length}`);
-    items.push(...page.items);
-    if (page.items.length === 0 || items.length >= page.total) return items;
+    const page = await send(
+      api.GET('/api/v1/gifts', { params: { query: { offset: gifts.length } } })
+    );
+    if (!page.ok) return page;
+    gifts.push(...page.data.items);
+    if (page.data.items.length === 0 || gifts.length >= page.data.total) {
+      return { ok: true, data: gifts };
+    }
   }
 }
 
-export const createGift = (fetch: Fetch, body: GiftIn) =>
-  api<GiftOut>(fetch, BASE, { method: 'POST', body: JSON.stringify(body) });
+/** Creates a gift idea and returns it with its new id. */
+export async function createGift(api: Api, input: GiftIn): Promise<Result<GiftOut>> {
+  return send(api.POST('/api/v1/gifts', { body: input }));
+}
 
-export const updateGift = (fetch: Fetch, id: string, body: GiftIn) =>
-  api<GiftOut>(fetch, `${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+/**
+ * Replaces all data of an existing gift idea, including its links; 404 if the id is unknown.
+ * Fields left out of `input` are reset to null, their default or an empty list by the backend.
+ */
+export async function updateGift(api: Api, id: string, input: GiftIn): Promise<Result<GiftOut>> {
+  return send(
+    api.PUT('/api/v1/gifts/{gift_id}', { params: { path: { gift_id: id } }, body: input })
+  );
+}
 
-export const deleteGift = (fetch: Fetch, id: string) =>
-  api<void>(fetch, `${BASE}/${id}`, { method: 'DELETE' });
+/** Deletes a gift idea; 404 if the id is unknown, 409 if a gifting still uses it. */
+export async function deleteGift(api: Api, id: string): Promise<Result<null>> {
+  try {
+    const { response } = await api.DELETE('/api/v1/gifts/{gift_id}', {
+      params: { path: { gift_id: id } }
+    });
+    return response.ok ? { ok: true, data: null } : fail(response.status);
+  } catch (cause) {
+    if (cause instanceof TypeError) return fail(502);
+    throw cause;
+  }
+}
 
 // ── Formular-Mapping ────────────────────────────────────────────
 
