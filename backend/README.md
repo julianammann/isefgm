@@ -128,7 +128,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `migration` | `uv run alembic revision --autogenerate -m "…"` | `mise run migration -- "create gifts"` |
 | `migrate:check` | `uv run alembic check` | fehlende Migration erkennen |
 | `create-user` | `uv run python -m giftmanager.create_user` | Konto anlegen, auch bei geschlossener Registrierung; fragt das Passwort ab. `mise run create-user -- --email anna@example.org --display-name Anna`, auf dem Server `docker compose exec api python -m giftmanager.create_user …` |
-| `seed` | `uv run python -m giftmanager.seed` | Testkonten `test1@example.org` und `test2@example.org` mit je 100 Personen, 20 Anlässen und 1.000 Geschenkideen (QZ-02, synthetisch per Faker) neu anlegen; fragt ein Passwort für alle Konten ab. Wiederholbar: vorhandene Testkonten werden samt Daten gelöscht. Auf dem Server `docker compose exec api python -m giftmanager.seed` |
+| `seed` | `uv run python -m giftmanager.seed` | Testkonten `test1@example.org` und `test2@example.org` mit je 100 Personen, 20 Anlässen, 1.000 Geschenkideen und 1.000 Beschenkungen samt Aufgaben (QZ-02, synthetisch per Faker) neu anlegen; fragt ein Passwort für alle Konten ab. Wiederholbar: vorhandene Testkonten werden samt Daten gelöscht. Auf dem Server `docker compose exec api python -m giftmanager.seed` |
 | `openapi` | `uv run python -m giftmanager.export_openapi > ../frontend/openapi.json` | |
 | `docs` | `uv run python -m giftmanager.export_docs ../docs/generated` | API-, Datenbank- und Konfigurationsdoku aus dem Code (MS 4) |
 | `apidocs` | `uv run python docs/build.py ../docs/site/backend` | Code-Referenz als Markdown für die VitePress-Seite; ganze Seite: `mise run apidocs:serve` im Root |
