@@ -66,6 +66,12 @@ OPENAPI_TAGS = [
         "description": "The complete list of the account's people, gift ideas and past gifts "
         "in one response (F-15). Visible only to its account (Q-01).",
     },
+    {
+        "name": "suggestions",
+        "description": "Gift suggestions for a person (F-16): category and price band shared "
+        "by the gift ideas of several accounts, without titles, texts or people of other "
+        "accounts (Q-04). Visible only to their account (Q-01).",
+    },
 ]
 
 

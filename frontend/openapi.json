@@ -1659,6 +1659,37 @@
         "title": "Page[ShareLinkOut]",
         "type": "object"
       },
+      "Page_SuggestionOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[SuggestionOut]",
+        "type": "object"
+      },
       "Page_TaskOut_": {
         "properties": {
           "items": {
@@ -1844,6 +1875,17 @@
         ],
         "title": "PersonOut",
         "type": "object"
+      },
+      "PriceBand": {
+        "description": "Price band of a gift idea in EUR (F-16), taken from the lower end of its price range.",
+        "enum": [
+          "under_20",
+          "20_to_50",
+          "50_to_100",
+          "over_100"
+        ],
+        "title": "PriceBand",
+        "type": "string"
       },
       "Problem": {
         "description": "Error body for every status outside 2xx (RFC 9457).",
@@ -2404,6 +2446,134 @@
         ],
         "title": "SharedPersonOut",
         "type": "object"
+      },
+      "SuggestionAccept": {
+        "description": "Title of the gift idea an accepted suggestion becomes.",
+        "properties": {
+          "title": {
+            "description": "Title of the new gift idea, 1 to 200 characters. The frontend fills in its wording of the suggestion; the user may change it.",
+            "examples": [
+              "Erlebnis, 20 bis 50 \u20ac"
+            ],
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "SuggestionAccept",
+        "type": "object"
+      },
+      "SuggestionOut": {
+        "description": "A suggestion as the frontend sees it. The frontend words it from the keys.",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/GiftCategory",
+            "description": "Suggested kind of gift, never `other`.",
+            "examples": [
+              "experience"
+            ]
+          },
+          "created_at": {
+            "description": "Creation time (UTC), set by the server.",
+            "examples": [
+              "2026-10-26T09:30:00Z"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "gift_count": {
+            "description": "Number of gift ideas of all accounts with this category and price band when the suggestion was made.",
+            "examples": [
+              42
+            ],
+            "title": "Gift Count",
+            "type": "integer"
+          },
+          "id": {
+            "description": "Suggestion ID (UUIDv7).",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "price_band": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceBand"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Suggested price band in EUR: `under_20`, `20_to_50`, `50_to_100` or `over_100`. Null if the ideas behind it have no price in EUR.",
+            "examples": [
+              "20_to_50"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/SuggestionStatus",
+            "description": "`open`, `accepted` or `dismissed`.",
+            "examples": [
+              "open"
+            ]
+          },
+          "target_person_id": {
+            "description": "ID of the person the suggestion is for.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+            ],
+            "format": "uuid",
+            "title": "Target Person Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_person_id",
+          "category",
+          "price_band",
+          "gift_count",
+          "status",
+          "created_at"
+        ],
+        "title": "SuggestionOut",
+        "type": "object"
+      },
+      "SuggestionRequest": {
+        "description": "Person to make new suggestions for.",
+        "properties": {
+          "person_id": {
+            "description": "ID of the account's person the suggestions are for.",
+            "examples": [
+              "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71"
+            ],
+            "format": "uuid",
+            "title": "Person Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "person_id"
+        ],
+        "title": "SuggestionRequest",
+        "type": "object"
+      },
+      "SuggestionStatus": {
+        "description": "State of a suggestion (F-16). Only `open` ones can be accepted or dismissed.",
+        "enum": [
+          "open",
+          "accepted",
+          "dismissed"
+        ],
+        "title": "SuggestionStatus",
+        "type": "string"
       },
       "TaskIn": {
         "description": "Data of a task; used for create and for full update (PUT).",
@@ -5944,6 +6114,378 @@
         ]
       }
     },
+    "/api/v1/suggestions": {
+      "get": {
+        "description": "Returns the open suggestions of the current account, one page at a time, most frequent first. `person_id` narrows the list to one person; a person of another account gives an empty page.",
+        "operationId": "listSuggestions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Only the suggestions for this person.",
+            "in": "query",
+            "name": "person_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the suggestions for this person.",
+              "title": "Person Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_SuggestionOut_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List suggestions",
+        "tags": [
+          "suggestions"
+        ]
+      },
+      "post": {
+        "description": "Replaces the open suggestions for a person of the current account with up to 5 new ones, most frequent first. Each is a category and price band shared by gift ideas of at least 3 accounts; no title or text of another account is used (Q-04). Features the person already has as an idea or gifting, and features accepted or dismissed for them before, are left out. The list may be empty. A person of another account returns 404, like a missing one.",
+        "operationId": "createSuggestions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionOut"
+                  },
+                  "title": "Response Createsuggestions",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Make suggestions",
+        "tags": [
+          "suggestions"
+        ]
+      }
+    },
+    "/api/v1/suggestions/{suggestion_id}": {
+      "get": {
+        "description": "Returns one suggestion of the current account in any status. A suggestion of another account returns 404, like a missing one.",
+        "operationId": "getSuggestion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show suggestion",
+        "tags": [
+          "suggestions"
+        ]
+      }
+    },
+    "/api/v1/suggestions/{suggestion_id}/accept": {
+      "post": {
+        "description": "Creates a gift idea for the suggestion's person with the given title, the suggested category and the price range of the band in EUR, and marks the suggestion `accepted`. Returns the new gift idea. Only an open suggestion can be accepted or dismissed; otherwise 409. A suggestion of another account returns 404, like a missing one.",
+        "operationId": "acceptSuggestion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionAccept"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept suggestion",
+        "tags": [
+          "suggestions"
+        ]
+      }
+    },
+    "/api/v1/suggestions/{suggestion_id}/dismiss": {
+      "post": {
+        "description": "Marks the suggestion `dismissed`. Its category and price band are never suggested for the person again. Only an open suggestion can be accepted or dismissed; otherwise 409. A suggestion of another account returns 404, like a missing one.",
+        "operationId": "dismissSuggestion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suggestion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suggestion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dismiss suggestion",
+        "tags": [
+          "suggestions"
+        ]
+      }
+    },
     "/api/v1/tasks": {
       "get": {
         "description": "Returns the tasks of the current account, one page at a time: earliest due date first, tasks without one last, the same due date in creation order. `gifting_id` narrows the list to one gifting; a gifting of another account gives an empty page.",
@@ -6314,6 +6856,10 @@
     {
       "description": "The complete list of the account's people, gift ideas and past gifts in one response (F-15). Visible only to its account (Q-01).",
       "name": "full-list"
+    },
+    {
+      "description": "Gift suggestions for a person (F-16): category and price band shared by the gift ideas of several accounts, without titles, texts or people of other accounts (Q-04). Visible only to their account (Q-01).",
+      "name": "suggestions"
     }
   ]
 }
