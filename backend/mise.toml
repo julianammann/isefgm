@@ -43,6 +43,10 @@ run = "uv run python -m giftmanager.seed"
 [tasks.openapi]
 run = "uv run python -m giftmanager.export_openapi > ../frontend/openapi.json"
 
+[tasks.measure]
+description = "QZ-02: p95 response times of the list endpoints against a running, seeded stack"
+run = "uv run python scripts/qz02_measure.py"
+
 [tasks.docs]
 description = "render docs/generated/{api,database,configuration}.md from code"
 run = "uv run python -m giftmanager.export_docs ../docs/generated"

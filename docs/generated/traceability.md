@@ -413,6 +413,14 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-08 | `tests/test_tasks.py::test_filtering_by_a_foreign_gifting_shows_nothing` | passed |
 | F-08 | `tests/test_tasks.py::test_deleting_the_gifting_deletes_its_tasks` | passed |
 | F-08 | `tests/test_tasks.py::test_deleting_the_account_deletes_its_tasks` | passed |
+| F-09 | `tests/test_person_overview.py::test_overview_holds_past_gifts_giftings_ideas_occasions_and_tasks_of_the_person` | passed |
+| F-09 | `tests/test_person_overview.py::test_ideas_already_used_for_the_person_are_left_out` | passed |
+| F-09 | `tests/test_person_overview.py::test_giftings_come_by_occasion_date_those_without_one_last` | passed |
+| F-09 | `tests/test_person_overview.py::test_past_gifts_are_sorted_by_given_date_latest_first` | passed |
+| F-09 | `tests/test_person_overview.py::test_every_list_is_paginated_with_the_same_limit_and_offset` | passed |
+| F-09 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
+| F-09 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
+| F-09 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -534,6 +542,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[PUT]` | passed |
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[DELETE]` | passed |
 | Q-01 | `tests/test_people.py::test_people_require_login` | passed |
+| Q-01 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
+| Q-01 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_require_login` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[GET]` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[PUT]` | passed |
@@ -635,6 +645,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-05 | `tests/test_occasions.py::test_list_is_sorted_by_date_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_is_sorted_by_name_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_rejects_oversized_page` | passed |
+| Q-05 | `tests/test_person_overview.py::test_every_list_is_paginated_with_the_same_limit_and_offset` | passed |
+| Q-05 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |
 | Q-05 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-05 | `tests/test_share_links.py::test_list_is_newest_first_and_paginated` | passed |
 | Q-05 | `tests/test_tasks.py::test_list_is_ordered_by_due_date_then_creation` | passed |
