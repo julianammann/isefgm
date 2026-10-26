@@ -1,4 +1,5 @@
 import asyncio
+import datetime as dt
 import getpass
 from collections.abc import Iterator
 
@@ -8,7 +9,15 @@ from sqlalchemy import func, select
 from giftmanager import seed
 from giftmanager.core.config import get_settings
 from giftmanager.core.db import get_engine, get_sessionmaker
-from giftmanager.models import Gift, Gifting, GiftingStatus, Person, User, gifting_person
+from giftmanager.models import (
+    Gift,
+    Gifting,
+    GiftingStatus,
+    Person,
+    Task,
+    User,
+    gifting_person,
+)
 from giftmanager.services import auth as auth_service
 
 
@@ -71,23 +80,40 @@ async def _counts() -> list[tuple[str, int, int, int]]:
         await get_engine().dispose()
 
 
-async def _given_without_recipients() -> int:
-    """Given giftings without a recipient; F-06 requires at least one."""
+async def _given() -> tuple[int, int]:
+    """Given giftings of the test accounts, and those without a recipient (F-06: none)."""
+    has_recipient = select(gifting_person).where(gifting_person.c.gifting_id == Gifting.id).exists()
     try:
         async with get_sessionmaker()() as session:
-            return (
-                await session.scalar(
-                    select(func.count())
+            given, without_recipient = (
+                await session.execute(
+                    select(func.count(), func.count().filter(~has_recipient))
                     .select_from(Gifting)
+                    .join(Gift, Gift.id == Gifting.gift_id)
+                    .join(User, User.id == Gift.owner_id)
                     .where(
                         Gifting.status == GiftingStatus.GIVEN,
-                        ~select(gifting_person)
-                        .where(gifting_person.c.gifting_id == Gifting.id)
-                        .exists(),
+                        User.email.in_([email for email, _ in seed.ACCOUNTS]),
                     )
                 )
-                or 0
+            ).one()
+            return given, without_recipient
+    finally:
+        await get_engine().dispose()
+
+
+async def _tasks() -> list[tuple[str, dt.date | None, dt.date | None]]:
+    """Title, due date and the gifting's occasion date of every task of the test accounts."""
+    try:
+        async with get_sessionmaker()() as session:
+            rows = await session.execute(
+                select(Task.title, Task.due_on, Gifting.occasion_date)
+                .join(Gifting, Gifting.id == Task.gifting_id)
+                .join(Gift, Gift.id == Gifting.gift_id)
+                .join(User, User.id == Gift.owner_id)
+                .where(User.email.in_([email for email, _ in seed.ACCOUNTS]))
             )
+            return [tuple(row) for row in rows]
     finally:
         await get_engine().dispose()
 
@@ -102,7 +128,18 @@ def test_seeds_every_account_and_can_run_again(
     _passwords(monkeypatch, "correct-horse-battery", "correct-horse-battery")
     assert seed.main() == 0
     assert asyncio.run(_counts()) == expected
-    assert asyncio.run(_given_without_recipients()) == 0
+    given, without_recipient = asyncio.run(_given())
+    assert given > 0
+    assert without_recipient == 0
+    tasks = asyncio.run(_tasks())
+    assert tasks
+    for title, due_on, occasion_date in tasks:
+        assert title in seed.TASK_TITLES
+        # 1 to 14 days before the gifting's date; no date, no due date.
+        if occasion_date is None:
+            assert due_on is None
+        else:
+            assert due_on is not None and 1 <= (occasion_date - due_on).days <= 14
     # The summary counts the rows, birthday occasions included, not the configured numbers.
     out = capsys.readouterr().out
     for email, _ in seed.ACCOUNTS:
