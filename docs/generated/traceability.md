@@ -58,6 +58,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_fixed_types_are_available_to_every_account` | passed |
 | F-03 | `tests/test_occasions.py::test_fixed_types_cannot_be_changed_or_deleted` | passed |
 | F-03 | `tests/test_occasions.py::test_create_and_show_own_yearly_occasion` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[spring]` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[autumn]` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[new-year]` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[leap-day]` | passed |
 | F-03 | `tests/test_occasions.py::test_one_off_is_the_default_and_fixed_types_can_be_used` | passed |
 | F-03 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body0-name]` | passed |
 | F-03 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body1-name]` | passed |
@@ -95,6 +99,9 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-03-01-2028-02-29]` | passed |
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-02-29-2028-02-29]` | passed |
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
+| F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-02-28-2027-02-28]` | passed |
+| F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2100-02-28-2100-02-28]` | passed |
+| F-03 | `tests/test_occasions.py::test_next_occurrence[1996-02-29-yearly-2000-02-28-2000-02-29]` | passed |
 | F-04 | `tests/test_birthdays.py::test_birthday_creates_the_birthday_occasion` | passed |
 | F-04 | `tests/test_birthdays.py::test_person_without_birthday_has_no_birthday_occasion` | passed |
 | F-04 | `tests/test_birthdays.py::test_birthday_occasion_follows_the_person` | passed |
@@ -656,6 +663,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_giftings.py::test_invalid_gifting_is_rejected[body8-given_on]` | passed |
 | Q-08 | `tests/test_gifts.py::test_created_at_is_set_by_the_server` | passed |
 | Q-08 | `tests/test_occasions.py::test_create_and_show_own_yearly_occasion` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[spring]` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[autumn]` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[new-year]` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[leap-day]` | passed |
 | Q-08 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body0-name]` | passed |
 | Q-08 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body1-name]` | passed |
 | Q-08 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body2-name]` | passed |
@@ -682,6 +693,9 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-03-01-2028-02-29]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-02-29-2028-02-29]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
+| Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-02-28-2027-02-28]` | passed |
+| Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2100-02-28-2100-02-28]` | passed |
+| Q-08 | `tests/test_occasions.py::test_next_occurrence[1996-02-29-yearly-2000-02-28-2000-02-29]` | passed |
 | Q-09 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |
 
 ## Tests without a requirement
