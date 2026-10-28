@@ -9,7 +9,13 @@ from giftmanager.services import auth as auth_service
 COOKIE = "__Host-session"
 
 
-async def log_in_new_user(client: AsyncClient, session: AsyncSession, email: str) -> User:
+async def log_in_new_user(
+    client: AsyncClient,
+    session: AsyncSession,
+    email: str,
+    *,
+    now: datetime | None = None,
+) -> User:
     """Create an account directly and put its session cookie on the client."""
     user = User(email=email, password_hash="not-a-real-hash", display_name=email)
     session.add(user)
@@ -17,7 +23,7 @@ async def log_in_new_user(client: AsyncClient, session: AsyncSession, email: str
     token = await auth_service.create_session(
         session,
         user,
-        now=datetime.now(UTC),
+        now=now if now is not None else datetime.now(UTC),
         ttl=timedelta(hours=1),
         max_lifetime=timedelta(days=1),
     )
