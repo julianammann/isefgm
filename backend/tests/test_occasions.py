@@ -17,6 +17,7 @@ from giftmanager.models import (
 )
 from giftmanager.services.occasion import next_occurrence
 from tests.accounts import log_in_new_user
+from tests.conftest import FixedClock
 from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 TYPES = "/api/v1/occasion-types"
@@ -89,6 +90,43 @@ async def test_create_and_show_own_yearly_occasion(client: AsyncClient, anna: Us
     shown = await client.get(f"{OCCASIONS}/{created['id']}")
     assert shown.status_code == 200
     assert shown.json() == created
+
+
+@pytest.mark.requirement("F-03", "Q-08")
+@pytest.mark.parametrize(
+    ("occasion_date", "now"),
+    [
+        ("2026-03-29", "2026-03-29T00:30:00+00:00"),
+        ("2026-10-25", "2026-10-25T00:30:00+00:00"),
+        ("2027-01-01", "2026-12-31T23:45:00+00:00"),
+        ("2028-02-29", "2028-02-28T23:45:00+00:00"),
+    ],
+    ids=["spring", "autumn", "new-year", "leap-day"],
+)
+async def test_occasion_date_survives_time_boundaries(
+    client: AsyncClient,
+    session: AsyncSession,
+    clock: FixedClock,
+    occasion_date: str,
+    now: str,
+) -> None:
+    """Keep the occasion's calendar date across time boundaries."""
+    clock.current = dt.datetime.fromisoformat(now)
+    await log_in_new_user(client, session, "anna@example.org", now=clock.now())
+
+    response = await client.post(
+        OCCASIONS,
+        json={"name": "Testanlass", "date": occasion_date},
+    )
+    assert response.status_code == 201
+    occasion_id = response.json()["id"]
+    assert response.json()["date"] == occasion_date
+
+    clock.advance(dt.timedelta(minutes=31))
+
+    shown = await client.get(f"{OCCASIONS}/{occasion_id}")
+    assert shown.status_code == 200
+    assert shown.json()["date"] == occasion_date
 
 
 @pytest.mark.requirement("F-03")
@@ -262,6 +300,9 @@ async def test_deleting_the_account_deletes_its_occasions(
         ("2020-02-29", Recurrence.YEARLY, "2027-03-01", "2028-02-29"),
         ("2020-02-29", Recurrence.YEARLY, "2028-02-29", "2028-02-29"),
         ("2020-02-29", Recurrence.YEARLY, "2028-03-01", "2029-02-28"),
+        ("2020-02-29", Recurrence.YEARLY, "2027-02-28", "2027-02-28"),
+        ("2020-02-29", Recurrence.YEARLY, "2100-02-28", "2100-02-28"),
+        ("1996-02-29", Recurrence.YEARLY, "2000-02-28", "2000-02-29"),
     ],
 )
 def test_next_occurrence(

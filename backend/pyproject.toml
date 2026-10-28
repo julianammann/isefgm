@@ -81,7 +81,7 @@ ban-relative-imports = "all"
 
 [tool.pyright]
 pythonVersion = "3.14"
-include = ["src", "tests", "alembic"]
+include = ["src", "tests", "alembic", "scripts"]
 exclude = ["alembic/versions"]
 typeCheckingMode = "strict"
 

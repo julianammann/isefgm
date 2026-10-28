@@ -608,6 +608,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/people/{person_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show person view
+         * @description Returns what the person view shows (F-09): past gifts (`given`) and the giftings not given yet with their procurement state (`giftings`), both with occasion and tasks, the gift ideas meant for the person and not used for them yet (`ideas`) and the occasions that concern them (`occasions`). Every list is one page with the same `limit` and `offset` and its own `total`; all rows are loaded in a fixed number of queries. A person of another account returns 404, like a missing one.
+         */
+        get: operations["getPersonOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/share-links": {
         parameters: {
             query?: never;
@@ -1627,6 +1647,85 @@ export interface components {
              */
             system: boolean;
         };
+        /**
+         * OverviewGifting
+         * @description A gifting in the person view, together with its tasks.
+         */
+        OverviewGifting: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * @description The gift idea this gifting uses.
+             * @example {
+             *       "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+             *       "title": "Raspberry Pi"
+             *     }
+             */
+            gift: components["schemas"]["LinkedGift"];
+            /**
+             * Given On
+             * @description Day the gift was given as a plain date; null unless `given`.
+             * @example 2026-12-24
+             */
+            given_on: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Gifting ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73
+             */
+            id: string;
+            /**
+             * @description Occasion the gift is for, or null.
+             * @example {
+             *       "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+             *       "name": "Weihnachten"
+             *     }
+             */
+            occasion: components["schemas"]["LinkedOccasion"] | null;
+            /**
+             * Occasion Date
+             * @description Concrete date of the occasion as a plain date, or null.
+             * @example 2026-12-24
+             */
+            occasion_date: string | null;
+            /**
+             * People
+             * @description Actual recipients, sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+            /**
+             * @description Progress of the gifting.
+             * @example planned
+             */
+            status: components["schemas"]["GiftingStatus"];
+            /**
+             * Tasks
+             * @description Tasks of the gifting, earliest due date first, tasks without one last.
+             * @example [
+             *       {
+             *         "created_at": "2026-10-04T09:30:00Z",
+             *         "due_on": "2026-12-20",
+             *         "gifting_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73",
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75",
+             *         "status": "open",
+             *         "title": "Karte schreiben"
+             *       }
+             *     ]
+             */
+            tasks: components["schemas"]["TaskOut"][];
+        };
         /** Page[GiftOut] */
         Page_GiftOut_: {
             /** Items */
@@ -1697,6 +1796,17 @@ export interface components {
         Page_OccasionTypeOut_: {
             /** Items */
             items: components["schemas"]["OccasionTypeOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[OverviewGifting] */
+        Page_OverviewGifting_: {
+            /** Items */
+            items: components["schemas"]["OverviewGifting"][];
             /** Limit */
             limit: number;
             /** Offset */
@@ -1821,6 +1931,52 @@ export interface components {
              * @example Schwester
              */
             relationship: string | null;
+        };
+        /**
+         * PersonOverviewOut
+         * @description The person view (F-09). Every list is one page with the same `limit` and `offset`.
+         */
+        PersonOverviewOut: {
+            /**
+             * @description Giftings for the person not given yet; `status` is the procurement state (`idea`, `planned` or `acquired`). Next occasion date first, those without one last.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            giftings: components["schemas"]["Page_OverviewGifting_"];
+            /**
+             * @description Past gifts: giftings with status `given` the person received, latest `given_on` first.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            given: components["schemas"]["Page_OverviewGifting_"];
+            /**
+             * @description Gift ideas meant for the person (possible recipient) without a gifting for them yet, newest first.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            ideas: components["schemas"]["Page_GiftOut_"];
+            /**
+             * @description Occasions that concern the person, sorted by date.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            occasions: components["schemas"]["Page_OccasionOut_"];
         };
         /**
          * PriceBand
@@ -4503,6 +4659,58 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getPersonOverview: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonOverviewOut"];
+                };
             };
             /** @description Unauthorized */
             401: {

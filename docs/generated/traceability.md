@@ -58,6 +58,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_fixed_types_are_available_to_every_account` | passed |
 | F-03 | `tests/test_occasions.py::test_fixed_types_cannot_be_changed_or_deleted` | passed |
 | F-03 | `tests/test_occasions.py::test_create_and_show_own_yearly_occasion` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[spring]` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[autumn]` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[new-year]` | passed |
+| F-03 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[leap-day]` | passed |
 | F-03 | `tests/test_occasions.py::test_one_off_is_the_default_and_fixed_types_can_be_used` | passed |
 | F-03 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body0-name]` | passed |
 | F-03 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body1-name]` | passed |
@@ -95,6 +99,9 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-03-01-2028-02-29]` | passed |
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-02-29-2028-02-29]` | passed |
 | F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
+| F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-02-28-2027-02-28]` | passed |
+| F-03 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2100-02-28-2100-02-28]` | passed |
+| F-03 | `tests/test_occasions.py::test_next_occurrence[1996-02-29-yearly-2000-02-28-2000-02-29]` | passed |
 | F-04 | `tests/test_birthdays.py::test_birthday_creates_the_birthday_occasion` | passed |
 | F-04 | `tests/test_birthdays.py::test_person_without_birthday_has_no_birthday_occasion` | passed |
 | F-04 | `tests/test_birthdays.py::test_birthday_occasion_follows_the_person` | passed |
@@ -413,6 +420,14 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-08 | `tests/test_tasks.py::test_filtering_by_a_foreign_gifting_shows_nothing` | passed |
 | F-08 | `tests/test_tasks.py::test_deleting_the_gifting_deletes_its_tasks` | passed |
 | F-08 | `tests/test_tasks.py::test_deleting_the_account_deletes_its_tasks` | passed |
+| F-09 | `tests/test_person_overview.py::test_overview_holds_past_gifts_giftings_ideas_occasions_and_tasks_of_the_person` | passed |
+| F-09 | `tests/test_person_overview.py::test_ideas_already_used_for_the_person_are_left_out` | passed |
+| F-09 | `tests/test_person_overview.py::test_giftings_come_by_occasion_date_those_without_one_last` | passed |
+| F-09 | `tests/test_person_overview.py::test_past_gifts_are_sorted_by_given_date_latest_first` | passed |
+| F-09 | `tests/test_person_overview.py::test_every_list_is_paginated_with_the_same_limit_and_offset` | passed |
+| F-09 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
+| F-09 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
+| F-09 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -573,6 +588,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[PUT]` | passed |
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[DELETE]` | passed |
 | Q-01 | `tests/test_people.py::test_people_require_login` | passed |
+| Q-01 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
+| Q-01 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_require_login` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[GET]` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[PUT]` | passed |
@@ -685,6 +702,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-05 | `tests/test_occasions.py::test_list_is_sorted_by_date_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_is_sorted_by_name_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_rejects_oversized_page` | passed |
+| Q-05 | `tests/test_person_overview.py::test_every_list_is_paginated_with_the_same_limit_and_offset` | passed |
+| Q-05 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |
 | Q-05 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-05 | `tests/test_share_links.py::test_list_is_newest_first_and_paginated` | passed |
 | Q-05 | `tests/test_tasks.py::test_list_is_ordered_by_due_date_then_creation` | passed |
@@ -706,6 +725,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_giftings.py::test_invalid_gifting_is_rejected[body8-given_on]` | passed |
 | Q-08 | `tests/test_gifts.py::test_created_at_is_set_by_the_server` | passed |
 | Q-08 | `tests/test_occasions.py::test_create_and_show_own_yearly_occasion` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[spring]` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[autumn]` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[new-year]` | passed |
+| Q-08 | `tests/test_occasions.py::test_occasion_date_survives_time_boundaries[leap-day]` | passed |
 | Q-08 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body0-name]` | passed |
 | Q-08 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body1-name]` | passed |
 | Q-08 | `tests/test_occasions.py::test_invalid_occasion_is_rejected[body2-name]` | passed |
@@ -732,6 +755,9 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-03-01-2028-02-29]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-02-29-2028-02-29]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2028-03-01-2029-02-28]` | passed |
+| Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2027-02-28-2027-02-28]` | passed |
+| Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2100-02-28-2100-02-28]` | passed |
+| Q-08 | `tests/test_occasions.py::test_next_occurrence[1996-02-29-yearly-2000-02-28-2000-02-29]` | passed |
 | Q-09 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |
 
 ## Tests without a requirement
