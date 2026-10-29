@@ -608,6 +608,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/people/{person_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show person view
+         * @description Returns what the person view shows (F-09): past gifts (`given`) and the giftings not given yet with their procurement state (`giftings`), both with occasion and tasks, the gift ideas meant for the person and not used for them yet (`ideas`) and the occasions that concern them (`occasions`). Every list is one page with the same `limit` and `offset` and its own `total`; all rows are loaded in a fixed number of queries. A person of another account returns 404, like a missing one.
+         */
+        get: operations["getPersonOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/share-links": {
         parameters: {
             query?: never;
@@ -694,6 +714,90 @@ export interface paths {
         get: operations["getSharedImage"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List suggestions
+         * @description Returns the open suggestions of the current account, one page at a time, most frequent first. `person_id` narrows the list to one person; a person of another account gives an empty page.
+         */
+        get: operations["listSuggestions"];
+        put?: never;
+        /**
+         * Make suggestions
+         * @description Replaces the open suggestions for a person of the current account with up to 5 new ones, most frequent first. Each is a category and price band shared by gift ideas of at least 3 other accounts; the account's own ideas do not count, and no title or text of another account is used (Q-04). Features the person already has as an idea or gifting, and features accepted or dismissed for them before, are left out. The list may be empty. A person of another account returns 404, like a missing one.
+         */
+        post: operations["createSuggestions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions/{suggestion_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show suggestion
+         * @description Returns one suggestion of the current account in any status. A suggestion of another account returns 404, like a missing one.
+         */
+        get: operations["getSuggestion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions/{suggestion_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept suggestion
+         * @description Creates a gift idea for the suggestion's person with the given title, the suggested category and the price range of the band in EUR, and marks the suggestion `accepted`. Returns the new gift idea. Only an open suggestion can be accepted or dismissed; otherwise 409. A suggestion of another account returns 404, like a missing one.
+         */
+        post: operations["acceptSuggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions/{suggestion_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss suggestion
+         * @description Marks the suggestion `dismissed`. Its category and price band are never suggested for the person again. Only an open suggestion can be accepted or dismissed; otherwise 409. A suggestion of another account returns 404, like a missing one.
+         */
+        post: operations["dismissSuggestion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1543,6 +1647,85 @@ export interface components {
              */
             system: boolean;
         };
+        /**
+         * OverviewGifting
+         * @description A gifting in the person view, together with its tasks.
+         */
+        OverviewGifting: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-04T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * @description The gift idea this gifting uses.
+             * @example {
+             *       "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70",
+             *       "title": "Raspberry Pi"
+             *     }
+             */
+            gift: components["schemas"]["LinkedGift"];
+            /**
+             * Given On
+             * @description Day the gift was given as a plain date; null unless `given`.
+             * @example 2026-12-24
+             */
+            given_on: string | null;
+            /**
+             * Id
+             * Format: uuid
+             * @description Gifting ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73
+             */
+            id: string;
+            /**
+             * @description Occasion the gift is for, or null.
+             * @example {
+             *       "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
+             *       "name": "Weihnachten"
+             *     }
+             */
+            occasion: components["schemas"]["LinkedOccasion"] | null;
+            /**
+             * Occasion Date
+             * @description Concrete date of the occasion as a plain date, or null.
+             * @example 2026-12-24
+             */
+            occasion_date: string | null;
+            /**
+             * People
+             * @description Actual recipients, sorted by name.
+             * @example [
+             *       {
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71",
+             *         "name": "Lena"
+             *       }
+             *     ]
+             */
+            people: components["schemas"]["LinkedPerson"][];
+            /**
+             * @description Progress of the gifting.
+             * @example planned
+             */
+            status: components["schemas"]["GiftingStatus"];
+            /**
+             * Tasks
+             * @description Tasks of the gifting, earliest due date first, tasks without one last.
+             * @example [
+             *       {
+             *         "created_at": "2026-10-04T09:30:00Z",
+             *         "due_on": "2026-12-20",
+             *         "gifting_id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a73",
+             *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a75",
+             *         "status": "open",
+             *         "title": "Karte schreiben"
+             *       }
+             *     ]
+             */
+            tasks: components["schemas"]["TaskOut"][];
+        };
         /** Page[GiftOut] */
         Page_GiftOut_: {
             /** Items */
@@ -1620,6 +1803,17 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Page[OverviewGifting] */
+        Page_OverviewGifting_: {
+            /** Items */
+            items: components["schemas"]["OverviewGifting"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
         /** Page[PersonOut] */
         Page_PersonOut_: {
             /** Items */
@@ -1635,6 +1829,17 @@ export interface components {
         Page_ShareLinkOut_: {
             /** Items */
             items: components["schemas"]["ShareLinkOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[SuggestionOut] */
+        Page_SuggestionOut_: {
+            /** Items */
+            items: components["schemas"]["SuggestionOut"][];
             /** Limit */
             limit: number;
             /** Offset */
@@ -1727,6 +1932,58 @@ export interface components {
              */
             relationship: string | null;
         };
+        /**
+         * PersonOverviewOut
+         * @description The person view (F-09). Every list is one page with the same `limit` and `offset`.
+         */
+        PersonOverviewOut: {
+            /**
+             * @description Giftings for the person not given yet; `status` is the procurement state (`idea`, `planned` or `acquired`). Next occasion date first, those without one last.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            giftings: components["schemas"]["Page_OverviewGifting_"];
+            /**
+             * @description Past gifts: giftings with status `given` the person received, latest `given_on` first.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            given: components["schemas"]["Page_OverviewGifting_"];
+            /**
+             * @description Gift ideas meant for the person (possible recipient) without a gifting for them yet, newest first.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            ideas: components["schemas"]["Page_GiftOut_"];
+            /**
+             * @description Occasions that concern the person, sorted by date.
+             * @example {
+             *       "items": [],
+             *       "limit": 50,
+             *       "offset": 0,
+             *       "total": 0
+             *     }
+             */
+            occasions: components["schemas"]["Page_OccasionOut_"];
+        };
+        /**
+         * PriceBand
+         * @description Price band in EUR (F-16) of the lower price; each band excludes its upper bound.
+         * @enum {string}
+         */
+        PriceBand: "under_20" | "20_to_50" | "50_to_100" | "over_100";
         /**
          * Problem
          * @description Error body for every status outside 2xx (RFC 9457).
@@ -2043,6 +2300,85 @@ export interface components {
              */
             name: string;
         };
+        /**
+         * SuggestionAccept
+         * @description Title of the gift idea an accepted suggestion becomes.
+         */
+        SuggestionAccept: {
+            /**
+             * Title
+             * @description Title of the new gift idea, 1 to 200 characters. The frontend fills in its wording of the suggestion; the user may change it.
+             * @example Erlebnis, 20 bis 50 €
+             */
+            title: string;
+        };
+        /**
+         * SuggestionOut
+         * @description A suggestion as the frontend sees it. The frontend words it from the keys.
+         */
+        SuggestionOut: {
+            /**
+             * @description Suggested kind of gift, never `other`.
+             * @example experience
+             */
+            category: components["schemas"]["GiftCategory"];
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation time (UTC), set by the server.
+             * @example 2026-10-26T09:30:00Z
+             */
+            created_at: string;
+            /**
+             * Gift Count
+             * @description Number of gift ideas of other accounts with this category and price band when the suggestion was made.
+             * @example 42
+             */
+            gift_count: number;
+            /**
+             * Id
+             * Format: uuid
+             * @description Suggestion ID (UUIDv7).
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a76
+             */
+            id: string;
+            /**
+             * @description Suggested price band in EUR: `under_20` (below 20), `20_to_50` (20 to below 50), `50_to_100` (50 to below 100) or `over_100` (100 and more). Null if the ideas behind it have no price in EUR.
+             * @example 20_to_50
+             */
+            price_band: components["schemas"]["PriceBand"] | null;
+            /**
+             * @description `open`, `accepted` or `dismissed`.
+             * @example open
+             */
+            status: components["schemas"]["SuggestionStatus"];
+            /**
+             * Target Person Id
+             * Format: uuid
+             * @description ID of the person the suggestion is for.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71
+             */
+            target_person_id: string;
+        };
+        /**
+         * SuggestionRequest
+         * @description Person to make new suggestions for.
+         */
+        SuggestionRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             * @description ID of the account's person the suggestions are for.
+             * @example 0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71
+             */
+            person_id: string;
+        };
+        /**
+         * SuggestionStatus
+         * @description State of a suggestion (F-16). Only `open` ones can be accepted or dismissed.
+         * @enum {string}
+         */
+        SuggestionStatus: "open" | "accepted" | "dismissed";
         /**
          * TaskIn
          * @description Data of a task; used for create and for full update (PUT).
@@ -4353,6 +4689,58 @@ export interface operations {
             };
         };
     };
+    getPersonOverview: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonOverviewOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     listShareLinks: {
         parameters: {
             query?: {
@@ -4675,6 +5063,269 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listSuggestions: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Only the suggestions for this person. */
+                person_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SuggestionOut_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    createSuggestions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionOut"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    acceptSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionAccept"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismissSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
