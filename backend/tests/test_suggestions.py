@@ -1,14 +1,17 @@
 """Gift suggestions from aggregated features (F-16, Q-04)."""
 
+import asyncio
 import uuid
 from decimal import Decimal
 from typing import Any
 
 import pytest
 from httpx import AsyncClient, Cookies
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from giftmanager.models import Gift, GiftCategory, Note, Person, User
+from giftmanager.models import Gift, GiftCategory, Note, Person, PriceBand, Suggestion, User
+from giftmanager.services import suggestion as suggestion_service
 from tests.accounts import log_in_new_user
 from tests.ownership import assert_invisible_to_other_account
 
@@ -106,7 +109,8 @@ async def test_features_shared_by_several_accounts_are_suggested_most_frequent_f
         ("20", "20_to_50"),
         ("49.99", "20_to_50"),
         ("50", "50_to_100"),
-        ("100", "50_to_100"),
+        ("99.99", "50_to_100"),
+        ("100", "over_100"),
         ("100.01", "over_100"),
         (None, None),
     ],
@@ -128,6 +132,23 @@ async def test_features_of_fewer_than_three_accounts_are_not_suggested(
     lena = await create_person(client)
 
     assert await suggest(client, lena) == []
+
+
+@pytest.mark.requirement("F-16", "Q-04")
+async def test_own_ideas_do_not_count_towards_the_accounts(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    await ideas_of_other_accounts(session, GiftCategory.GAMES, "25", accounts=2)
+    lena = await create_person(client)
+    tom = await create_person(client, "Tom")
+    own = {"title": "Brettspiel", "category": "games", "price_from": "25"}
+    for _ in range(3):
+        await client.post(GIFTS, json=own | {"person_ids": [tom]})
+
+    assert await suggest(client, lena) == []
+
+    await ideas_of_other_accounts(session, GiftCategory.GAMES, "25", accounts=1)
+    assert [s["gift_count"] for s in await suggest(client, lena)] == [3]
 
 
 @pytest.mark.requirement("F-16")
@@ -282,6 +303,22 @@ async def test_accepted_idea_gets_the_price_range_of_the_band(
 
 
 @pytest.mark.requirement("F-16")
+@pytest.mark.parametrize("band", ["under_20", "20_to_50", "50_to_100", "over_100"])
+async def test_accepted_idea_stays_in_the_band_of_its_suggestion(
+    client: AsyncClient, session: AsyncSession, anna: User, band: str
+) -> None:
+    for price in ("15", "30", "75", "150"):
+        await ideas_of_other_accounts(session, GiftCategory.TECH, price)
+    lena = await create_person(client)
+    suggestion = next(s for s in await suggest(client, lena) if s["price_band"] == band)
+
+    await client.post(f"{SUGGESTIONS}/{suggestion['id']}/accept", json={"title": "Technik"})
+
+    left = {s["price_band"] for s in await suggest(client, lena)}
+    assert left == {"under_20", "20_to_50", "50_to_100", "over_100"} - {band}
+
+
+@pytest.mark.requirement("F-16")
 async def test_dismissed_suggestion_is_never_made_again(
     client: AsyncClient, session: AsyncSession, anna: User
 ) -> None:
@@ -316,6 +353,51 @@ async def test_only_open_suggestions_can_be_accepted_or_dismissed(
 
     assert r.status_code == 409
     assert (await client.get(GIFTS)).json()["total"] == (1 if first == "accept" else 0)
+
+
+@pytest.mark.requirement("F-16")
+async def test_accepting_twice_at_once_creates_one_idea(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    maker = async_sessionmaker(engine, expire_on_commit=False)
+    async with maker() as s, s.begin():
+        user = User(
+            email=f"{uuid.uuid4().hex}@example.org",
+            password_hash="not-a-real-hash",
+            display_name="Doppelklick",
+        )
+        s.add(user)
+        await s.flush()
+        lena = Person(owner_id=user.id, name="Lena")
+        s.add(lena)
+        await s.flush()
+        suggestion = Suggestion(
+            owner_id=user.id,
+            target_person_id=lena.id,
+            category=GiftCategory.BOOKS,
+            price_band=PriceBand.UNDER_20,
+            gift_count=3,
+        )
+        s.add(suggestion)
+
+    async def accept() -> Gift:
+        async with maker() as s, s.begin():
+            return await suggestion_service.accept_suggestion(
+                s, user.id, suggestion.id, title="Buch"
+            )
+
+    try:
+        results = await asyncio.gather(accept(), accept(), return_exceptions=True)
+        async with maker() as s:
+            ideas = await s.scalar(
+                select(func.count()).select_from(Gift).where(Gift.owner_id == user.id)
+            )
+    finally:
+        async with maker() as s, s.begin():
+            await s.execute(delete(User).where(User.id == user.id))
+        await engine.dispose()
+
+    assert sorted(type(r).__name__ for r in results) == ["ConflictError", "Gift"]
+    assert ideas == 1
 
 
 @pytest.mark.requirement("F-16")

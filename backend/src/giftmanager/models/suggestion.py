@@ -11,7 +11,7 @@ from giftmanager.models.gift import GiftCategory
 
 
 class PriceBand(enum.StrEnum):
-    """Price band of a gift idea in EUR (F-16), taken from the lower end of its price range."""
+    """Price band in EUR (F-16) of the lower price; each band excludes its upper bound."""
 
     UNDER_20 = "under_20"
     FROM_20_TO_50 = "20_to_50"
@@ -39,7 +39,7 @@ class Suggestion(TimestampMixin, Base):
     __table_args__ = (
         {
             "comment": "Suggested kind of gift for a person (F-16): category and price band "
-            "aggregated over the gift ideas of all accounts, no titles or texts (Q-04). "
+            "aggregated over the gift ideas of other accounts, no titles or texts (Q-04). "
             "Visible only to its owner (Q-01); deleted together with the person and the "
             "account (F-17)."
         },
@@ -82,7 +82,7 @@ class Suggestion(TimestampMixin, Base):
     )
     gift_count: Mapped[int] = mapped_column(
         Integer,
-        comment="Number of gift ideas of all accounts with this category and price band when "
+        comment="Number of gift ideas of other accounts with this category and price band when "
         "the suggestion was made. A count only, no reference to the ideas.",
     )
     status: Mapped[SuggestionStatus] = mapped_column(

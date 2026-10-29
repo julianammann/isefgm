@@ -480,10 +480,12 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[20-20_to_50]` | passed |
 | F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[49.99-20_to_50]` | passed |
 | F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[50-50_to_100]` | passed |
-| F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[100-50_to_100]` | passed |
+| F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[99.99-50_to_100]` | passed |
+| F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[100-over_100]` | passed |
 | F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[100.01-over_100]` | passed |
 | F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[None-None]` | passed |
 | F-16 | `tests/test_suggestions.py::test_features_of_fewer_than_three_accounts_are_not_suggested` | passed |
+| F-16 | `tests/test_suggestions.py::test_own_ideas_do_not_count_towards_the_accounts` | passed |
 | F-16 | `tests/test_suggestions.py::test_category_other_is_never_suggested` | passed |
 | F-16 | `tests/test_suggestions.py::test_suggestions_hold_nothing_of_other_accounts_but_counts` | passed |
 | F-16 | `tests/test_suggestions.py::test_features_of_the_persons_ideas_are_left_out` | passed |
@@ -493,11 +495,16 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-16 | `tests/test_suggestions.py::test_accepting_creates_an_idea_for_the_person` | passed |
 | F-16 | `tests/test_suggestions.py::test_accepted_idea_gets_the_price_range_of_the_band[150-100.00-None-EUR]` | passed |
 | F-16 | `tests/test_suggestions.py::test_accepted_idea_gets_the_price_range_of_the_band[None-None-None-None]` | passed |
+| F-16 | `tests/test_suggestions.py::test_accepted_idea_stays_in_the_band_of_its_suggestion[under_20]` | passed |
+| F-16 | `tests/test_suggestions.py::test_accepted_idea_stays_in_the_band_of_its_suggestion[20_to_50]` | passed |
+| F-16 | `tests/test_suggestions.py::test_accepted_idea_stays_in_the_band_of_its_suggestion[50_to_100]` | passed |
+| F-16 | `tests/test_suggestions.py::test_accepted_idea_stays_in_the_band_of_its_suggestion[over_100]` | passed |
 | F-16 | `tests/test_suggestions.py::test_dismissed_suggestion_is_never_made_again` | passed |
 | F-16 | `tests/test_suggestions.py::test_only_open_suggestions_can_be_accepted_or_dismissed[accept-accept]` | passed |
 | F-16 | `tests/test_suggestions.py::test_only_open_suggestions_can_be_accepted_or_dismissed[accept-dismiss]` | passed |
 | F-16 | `tests/test_suggestions.py::test_only_open_suggestions_can_be_accepted_or_dismissed[dismiss-accept]` | passed |
 | F-16 | `tests/test_suggestions.py::test_only_open_suggestions_can_be_accepted_or_dismissed[dismiss-dismiss]` | passed |
+| F-16 | `tests/test_suggestions.py::test_accepting_twice_at_once_creates_one_idea` | passed |
 | F-16 | `tests/test_suggestions.py::test_accepting_needs_a_valid_title[]` | passed |
 | F-16 | `tests/test_suggestions.py::test_accepting_needs_a_valid_title[   ]` | passed |
 | F-16 | `tests/test_suggestions.py::test_accepting_needs_a_valid_title[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]` | passed |
@@ -688,6 +695,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_uploads.py::test_storage_path_is_random_per_account` | passed |
 | Q-04 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-04 | `tests/test_suggestions.py::test_features_of_fewer_than_three_accounts_are_not_suggested` | passed |
+| Q-04 | `tests/test_suggestions.py::test_own_ideas_do_not_count_towards_the_accounts` | passed |
 | Q-04 | `tests/test_suggestions.py::test_suggestions_hold_nothing_of_other_accounts_but_counts` | passed |
 | Q-05 | `tests/test_giftings.py::test_list_is_newest_first_and_paginated` | passed |
 | Q-05 | `tests/test_giftings.py::test_list_rejects_oversized_page` | passed |

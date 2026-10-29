@@ -735,7 +735,7 @@ export interface paths {
         put?: never;
         /**
          * Make suggestions
-         * @description Replaces the open suggestions for a person of the current account with up to 5 new ones, most frequent first. Each is a category and price band shared by gift ideas of at least 3 accounts; no title or text of another account is used (Q-04). Features the person already has as an idea or gifting, and features accepted or dismissed for them before, are left out. The list may be empty. A person of another account returns 404, like a missing one.
+         * @description Replaces the open suggestions for a person of the current account with up to 5 new ones, most frequent first. Each is a category and price band shared by gift ideas of at least 3 other accounts; the account's own ideas do not count, and no title or text of another account is used (Q-04). Features the person already has as an idea or gifting, and features accepted or dismissed for them before, are left out. The list may be empty. A person of another account returns 404, like a missing one.
          */
         post: operations["createSuggestions"];
         delete?: never;
@@ -1980,7 +1980,7 @@ export interface components {
         };
         /**
          * PriceBand
-         * @description Price band of a gift idea in EUR (F-16), taken from the lower end of its price range.
+         * @description Price band in EUR (F-16) of the lower price; each band excludes its upper bound.
          * @enum {string}
          */
         PriceBand: "under_20" | "20_to_50" | "50_to_100" | "over_100";
@@ -2331,7 +2331,7 @@ export interface components {
             created_at: string;
             /**
              * Gift Count
-             * @description Number of gift ideas of all accounts with this category and price band when the suggestion was made.
+             * @description Number of gift ideas of other accounts with this category and price band when the suggestion was made.
              * @example 42
              */
             gift_count: number;
@@ -2343,7 +2343,7 @@ export interface components {
              */
             id: string;
             /**
-             * @description Suggested price band in EUR: `under_20`, `20_to_50`, `50_to_100` or `over_100`. Null if the ideas behind it have no price in EUR.
+             * @description Suggested price band in EUR: `under_20` (below 20), `20_to_50` (20 to below 50), `50_to_100` (50 to below 100) or `over_100` (100 and more). Null if the ideas behind it have no price in EUR.
              * @example 20_to_50
              */
             price_band: components["schemas"]["PriceBand"] | null;

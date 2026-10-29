@@ -31,7 +31,8 @@ _OPEN_NOTE = " Only an open suggestion can be accepted or dismissed; otherwise 4
     description="Replaces the open suggestions for a person of the current account with up to "
     f"{suggestion_service.MAX_SUGGESTIONS} new ones, most frequent first. Each is a category "
     "and price band shared by gift ideas of at least "
-    f"{suggestion_service.MIN_ACCOUNTS} accounts; no title or text of another account is "
+    f"{suggestion_service.MIN_ACCOUNTS} other accounts; the account's own ideas do not "
+    "count, and no title or text of another account is "
     "used (Q-04). Features the person already has as an idea or gifting, and features "
     "accepted or dismissed for them before, are left out. The list may be empty. A person of "
     "another account returns 404, like a missing one.",

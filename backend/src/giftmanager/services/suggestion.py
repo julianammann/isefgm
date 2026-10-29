@@ -1,4 +1,4 @@
-"""Gift suggestions (F-16) from category, price band and counts of all accounts only (Q-04)."""
+"""Gift suggestions (F-16) from category, price band and counts of other accounts only (Q-04)."""
 
 import uuid
 from decimal import Decimal
@@ -6,7 +6,7 @@ from decimal import Decimal
 from sqlalchemy import ColumnElement, case, delete, distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.core.errors import ConflictError
+from giftmanager.core.errors import ConflictError, NotFoundError
 from giftmanager.models import (
     Gift,
     GiftCategory,
@@ -38,7 +38,7 @@ def _price_band() -> ColumnElement[str | None]:
         (or_(price.is_(None), Gift.currency != "EUR"), None),
         (price < 20, PriceBand.UNDER_20.value),
         (price < 50, PriceBand.FROM_20_TO_50.value),
-        (price <= 100, PriceBand.FROM_50_TO_100.value),
+        (price < 100, PriceBand.FROM_50_TO_100.value),
         else_=PriceBand.OVER_100.value,
     )
 
@@ -79,11 +79,11 @@ async def _decided_features(
 async def suggest_for_person(
     session: AsyncSession, owner_id: uuid.UUID, person_id: uuid.UUID
 ) -> list[Suggestion]:
-    """Replace the person's open suggestions with features shared by MIN_ACCOUNTS accounts."""
+    """Replace the person's open suggestions with features of MIN_ACCOUNTS other accounts."""
     await get_owned(session, Person, owner_id, person_id)
     features = (
         select(Gift.owner_id, Gift.category, _price_band().label("price_band"))
-        .where(Gift.category != GiftCategory.OTHER)
+        .where(Gift.category != GiftCategory.OTHER, Gift.owner_id != owner_id)
         .subquery()
     )
     rows = await session.execute(
@@ -152,8 +152,12 @@ async def get_suggestion(
 async def _open_suggestion(
     session: AsyncSession, owner_id: uuid.UUID, suggestion_id: uuid.UUID
 ) -> Suggestion:
-    """Return the owner's open suggestion; 404 if foreign, 409 if already decided."""
-    suggestion = await get_owned(session, Suggestion, owner_id, suggestion_id)
+    """Lock the owner's open suggestion until the commit; 404 if foreign, 409 if decided."""
+    suggestion = await session.scalar(
+        owned(Suggestion, owner_id).where(Suggestion.id == suggestion_id).with_for_update()
+    )
+    if suggestion is None:
+        raise NotFoundError("Suggestion not found")
     if suggestion.status is not SuggestionStatus.OPEN:
         raise ConflictError(f"Suggestion is already {suggestion.status.value}")
     return suggestion

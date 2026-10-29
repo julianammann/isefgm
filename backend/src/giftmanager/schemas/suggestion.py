@@ -53,12 +53,13 @@ class SuggestionOut(BaseModel):
         description="Suggested kind of gift, never `other`.", examples=["experience"]
     )
     price_band: PriceBand | None = Field(
-        description="Suggested price band in EUR: `under_20`, `20_to_50`, `50_to_100` or "
-        "`over_100`. Null if the ideas behind it have no price in EUR.",
+        description="Suggested price band in EUR: `under_20` (below 20), `20_to_50` (20 to "
+        "below 50), `50_to_100` (50 to below 100) or `over_100` (100 and more). Null if the "
+        "ideas behind it have no price in EUR.",
         examples=["20_to_50"],
     )
     gift_count: int = Field(
-        description="Number of gift ideas of all accounts with this category and price band "
+        description="Number of gift ideas of other accounts with this category and price band "
         "when the suggestion was made.",
         examples=[42],
     )

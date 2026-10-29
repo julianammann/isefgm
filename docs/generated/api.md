@@ -145,11 +145,11 @@ Public view behind a valid share link, no login needed (F-14). Shows only the ch
 
 ## suggestions
 
-Gift suggestions for a person (F-16): category and price band shared by the gift ideas of several accounts, without titles, texts or people of other accounts (Q-04). Visible only to their account (Q-01).
+Gift suggestions for a person (F-16): category and price band shared by the gift ideas of several other accounts, without titles, texts or people of other accounts (Q-04). Visible only to their account (Q-01).
 
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
-| `POST /api/v1/suggestions` | `createSuggestions` | Make suggestions | Replaces the open suggestions for a person of the current account with up to 5 new ones, most frequent first. Each is a category and price band shared by gift ideas of at least 3 accounts; no title or text of another account is used (Q-04). Features the person already has as an idea or gifting, and features accepted or dismissed for them before, are left out. The list may be empty. A person of another account returns 404, like a missing one. | 201, 401, 404, 422 |
+| `POST /api/v1/suggestions` | `createSuggestions` | Make suggestions | Replaces the open suggestions for a person of the current account with up to 5 new ones, most frequent first. Each is a category and price band shared by gift ideas of at least 3 other accounts; the account's own ideas do not count, and no title or text of another account is used (Q-04). Features the person already has as an idea or gifting, and features accepted or dismissed for them before, are left out. The list may be empty. A person of another account returns 404, like a missing one. | 201, 401, 404, 422 |
 | `GET /api/v1/suggestions` | `listSuggestions` | List suggestions | Returns the open suggestions of the current account, one page at a time, most frequent first. `person_id` narrows the list to one person; a person of another account gives an empty page. | 200, 401, 422 |
 | `GET /api/v1/suggestions/{suggestion_id}` | `getSuggestion` | Show suggestion | Returns one suggestion of the current account in any status. A suggestion of another account returns 404, like a missing one. | 200, 401, 404, 422 |
 | `POST /api/v1/suggestions/{suggestion_id}/accept` | `acceptSuggestion` | Accept suggestion | Creates a gift idea for the suggestion's person with the given title, the suggested category and the price range of the band in EUR, and marks the suggestion `accepted`. Returns the new gift idea. Only an open suggestion can be accepted or dismissed; otherwise 409. A suggestion of another account returns 404, like a missing one. | 201, 401, 404, 409, 422 |

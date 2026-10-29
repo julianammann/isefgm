@@ -68,7 +68,7 @@ def upgrade() -> None:
             "gift_count",
             sa.Integer(),
             nullable=False,
-            comment="Number of gift ideas of all accounts with this category and price band when the suggestion was made. A count only, no reference to the ideas.",
+            comment="Number of gift ideas of other accounts with this category and price band when the suggestion was made. A count only, no reference to the ideas.",
         ),
         sa.Column(
             "status",
@@ -105,7 +105,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_suggestion")),
-        comment="Suggested kind of gift for a person (F-16): category and price band aggregated over the gift ideas of all accounts, no titles or texts (Q-04). Visible only to its owner (Q-01); deleted together with the person and the account (F-17).",
+        comment="Suggested kind of gift for a person (F-16): category and price band aggregated over the gift ideas of other accounts, no titles or texts (Q-04). Visible only to its owner (Q-01); deleted together with the person and the account (F-17).",
     )
     op.create_index(op.f("ix_suggestion_owner_id"), "suggestion", ["owner_id"], unique=False)
     op.create_index(

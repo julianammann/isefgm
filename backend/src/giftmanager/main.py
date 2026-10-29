@@ -69,7 +69,7 @@ OPENAPI_TAGS = [
     {
         "name": "suggestions",
         "description": "Gift suggestions for a person (F-16): category and price band shared "
-        "by the gift ideas of several accounts, without titles, texts or people of other "
+        "by the gift ideas of several other accounts, without titles, texts or people of other "
         "accounts (Q-04). Visible only to their account (Q-01).",
     },
 ]

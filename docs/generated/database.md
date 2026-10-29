@@ -143,7 +143,7 @@ People whose gift ideas a share link shows (F-14), n:m. Deleting the link or the
 
 ## suggestion
 
-Suggested kind of gift for a person (F-16): category and price band aggregated over the gift ideas of all accounts, no titles or texts (Q-04). Visible only to its owner (Q-01); deleted together with the person and the account (F-17).
+Suggested kind of gift for a person (F-16): category and price band aggregated over the gift ideas of other accounts, no titles or texts (Q-04). Visible only to its owner (Q-01); deleted together with the person and the account (F-17).
 
 | Column | Type | Nullable | Description |
 | --- | --- | --- | --- |
@@ -152,7 +152,7 @@ Suggested kind of gift for a person (F-16): category and price band aggregated o
 | `target_person_id` | UUID | no | Person the suggestion is for. Deleting the person deletes the suggestion. (FK → person.id) (Index) |
 | `category` | VARCHAR(16) | no | Suggested kind of gift, never `other`. |
 | `price_band` | VARCHAR(16) | yes | Suggested price band in EUR. Null for ideas without a price in EUR. |
-| `gift_count` | INTEGER | no | Number of gift ideas of all accounts with this category and price band when the suggestion was made. A count only, no reference to the ideas. |
+| `gift_count` | INTEGER | no | Number of gift ideas of other accounts with this category and price band when the suggestion was made. A count only, no reference to the ideas. |
 | `status` | VARCHAR(16) | no | `open`, `accepted` or `dismissed`. A dismissed suggestion is never made again for the person. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
