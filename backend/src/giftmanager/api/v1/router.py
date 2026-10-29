@@ -14,6 +14,7 @@ from giftmanager.api.v1 import (
     occasions,
     people,
     share_links,
+    suggestions,
     tasks,
 )
 
@@ -32,3 +33,4 @@ router.include_router(images.router)
 router.include_router(share_links.router)
 router.include_router(share_links.shared_router)
 router.include_router(full_list.router)
+router.include_router(suggestions.router)
