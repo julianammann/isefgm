@@ -10,6 +10,7 @@ import {
   createGift,
   deleteGift,
   giftFromForm,
+  isPrice,
   listGifts,
   updateGift,
   type GiftIn
@@ -51,9 +52,10 @@ function isSuccessKey(key: string | null): key is SuccessKey {
 /** Reads and validates the gift idea form. The backend remains the authority on validation. */
 function parseForm(form: FormData): { values: GiftIn; errors: FieldErrors } {
   const values = giftFromForm(form);
-  const priceFrom = values.price_from === null ? null : Number(values.price_from);
-  const priceTo = values.price_to === null ? null : Number(values.price_to);
+  const priceFrom = values.price_from === null ? null : String(values.price_from);
+  const priceTo = values.price_to === null ? null : String(values.price_to);
   const errors: FieldErrors = {};
+  const invalidPrice = 'Bitte gib einen Preis mit höchstens zwei Nachkommastellen an, z. B. 10,99.';
 
   if (!values.title) errors.title = 'Bitte gib einen Titel an.';
   else if (values.title.length > 200) {
@@ -62,11 +64,14 @@ function parseForm(form: FormData): { values: GiftIn; errors: FieldErrors } {
   if (values.description && values.description.length > 2000) {
     errors.description = 'Die Beschreibung darf höchstens 2000 Zeichen lang sein.';
   }
-  if (priceFrom !== null && !(priceFrom >= 0)) {
-    errors.price_from = 'Bitte gib einen gültigen Preis an.';
-  }
-  if (priceTo !== null && !(priceTo >= 0)) errors.price_to = 'Bitte gib einen gültigen Preis an.';
-  else if (priceFrom !== null && priceTo !== null && priceFrom > priceTo) {
+  if (priceFrom !== null && !isPrice(priceFrom)) errors.price_from = invalidPrice;
+  if (priceTo !== null && !isPrice(priceTo)) errors.price_to = invalidPrice;
+  else if (
+    priceFrom !== null &&
+    priceTo !== null &&
+    !errors.price_from &&
+    Number(priceFrom) > Number(priceTo)
+  ) {
     errors.price_to = '„Preis bis“ darf nicht kleiner als „Preis von“ sein.';
   }
   if (values.currency && !/^[A-Z]{3}$/.test(values.currency)) {

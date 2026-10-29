@@ -1,6 +1,8 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import type { PageProps } from './$types';
 
@@ -27,12 +29,22 @@
   let previousEditId = $state<string | null>(null);
   let deleteDialog: HTMLDialogElement | null = null;
   let toDelete = $state<{ id: string; title: string } | null>(null);
+  /** True while a successful save redirects, so closing the dialog does not navigate as well. */
+  let saving = false;
+
+  /** Drops `?edit` / `?edit_gifting` when an edit dialog is closed with Escape or Abbrechen. */
+  function leaveEdit(param: 'edit' | 'edit_gifting') {
+    if (!saving && page.url.searchParams.has(param)) {
+      goto(resolve('/gifts'), { replaceState: true, noScroll: true, keepFocus: true });
+    }
+  }
 
   type Gifting = (typeof data.giftingsByGift)[string][number];
 
-  const isGiftingEdit = $derived(data.editingGifting !== null);
   /** Set by the create buttons; `fresh` ignores the values of an earlier failed submit. */
   let newGifting = $state<{ giftId: string; status: Status } | null>(null);
+  // A dialog opened by a create button never edits, even if `?edit_gifting` is still in the URL.
+  const isGiftingEdit = $derived(data.editingGifting !== null && newGifting === null);
   let fresh = $state(false);
   const giftingValues = $derived(
     (fresh ? undefined : form?.giftingValues) ??
@@ -103,6 +115,9 @@
     today = new Date().toLocaleDateString('sv-SE');
   });
   const formatDate = (iso: string | null) => (iso ? iso.split('-').reverse().join('.') : '');
+  // Prices come from the API with a decimal point; the form shows them with a decimal comma.
+  const formatPrice = (price: string | number | null | undefined) =>
+    price === null || price === undefined ? '' : String(price).replace('.', ',');
 
   $effect(() => {
     const editId = data.editing?.id ?? null;
@@ -338,6 +353,7 @@
     onclose={() => {
       showGiftingForm = false;
       newGifting = null;
+      leaveEdit('edit_gifting');
     }}
   >
     <h2 id="gifting-heading" class="text-lg font-semibold">
@@ -351,11 +367,13 @@
         use:enhance={() =>
           async ({ result, update }) => {
             if (result.type === 'redirect') {
+              saving = true;
               showGiftingForm = false;
               giftingFormDialog?.close();
             }
             fresh = false;
             await update();
+            saving = false;
           }}
         novalidate
         class="mt-4 flex flex-col gap-3"
@@ -455,13 +473,15 @@
           </p>
         {/if}
 
-        {#if giftingStatus === 'given'}
+        <!-- Hidden instead of removed, so a quick status change keeps the entered date. -->
+        <div class="flex flex-col gap-3" hidden={giftingStatus !== 'given'}>
           <label for="given_on" class="text-sm font-medium">Verschenkdatum</label>
           <input
             id="given_on"
             name="given_on"
             type="date"
             required
+            disabled={giftingStatus !== 'given'}
             value={giftingValues.given_on ?? today}
             class="rounded border px-3 py-2"
             aria-invalid={giftingErrors.given_on ? 'true' : undefined}
@@ -470,7 +490,7 @@
           {#if giftingErrors.given_on}
             <p id="given-on-error" class="text-sm text-red-800">{giftingErrors.given_on}</p>
           {/if}
-        {/if}
+        </div>
 
         <div class="flex items-center gap-4">
           <button type="submit" class="rounded bg-black px-4 py-2 text-white">
@@ -497,7 +517,10 @@
     bind:this={formDialog}
     aria-labelledby="form-heading"
     class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded border bg-white p-6 shadow-xl backdrop:bg-black/40"
-    onclose={() => (showForm = false)}
+    onclose={() => {
+      showForm = false;
+      leaveEdit('edit');
+    }}
   >
     <h2 id="form-heading" class="text-lg font-semibold">
       {isEdit ? 'Geschenkidee bearbeiten' : 'Geschenkidee hinzufügen'}
@@ -509,10 +532,12 @@
         use:enhance={() =>
           async ({ result, update }) => {
             if (result.type === 'redirect') {
+              saving = true;
               showForm = false;
               formDialog?.close();
             }
             await update();
+            saving = false;
           }}
         novalidate
         class="mt-4 flex flex-col gap-3"
@@ -569,7 +594,7 @@
               id="price_from"
               name="price_from"
               inputmode="decimal"
-              value={values.price_from ?? ''}
+              value={formatPrice(values.price_from)}
               class="rounded border px-3 py-2"
               aria-invalid={errors.price_from ? 'true' : undefined}
               aria-describedby={errors.price_from ? 'price-from-error' : undefined}
@@ -584,7 +609,7 @@
               id="price_to"
               name="price_to"
               inputmode="decimal"
-              value={values.price_to ?? ''}
+              value={formatPrice(values.price_to)}
               class="rounded border px-3 py-2"
               aria-invalid={errors.price_to ? 'true' : undefined}
               aria-describedby={errors.price_to ? 'price-to-error' : undefined}

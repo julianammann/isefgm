@@ -105,6 +105,15 @@ export async function deleteGift(api: Api, id: string): Promise<Result<null>> {
 
 // ── Form mapping ────────────────────────────────────────────────
 
+/**
+ * Whether a price fits the backend's `Numeric(10, 2)` column: not negative, at most
+ * 8 digits before and 2 after the decimal point. Expects the point form from `giftFromForm`,
+ * so a thousands separator like `1.000,50` is rejected.
+ */
+export function isPrice(value: string): boolean {
+  return /^\d{1,8}(\.\d{1,2})?$/.test(value);
+}
+
 /** Returns the trimmed form value, or null if it is empty; the backend stores empty optional fields as null. */
 export function text(form: FormData, name: string): string | null {
   const v = form.get(name);

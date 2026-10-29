@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiClient } from '$lib/api/client';
 import type { GiftOut } from './gifts';
-import { createGift, deleteGift, giftFromForm, listGifts, updateGift } from './gifts';
+import { createGift, deleteGift, giftFromForm, isPrice, listGifts, updateGift } from './gifts';
 
 const gift: GiftOut = {
   id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70',
@@ -64,6 +64,30 @@ describe('giftFromForm', () => {
     f.set('price_from', '10');
     f.set('currency', 'eur');
     expect(giftFromForm(f).currency).toBe('EUR');
+  });
+});
+
+describe('isPrice', () => {
+  it('accepts whole prices and up to two decimal places', () => {
+    for (const price of ['0', '10', '10.5', '10.99', '12345678.99']) {
+      expect(isPrice(price), price).toBe(true);
+    }
+  });
+
+  it('rejects what the backend would reject with 422', () => {
+    for (const price of [
+      '10.999',
+      '123456789',
+      '-1',
+      '1e3',
+      '0x10',
+      '1.000.50',
+      '10.',
+      '.5',
+      'abc'
+    ]) {
+      expect(isPrice(price), price).toBe(false);
+    }
   });
 });
 
