@@ -50,7 +50,7 @@
         {#each data.persons as person (person.id)}
           <li class="flex items-center gap-4 p-3">
             <span class="flex-1">
-              {person.name}
+              <span class="font-bold">{person.name}</span>
               {#if person.birthday}<span class="ml-2 text-sm text-gray-600">{person.birthday}</span
                 >{/if}
               {#if person.relationship}
