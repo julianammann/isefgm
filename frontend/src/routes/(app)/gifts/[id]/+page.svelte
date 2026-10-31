@@ -4,12 +4,18 @@
   import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
   import { CATEGORIES, formatPrice } from '$lib/display';
   import GiftingsSection from './GiftingsSection.svelte';
-  import type { PageProps } from './$types';
+  import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
 
+  /**
+   * One opening of the edit dialog, holding the action result present at that moment, which
+   * belongs to an earlier opening. A new object per opening re-creates the dialog.
+   */
+  let session = $state.raw<{ seen: ActionData }>({ seen: null });
+
   const gift = $derived(data.gift);
-  const giftForm = $derived(form?.scope === 'gift' ? form : null);
+  const giftForm = $derived(form !== session.seen && form?.scope === 'gift' ? form : null);
   const values = $derived(
     giftForm?.values ?? {
       title: gift.title,
@@ -32,6 +38,11 @@
   let editOpen = $state(false);
   let deleteOpen = $state(false);
 
+  function openEdit() {
+    session = { seen: form };
+    editOpen = true;
+  }
+
   // A failed delete closes its dialog, so the alert below is not hidden behind it.
   $effect(() => {
     if (form?.scope === 'delete') deleteOpen = false;
@@ -51,7 +62,7 @@
         class="text-sm underline"
         aria-haspopup="dialog"
         aria-controls="gift-form-dialog"
-        onclick={() => (editOpen = true)}
+        onclick={openEdit}
       >
         Bearbeiten<span class="sr-only">: {gift.title}</span>
       </button>
@@ -100,16 +111,19 @@
     {form}
   />
 
-  <GiftFormDialog
-    bind:open={editOpen}
-    action="?/update"
-    editId={gift.id}
-    {values}
-    errors={giftForm?.errors ?? {}}
-    message={giftForm?.message ?? null}
-    people={data.people}
-    occasions={data.occasions}
-  />
+  <!-- Re-created per opening, so cancelled input is gone; a failed submit keeps the session. -->
+  {#key session}
+    <GiftFormDialog
+      bind:open={editOpen}
+      action="?/update"
+      editId={gift.id}
+      {values}
+      errors={giftForm?.errors ?? {}}
+      message={giftForm?.message ?? null}
+      people={data.people}
+      occasions={data.occasions}
+    />
+  {/key}
 
   <FormDialog
     id="gift-delete"

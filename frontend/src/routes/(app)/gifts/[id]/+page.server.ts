@@ -90,6 +90,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
       listLinks(locals.api, params.id),
       listImages(locals.api, params.id)
     ]);
+  // A malformed id (not a UUID) gets 422 from the backend; for the user it is just unknown.
+  if (!giftResult.ok && giftResult.status === 422) error(404, 'Geschenkidee nicht gefunden.');
   const gift = unwrap(giftResult);
   // The backend cannot filter giftings by idea, so the full list is filtered here.
   const giftings = unwrap(giftingsResult).filter((g) => g.gift.id === params.id);

@@ -27,6 +27,11 @@ describe('load', () => {
     await expect(load(event)).rejects.toMatchObject({ status: 404 });
   });
 
+  it('answers 404 for a malformed id', async () => {
+    const event = loadEvent({ '/api/v1/gifts/{gift_id}': status(422) });
+    await expect(load(event)).rejects.toMatchObject({ status: 404 });
+  });
+
   it('keeps only the giftings of this idea', async () => {
     const event = loadEvent({
       '/api/v1/gifts/{gift_id}': ok(gift),
