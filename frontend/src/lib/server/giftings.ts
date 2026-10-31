@@ -9,6 +9,7 @@
  */
 
 import type { components } from '$lib/api/schema';
+import { PAGE_SIZE } from '$lib/pagination';
 import { ids, text } from './gifts';
 
 /** Payload for creating or updating a gifting. */
@@ -65,7 +66,9 @@ export async function listGiftings(api: Api): Promise<Result<GiftingOut[]>> {
   const giftings: GiftingOut[] = [];
   for (;;) {
     const page = await send(
-      api.GET('/api/v1/giftings', { params: { query: { offset: giftings.length } } })
+      api.GET('/api/v1/giftings', {
+        params: { query: { offset: giftings.length, limit: PAGE_SIZE } }
+      })
     );
     if (!page.ok) return page;
     giftings.push(...page.data.items);
@@ -147,4 +150,43 @@ export function giftingFromForm(form: FormData, giftId: string): GiftingIn {
     given_on: text(form, 'given_on'),
     status: (text(form, 'status') ?? 'idea') as GiftingStatus
   };
+}
+
+type GiftingFieldErrors = Partial<Record<keyof GiftingIn, string>>;
+
+const GIFTING_STATUSES = ['idea', 'planned', 'acquired', 'given'] as const;
+
+/**
+ * Reads and validates the gifting form. A given gifting needs recipients, an occasion, its
+ * date and the day it was given, like the backend checks. The backend remains the authority.
+ */
+export function parseGiftingForm(form: FormData): {
+  values: GiftingIn;
+  errors: GiftingFieldErrors;
+} {
+  const status = String(form.get('status') ?? '');
+  const values = giftingFromForm(form, String(form.get('gift_id') ?? ''));
+  const errors: GiftingFieldErrors = {};
+
+  if (!values.gift_id) errors.gift_id = 'Keine Geschenkidee ausgewählt.';
+  if (!(GIFTING_STATUSES as readonly string[]).includes(status)) {
+    errors.status = 'Bitte wähle einen gültigen Status.';
+  }
+  if (values.occasion_date && Number.isNaN(Date.parse(values.occasion_date))) {
+    errors.occasion_date = 'Bitte gib ein gültiges Datum an.';
+  }
+  if (values.given_on && Number.isNaN(Date.parse(values.given_on))) {
+    errors.given_on = 'Bitte gib ein gültiges Datum an.';
+  }
+  if (values.status === 'given') {
+    if (!values.person_ids?.length) {
+      errors.person_ids = 'Für „Verschenkt“ bitte mindestens eine Person auswählen.';
+    }
+    if (!values.occasion_id) errors.occasion_id = 'Für „Verschenkt“ bitte einen Anlass wählen.';
+    if (!values.occasion_date) {
+      errors.occasion_date ??= 'Für „Verschenkt“ bitte den Anlasstermin angeben.';
+    }
+    if (!values.given_on) errors.given_on ??= 'Für „Verschenkt“ bitte das Verschenkdatum angeben.';
+  }
+  return { values, errors };
 }

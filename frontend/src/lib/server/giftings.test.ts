@@ -7,6 +7,7 @@ import {
   giftingFromForm,
   groupByGift,
   listGiftings,
+  parseGiftingForm,
   toGiftingIn,
   updateGifting,
   type GiftingOut
@@ -52,6 +53,20 @@ describe('giftingFromForm', () => {
       occasion_date: null,
       given_on: null,
       status: 'idea'
+    });
+  });
+});
+
+describe('parseGiftingForm', () => {
+  it('requires people, occasion and dates for given', () => {
+    const f = new FormData();
+    f.set('gift_id', 'gift1');
+    f.set('status', 'given');
+    expect(parseGiftingForm(f).errors).toEqual({
+      person_ids: 'Für „Verschenkt“ bitte mindestens eine Person auswählen.',
+      occasion_id: 'Für „Verschenkt“ bitte einen Anlass wählen.',
+      occasion_date: 'Für „Verschenkt“ bitte den Anlasstermin angeben.',
+      given_on: 'Für „Verschenkt“ bitte das Verschenkdatum angeben.'
     });
   });
 });
@@ -140,5 +155,16 @@ describe('deleteGifting', () => {
       status: 404,
       message: 'Beschenkung nicht gefunden.'
     });
+  });
+});
+
+describe('listGiftings page size', () => {
+  it('sends limit=200', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [given], offset: 0, limit: 200, total: 1 })
+    );
+
+    await listGiftings(api);
+    expect(new URL(requests[0].url).searchParams.get('limit')).toBe('200');
   });
 });

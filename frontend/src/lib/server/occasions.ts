@@ -5,6 +5,7 @@
  */
 
 import type { components } from '$lib/api/schema';
+import { PAGE_SIZE } from '$lib/pagination';
 
 /** Payload for creating or updating an occasion. */
 export type Occasion = components['schemas']['OccasionOut'];
@@ -55,12 +56,14 @@ async function send<T>(request: Promise<{ data?: T; response: Response }>): Prom
   }
 }
 
-/** Returns all occasions of the current account, sorted by date; reads every page of the list. */
+/** Returns all occasions of the current account, sorted by month and day; reads every page of the list. */
 export async function listOccasions(api: Api): Promise<Result<Occasion[]>> {
   const occasions: Occasion[] = [];
   for (;;) {
     const page = await send(
-      api.GET('/api/v1/occasions', { params: { query: { offset: occasions.length } } })
+      api.GET('/api/v1/occasions', {
+        params: { query: { offset: occasions.length, limit: PAGE_SIZE } }
+      })
     );
     if (!page.ok) return page;
     occasions.push(...page.data.items);
@@ -70,12 +73,29 @@ export async function listOccasions(api: Api): Promise<Result<Occasion[]>> {
   }
 }
 
+/** Returns one page of occasions; `total` counts all entries, not only this page. */
+export async function listOccasionsPage(
+  api: Api,
+  page: number
+): Promise<Result<{ items: Occasion[]; total: number }>> {
+  const result = await send(
+    api.GET('/api/v1/occasions', {
+      params: { query: { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE } }
+    })
+  );
+  return result.ok
+    ? { ok: true, data: { items: result.data.items, total: result.data.total } }
+    : result;
+}
+
 /** Returns all occasion types of the current account. */
 export async function listOccasionTypes(api: Api): Promise<Result<OccasionType[]>> {
   const types: OccasionType[] = [];
   for (;;) {
     const page = await send(
-      api.GET('/api/v1/occasion-types', { params: { query: { offset: types.length } } })
+      api.GET('/api/v1/occasion-types', {
+        params: { query: { offset: types.length, limit: PAGE_SIZE } }
+      })
     );
     if (!page.ok) return page;
     types.push(...page.data.items);

@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiClient } from '$lib/api/client';
 import type { GiftOut } from './gifts';
-import { createGift, deleteGift, giftFromForm, isPrice, listGifts, updateGift } from './gifts';
+import {
+  createGift,
+  deleteGift,
+  getGift,
+  giftFromForm,
+  isPrice,
+  listGiftsPage,
+  parseGiftForm,
+  updateGift
+} from './gifts';
 
 const gift: GiftOut = {
   id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70',
@@ -67,6 +76,14 @@ describe('giftFromForm', () => {
   });
 });
 
+describe('parseGiftForm', () => {
+  it('requires a title', () => {
+    const f = new FormData();
+    f.set('title', '   ');
+    expect(parseGiftForm(f).errors).toEqual({ title: 'Bitte gib einen Titel an.' });
+  });
+});
+
 describe('isPrice', () => {
   it('accepts whole prices and up to two decimal places', () => {
     for (const price of ['0', '10', '10.5', '10.99', '12345678.99']) {
@@ -91,30 +108,17 @@ describe('isPrice', () => {
   });
 });
 
-describe('listGifts', () => {
-  it('loads every page using the number of collected ideas as the next offset', async () => {
-    const second = { ...gift, id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71', title: 'Buch' };
-    const { api, requests } = createApi(async (request) => {
-      const offset = new URL(request.url).searchParams.get('offset');
-      if (offset === '0') return jsonResponse({ items: [gift], offset: 0, limit: 1, total: 2 });
-      return jsonResponse({ items: [second], offset: 1, limit: 1, total: 2 });
-    });
+describe('getGift', () => {
+  it('maps 404', async () => {
+    const { api, requests } = createApi(async () => jsonResponse({ detail: 'Not found' }, 404));
 
-    await expect(listGifts(api)).resolves.toEqual({ ok: true, data: [gift, second] });
-    expect(requests.map((request) => new URL(request.url).searchParams.get('offset'))).toEqual([
-      '0',
-      '1'
-    ]);
-  });
-
-  it('returns the backend error for a failed page request', async () => {
-    const { api } = createApi(async () => jsonResponse({ detail: 'Unauthorized' }, 401));
-
-    await expect(listGifts(api)).resolves.toEqual({
+    await expect(getGift(api, gift.id)).resolves.toEqual({
       ok: false,
-      status: 401,
-      message: 'Sitzung abgelaufen. Bitte erneut anmelden.'
+      status: 404,
+      message: 'Geschenkidee nicht gefunden.'
     });
+    expect(requests[0].method).toBe('GET');
+    expect(new URL(requests[0].url).pathname).toBe(`/api/v1/gifts/${gift.id}`);
   });
 });
 
@@ -179,5 +183,21 @@ describe('deleteGift', () => {
       message:
         'Die Idee wird von mindestens einer Beschenkung verwendet und kann nicht gelöscht werden.'
     });
+  });
+});
+
+describe('listGiftsPage', () => {
+  it('requests one page of 200 and returns items with the total', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [gift], offset: 400, limit: 200, total: 450 })
+    );
+
+    await expect(listGiftsPage(api, 3)).resolves.toEqual({
+      ok: true,
+      data: { items: [gift], total: 450 }
+    });
+    const query = new URL(requests[0].url).searchParams;
+    expect(requests).toHaveLength(1);
+    expect([query.get('limit'), query.get('offset')]).toEqual(['200', '400']);
   });
 });

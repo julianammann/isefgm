@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiClient } from '$lib/api/client';
 import type { Person, PersonInput } from './persons';
-import { createPerson, deletePerson, getPerson, listPersons, updatePerson } from './persons';
+import {
+  createPerson,
+  deletePerson,
+  getPerson,
+  listPersons,
+  listPersonsPage,
+  updatePerson
+} from './persons';
 
 const firstPerson: Person = {
   id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70',
@@ -161,5 +168,30 @@ describe('deletePerson', () => {
       ok: false,
       status: 404
     });
+  });
+});
+
+describe('listPersonsPage', () => {
+  it('requests one page of 200 and returns items with the total', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [firstPerson], offset: 200, limit: 200, total: 450 })
+    );
+
+    await expect(listPersonsPage(api, 2)).resolves.toEqual({
+      ok: true,
+      data: { items: [firstPerson], total: 450 }
+    });
+    const query = new URL(requests[0].url).searchParams;
+    expect(requests).toHaveLength(1);
+    expect([query.get('limit'), query.get('offset')]).toEqual(['200', '200']);
+  });
+
+  it('sends limit=200 when loading every page', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [firstPerson], offset: 0, limit: 200, total: 1 })
+    );
+
+    await listPersons(api);
+    expect(new URL(requests[0].url).searchParams.get('limit')).toBe('200');
   });
 });
