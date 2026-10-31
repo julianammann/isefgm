@@ -9,10 +9,11 @@ import type { Actions, PageServerLoad } from './$types';
 import {
   createPerson,
   deletePerson,
-  listPersons,
+  listPersonsPage,
   updatePerson,
   type PersonInput
 } from '$lib/server/persons';
+import { pageCount, pageQuery, parsePage } from '$lib/pagination';
 
 type FieldErrors = Partial<Record<keyof PersonInput, string>>;
 
@@ -54,15 +55,24 @@ function parseForm(form: FormData): { values: PersonInput; errors: FieldErrors }
   return { values: { name, birthday, relationship, notes }, errors };
 }
 
-/** Loads all persons; `?edit=<id>` returns one for the edit form. */
+/** Loads one page of persons; `?edit=<id>` returns one of them for the edit form. */
 export const load: PageServerLoad = async ({ locals, url }) => {
-  const result = await listPersons(locals.api);
+  const page = parsePage(url);
+  const result = await listPersonsPage(locals.api, page);
   if (!result.ok) error(result.status, result.message);
+  const { items, total } = result.data;
+  const last = pageCount(total);
+  if (total > 0 && page > last) {
+    const rest = Object.fromEntries([...url.searchParams].filter(([key]) => key !== 'page'));
+    redirect(303, '/persons' + pageQuery(last, rest));
+  }
   const editId = url.searchParams.get('edit');
   const success = url.searchParams.get('success');
   return {
-    persons: result.data,
-    editing: result.data.find((p) => p.id === editId) ?? null,
+    persons: items,
+    page,
+    total,
+    editing: items.find((p) => p.id === editId) ?? null,
     success: isSuccessKey(success) ? successMessages[success] : null
   };
 };
@@ -80,19 +90,19 @@ export const actions: Actions = {
     if (!result.ok) return fail(result.status, { values, message: result.message });
     throw redirect(303, '/persons?success=created');
   },
-  update: async ({ request, locals }) => {
+  update: async ({ request, locals, url }) => {
     const form = await request.formData();
     const id = String(form.get('id') ?? '');
     const { values, errors } = parseForm(form);
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await updatePerson(locals.api, id, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
-    throw redirect(303, '/persons?success=updated');
+    throw redirect(303, '/persons' + pageQuery(parsePage(url), { success: 'updated' }));
   },
-  delete: async ({ request, locals }) => {
+  delete: async ({ request, locals, url }) => {
     const id = String((await request.formData()).get('id') ?? '');
     const result = await deletePerson(locals.api, id);
     if (!result.ok) return fail(result.status, { deleteMessage: result.message });
-    throw redirect(303, '/persons?success=deleted');
+    throw redirect(303, '/persons' + pageQuery(parsePage(url), { success: 'deleted' }));
   }
 };
