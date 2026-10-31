@@ -121,6 +121,8 @@ async def plan(session: AsyncSession, mails: Iterable[PlannedMail]) -> int:
     ]
     if not rows:
         return 0
+    # shortcut: one INSERT per call, asyncpg caps bind params at 32767 (~2,500
+    # rows); chunk if a single run ever plans more.
     result = await session.execute(
         insert(Notification)
         .values(rows)
@@ -139,7 +141,10 @@ async def claim_next(session: AsyncSession, now: datetime) -> Notification | Non
             Notification.scheduled_for <= now,
             Notification.expires_at > now,
         )
-        .order_by(Notification.scheduled_for, Notification.id)
+        # Never-tried rows first, so a row retried after a transient failure cannot block the rest.
+        .order_by(
+            Notification.claimed_at.asc().nulls_first(), Notification.scheduled_for, Notification.id
+        )
         .limit(1)
         .with_for_update(skip_locked=True)
     )
@@ -174,6 +179,8 @@ async def dispatch_due(
 
         async with sessionmaker() as session, session.begin():
             notification = await session.get_one(Notification, notification_id)
+            # No `status == sending` guard: a late TRANSIENT means nothing was delivered, so a retry
+            # is a first delivery; a late success correctly overwrites `failed`.
             if failure is None:
                 notification.status = NotificationStatus.SENT
                 notification.sent_at = clock.now()
@@ -182,10 +189,12 @@ async def dispatch_due(
             elif failure.failure is MailFailure.TRANSIENT:
                 notification.status = NotificationStatus.PLANNED
                 notification.error = failure.detail
+                logger.warning("Notification %s not sent (transient), will retry", notification_id)
                 return sent
             elif failure.failure is MailFailure.PERMANENT:
                 notification.status = NotificationStatus.FAILED
                 notification.error = failure.detail
+                logger.warning("Notification %s not sent (permanent)", notification_id)
             else:
                 notification.status = NotificationStatus.FAILED
                 notification.error = "Versandergebnis unklar: " + failure.detail

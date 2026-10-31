@@ -257,3 +257,51 @@ async def test_expired_planned_row_fails(session: AsyncSession, clock: FixedCloc
     assert await expire(session, clock.now()) == 1
     await session.refresh(row)
     assert (row.status, row.error) == (NotificationStatus.FAILED, "Zeitfenster abgelaufen")
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_retried_transient_row_does_not_block_rows_behind_it(
+    committed_sessionmaker: Maker, clock: FixedClock
+) -> None:
+    clock.current = SEND_TIME
+    a = await add_committed_notification(
+        committed_sessionmaker, scheduled_for=SEND_TIME - timedelta(hours=1)
+    )
+    b = await add_committed_notification(committed_sessionmaker)
+    mailer = RecordingMailer(fail_for={a.recipient: MailFailure.TRANSIENT})
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 0
+    assert (await reload(committed_sessionmaker, b.id)).status is NotificationStatus.PLANNED
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 1
+    assert [m.to for m in mailer.sent] == [b.recipient]
+    assert (await reload(committed_sessionmaker, b.id)).status is NotificationStatus.SENT
+    stored_a = await reload(committed_sessionmaker, a.id)
+    assert (stored_a.status, stored_a.error) == (NotificationStatus.PLANNED, "simulated")
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+@pytest.mark.parametrize("failure", [MailFailure.TRANSIENT, MailFailure.PERMANENT])
+async def test_transient_and_permanent_failures_are_logged_without_recipient(
+    committed_sessionmaker: Maker,
+    clock: FixedClock,
+    caplog: pytest.LogCaptureFixture,
+    failure: MailFailure,
+) -> None:
+    clock.current = SEND_TIME
+    row = await add_committed_notification(committed_sessionmaker)
+    await dispatch_due(committed_sessionmaker, RecordingMailer(fail_with=failure), clock)
+    assert any(r.levelname == "WARNING" and str(row.id) in r.getMessage() for r in caplog.records)
+    assert not any(row.recipient in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_row_expiring_now_is_not_sent(
+    committed_sessionmaker: Maker, clock: FixedClock
+) -> None:
+    clock.current = SEND_TIME
+    row = await add_committed_notification(
+        committed_sessionmaker, scheduled_for=SEND_TIME - timedelta(hours=1), expires_at=SEND_TIME
+    )
+    mailer = RecordingMailer()
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 0
+    assert mailer.sent == []
+    assert (await reload(committed_sessionmaker, row.id)).status is NotificationStatus.PLANNED

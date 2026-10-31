@@ -59,7 +59,8 @@ def mailpit() -> Iterator[tuple[str, int, int]]:
         (aiosmtplib.SMTPConnectTimeoutError("timeout"), MailFailure.TRANSIENT),
         (aiosmtplib.SMTPAuthenticationError(535, "bad key"), MailFailure.TRANSIENT),
         (aiosmtplib.SMTPSenderRefused(451, "later", "a@b.c"), MailFailure.TRANSIENT),
-        (aiosmtplib.SMTPSenderRefused(550, "no", "a@b.c"), MailFailure.PERMANENT),
+        # A refused sender is a config problem for every mail, nothing was delivered: retry.
+        (aiosmtplib.SMTPSenderRefused(550, "no", "a@b.c"), MailFailure.TRANSIENT),
         (
             aiosmtplib.SMTPRecipientsRefused(
                 [aiosmtplib.SMTPRecipientRefused(450, "later", "x@y.z")]
