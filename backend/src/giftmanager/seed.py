@@ -14,6 +14,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from faker import Faker
+from faker.providers import DynamicProvider
 from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,6 +49,221 @@ OCCASIONS = 20
 GIFTS = 1000
 GIFTINGS = 1000
 TASK_TITLES = ("Bestellen", "Abholen", "Einpacken", "Karte schreiben", "Größe klären")
+# de_DE has no product or catch-phrase data, so titles are curated per category and made
+# unique with a Faker detail; the {{...}} placeholders are filled by Faker.parse. Each title
+# carries its own descriptions, so a description always fits its title.
+GIFT_IDEAS = {
+    GiftCategory.BOOKS: {
+        "Krimi von {{last_name}}": (
+            "Den neuen Band gibt es erst seit Kurzem.",
+            "Die Vorgänger sind alle schon gelesen.",
+        ),
+        "Roman von {{last_name}}": (
+            "Als Taschenbuch reicht.",
+            "Stand lange auf der Bestsellerliste.",
+        ),
+        "Biografie von {{last_name}}": (
+            "Gebunden, mit Fotos.",
+            "Großes Interesse an Zeitgeschichte.",
+        ),
+        "Gedichtband von {{last_name}}": ("Schöne Ausgabe mit Lesebändchen.", "Gern mit Widmung."),
+        "Kochbuch von {{last_name}}": (
+            "Am liebsten vegetarisch.",
+            "Mit einfachen Rezepten für den Alltag.",
+        ),
+        "Sachbuch von {{last_name}}": (
+            "Gibt es oft gebraucht im Antiquariat.",
+            "Wurde im Podcast empfohlen.",
+        ),
+        "Hörbuch von {{last_name}}": (
+            "Für lange Autofahrten.",
+            "Als Download, einen CD-Spieler gibt es nicht mehr.",
+        ),
+        "Comic von {{last_name}}": ("Der erste Band einer Reihe.", "Gern die Sammelausgabe."),
+    },
+    GiftCategory.GAMES: {
+        "Puzzle {{city}}, 1000 Teile": (
+            "Puzzelt gern an Regentagen.",
+            "Erinnert an den letzten Urlaub.",
+        ),
+        "Brettspiel „{{city}}“": ("Für Spieleabende zu viert.", "Spieldauer etwa eine Stunde."),
+        "Kartenspiel „{{city}}“": ("Passt in jede Jackentasche.", "Geht auch zu zweit."),
+        "Würfelspiel „{{city}}“": ("Schnell erklärt, auch für Kinder.", "Gut für zwischendurch."),
+        "Kooperatives Spiel „{{city}}“": (
+            "Alle gewinnen oder verlieren zusammen.",
+            "Die Erweiterung kann später folgen.",
+        ),
+    },
+    GiftCategory.EXPERIENCE: {
+        "Kochkurs in {{city}}": (
+            "Für zwei Personen, Termin frei wählbar.",
+            "Am liebsten italienische Küche.",
+        ),
+        "Konzertkarten in {{city}}": (
+            "Stehplätze reichen.",
+            "Vorher nach freien Wochenenden fragen.",
+        ),
+        "Escape Room in {{city}}": (
+            "Für eine Gruppe von vier Leuten.",
+            "Lieber mittlere Schwierigkeit.",
+        ),
+        "Wellnesstag in {{city}}": ("Mit Massage.", "Gutschein ist drei Jahre gültig."),
+        "Kletterkurs in {{city}}": (
+            "Für Anfänger, Ausrüstung wird gestellt.",
+            "Steht schon lange auf der Liste.",
+        ),
+        "Stadtführung in {{city}}": ("Gern die Abendführung.", "Anfahrt mit der Bahn einplanen."),
+        "Theaterkarten in {{city}}": ("Lieber Komödie als Drama.", "Plätze im Parkett."),
+        "Weinprobe in {{city}}": ("Mit kleinem Imbiss.", "Rückfahrt vorher klären."),
+    },
+    GiftCategory.CLOTHING: {
+        "Strickpullover, Farbe {{color_name}}, Größe {{clothing_size}}": (
+            "Bitte aus Baumwolle, Wolle kratzt.",
+            "Weite Schnitte kommen gut an.",
+        ),
+        "Regenjacke, Farbe {{color_name}}, Größe {{clothing_size}}": (
+            "Mit Kapuze.",
+            "Leicht genug zum Wandern.",
+        ),
+        "Hoodie, Farbe {{color_name}}, Größe {{clothing_size}}": (
+            "Gern nachhaltig produziert.",
+            "Mit Reißverschluss.",
+        ),
+        "Schal, Farbe {{color_name}}": ("Lang genug zum zweimal Wickeln.", "Weich, nicht kratzig."),
+        "Mütze, Farbe {{color_name}}": ("Ohne Bommel.", "Passend zum Schal vom letzten Jahr."),
+        "Hausschuhe, Farbe {{color_name}}": ("Mit fester Sohle.", "Schuhgröße vorher nachfragen."),
+        "Handschuhe, Farbe {{color_name}}": (
+            "Mit Touchscreen-Fingerspitzen.",
+            "Gefüttert für den Winter.",
+        ),
+    },
+    GiftCategory.TECH: {
+        "Kopfhörer, Farbe {{color_name}}": (
+            "Mit Geräuschunterdrückung.",
+            "Zum Joggen, also kabellos.",
+        ),
+        "Powerbank, Farbe {{color_name}}": (
+            "Mit USB-C, das alte Kabel passt nicht mehr.",
+            "Klein genug für die Hosentasche.",
+        ),
+        "Bluetooth-Lautsprecher, Farbe {{color_name}}": (
+            "Wasserdicht, für den Garten.",
+            "Der Akku sollte einen Tag halten.",
+        ),
+        "Handyhülle, Farbe {{color_name}}": (
+            "Vorher das Handymodell nachsehen.",
+            "Mit Fach für Karten.",
+        ),
+        "E-Reader-Hülle, Farbe {{color_name}}": (
+            "Mit Standfunktion.",
+            "Vorher das Modell nachsehen.",
+        ),
+        "Smartwatch-Armband, Farbe {{color_name}}": ("Aus Stoff, nicht Silikon.", "Für den Sport."),
+    },
+    GiftCategory.FOOD: {
+        "Honig aus {{city}}": ("Gern regional.", "Lieber cremig als flüssig."),
+        "Kaffee aus einer Rösterei in {{city}}": (
+            "Ganze Bohnen, gemahlen wird selbst.",
+            "Lieber mild als kräftig.",
+        ),
+        "Pralinen aus {{city}}": ("Keine Nüsse, Allergie.", "Gern mit Zartbitterschokolade."),
+        "Gin aus {{city}}": ("Mit passendem Tonic.", "Lieber herb als süß."),
+        "Weinpaket vom Weingut {{last_name}}": (
+            "Rotwein, eher trocken.",
+            "Hält sich ein paar Jahre.",
+        ),
+        "Feinkostkorb vom Hofladen {{last_name}}": (
+            "Keine Nüsse, Allergie.",
+            "Gern mit Käse und Chutney.",
+        ),
+    },
+    GiftCategory.HOME: {
+        "Kerzenhalter, Farbe {{color_name}}": ("Passt zur neuen Wohnung.", "Für Stabkerzen."),
+        "Kuscheldecke, Farbe {{color_name}}": ("Groß genug fürs Sofa.", "Waschbar bei 40 Grad."),
+        "Blumenvase, Farbe {{color_name}}": ("Zerbrechlich, gut einpacken.", "Für große Sträuße."),
+        "Kissenbezug, Farbe {{color_name}}": ("Format 50 x 50.", "Lieber schlicht als verspielt."),
+        "Teekanne, Farbe {{color_name}}": (
+            "Mit Sieb für losen Tee.",
+            "Für mindestens vier Tassen.",
+        ),
+        "Bilderrahmen, Farbe {{color_name}}": (
+            "Für ein Foto im Format 13 x 18.",
+            "Nach dem Umzug fehlt noch Deko.",
+        ),
+        "Keramiktasse, Farbe {{color_name}}": ("Spülmaschinenfest.", "Gern handgemacht."),
+    },
+    GiftCategory.VOUCHER: {
+        "Gutschein Buchhandlung {{last_name}}": ("Betrag frei wählbar.", "Auch online einlösbar."),
+        "Gutschein Café {{last_name}}": ("Für Frühstück zu zweit.", "Liegt direkt um die Ecke."),
+        "Gutschein Restaurant {{last_name}}": (
+            "Für ein Abendessen zu zweit.",
+            "Gültig bis Ende nächsten Jahres.",
+        ),
+        "Gutschein Friseursalon {{last_name}}": (
+            "Lieber ausgedruckt als per E-Mail.",
+            "Termin wird selbst gebucht.",
+        ),
+        "Gutschein Gärtnerei {{last_name}}": (
+            "Für den Balkon im Frühjahr.",
+            "Betrag frei wählbar.",
+        ),
+        "Gutschein Kino in {{city}}": ("Für zwei Personen.", "Auch für 3D-Filme."),
+        "Gutschein Therme {{city}}": ("Tageskarte mit Sauna.", "Gültig bis Ende nächsten Jahres."),
+    },
+    GiftCategory.OTHER: {
+        "Fotobuch vom Urlaub in {{city}}": (
+            "Selbst gestaltet, rechtzeitig anfangen.",
+            "Braucht ein paar Wochen Vorlauf.",
+        ),
+        "Kalender mit Fotos aus {{city}}": ("Bis Ende November bestellen.", "Ein Foto pro Monat."),
+        "Postkartenset aus {{city}}": ("Für Grüße aus dem Urlaub.", "Mit Briefmarken."),
+        "Zimmerpflanze von der Gärtnerei {{last_name}}": (
+            "Pflegeleicht, verträgt wenig Licht.",
+            "Mit Übertopf.",
+        ),
+        "Spende an den Tierschutzverein {{city}}": (
+            "Mit Urkunde zum Überreichen.",
+            "Statt eines weiteren Gegenstands.",
+        ),
+    },
+}
+# Christmas is added on its own; the rest are drawn without repetition.
+OCCASION_NAMES = (
+    "Hochzeit",
+    "Verlobung",
+    "Polterabend",
+    "Silberhochzeit",
+    "Goldene Hochzeit",
+    "Jahrestag",
+    "Einweihung",
+    "Umzug",
+    "Taufe",
+    "Geburt",
+    "Einschulung",
+    "Konfirmation",
+    "Kommunion",
+    "Abschlussfeier",
+    "Führerschein bestanden",
+    "Firmenjubiläum",
+    "Ruhestand",
+    "Abschied",
+    "Sommerfest",
+    "Jubiläum",
+)
+PERSON_NOTES = (
+    "Trinkt keinen Kaffee, lieber Tee.",
+    "Allergisch gegen Nüsse.",
+    "Sammelt Schallplatten.",
+    "Wandert gern.",
+    "Spielt Gitarre.",
+    "Kocht gern asiatisch.",
+    "Liest viel, am liebsten Krimis.",
+    "Fährt jeden Tag Rad.",
+    "Mag keine Deko-Artikel.",
+    "Hat gerade einen Garten.",
+    "Reist gern in den Norden.",
+    "Backt jedes Wochenende.",
+)
 
 
 async def _seed_account(
@@ -59,6 +275,8 @@ async def _seed_account(
     user = await auth_service.register(
         session, email=email, password=password, display_name=display_name
     )
+    # Unique titles and occasion names per account, not across both.
+    fake.unique.clear()
 
     person_ids: list[uuid.UUID] = []
     for _ in range(PEOPLE):
@@ -72,7 +290,7 @@ async def _seed_account(
             relationship=fake.random_element(
                 ["Schwester", "Bruder", "Mutter", "Vater", "Freundin", "Freund", "Kollegin"]
             ),
-            notes=fake.sentence() if fake.boolean(30) else None,
+            notes=fake.random_element(PERSON_NOTES) if fake.boolean(30) else None,
         )
         person_ids.append(person.id)
 
@@ -82,7 +300,7 @@ async def _seed_account(
         occasion = await occasion_service.create_occasion(
             session,
             user.id,
-            name="Weihnachten" if christmas else fake.catch_phrase()[:100],
+            name="Weihnachten" if christmas else fake.unique.random_element(OCCASION_NAMES),
             date=fake.date_this_decade(after_today=True),
             recurrence=Recurrence.YEARLY if christmas or fake.boolean() else Recurrence.NONE,
             occasion_type_id=CHRISTMAS_TYPE_ID if christmas else None,
@@ -94,15 +312,18 @@ async def _seed_account(
     for _ in range(GIFTS):
         priced = fake.boolean(70)
         price_from = Decimal(fake.random_int(5, 150)) if priced else None
+        category = fake.random_element(list(GiftCategory))
+        ideas = GIFT_IDEAS[category]
+        template = fake.random_element(list(ideas))
         gift = await gift_service.create_gift(
             session,
             user.id,
-            title=fake.catch_phrase()[:200],
-            description=fake.paragraph() if fake.boolean(50) else None,
+            title=fake.unique.parse(template),
+            description=fake.random_element(ideas[template]) if fake.boolean(50) else None,
             price_from=price_from,
             price_to=price_from + fake.random_int(0, 50) if price_from is not None else None,
             currency="EUR" if priced else None,
-            category=fake.random_element(list(GiftCategory)),
+            category=category,
             person_ids=list(fake.random_sample(person_ids, length=fake.random_int(0, 3))),
             occasion_ids=list(fake.random_sample(occasion_ids, length=fake.random_int(0, 2))),
         )
@@ -176,6 +397,7 @@ async def _seed_account(
 async def _seed(password: str) -> list[str]:
     Faker.seed(51)
     fake = Faker("de_DE")
+    fake.add_provider(DynamicProvider("clothing_size", ["S", "M", "L", "XL"]))
     try:
         async with get_sessionmaker()() as session, session.begin():
             return [
