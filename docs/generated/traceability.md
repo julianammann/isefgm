@@ -431,6 +431,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-09 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
 | F-09 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
 | F-09 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |
+| F-10 | `tests/test_notifications.py::test_format_day_is_day_and_month_with_dot` | passed |
 | F-13 | `tests/test_config.py::test_smtp_defaults_point_at_local_mailpit` | passed |
 | F-13 | `tests/test_config.py::test_smtp_password_is_not_shown` | passed |
 | F-13 | `tests/test_mail.py::test_classify[exc0-transient]` | passed |
@@ -471,6 +472,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
 | F-13 | `tests/test_notifications.py::test_notification_rows_go_with_the_account` | passed |
 | F-13 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
+| F-13 | `tests/test_notifications.py::test_dedup_key_covers_account_reference_date_type_and_interval` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -708,6 +710,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-02 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | Q-02 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
 | Q-02 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
+| Q-02 | `tests/test_notifications.py::test_dedup_key_covers_account_reference_date_type_and_interval` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | Q-03 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
 | Q-03 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/login-body0]` | passed |
@@ -848,6 +851,11 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2100-02-28-2100-02-28]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[1996-02-29-yearly-2000-02-28-2000-02-29]` | passed |
 | Q-09 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |
+| QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
+| QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
+| QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |
+| QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day3-utc3]` | passed |
+| QZ-09 | `tests/test_notifications.py::test_local_date_switches_at_berlin_midnight` | passed |
 
 ## Tests without a requirement
 

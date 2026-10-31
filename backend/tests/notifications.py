@@ -1,11 +1,13 @@
 """Helpers for notification tests."""
 
 from datetime import UTC, date, datetime
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.models import User
 from giftmanager.models.notification import Notification, NotificationStatus, NotificationType
+from giftmanager.services.notification import PlannedMail
 
 
 async def make_user(session: AsyncSession, email: str) -> User:
@@ -35,3 +37,20 @@ def make_notification(
         subject="Betreff",
         body="Text",
     )
+
+
+def planned_mail(**overrides: object) -> PlannedMail:
+    values: dict[str, object] = {
+        "owner_id": UUID(int=1),
+        "recipient": "konto@isefgm.localhost",
+        "type": NotificationType.CHRISTMAS,
+        "reference_type": None,
+        "reference_id": None,
+        "event_date": date(2026, 12, 24),
+        "interval": "2026-11-12",
+        "scheduled_for": datetime(2026, 11, 12, 7, 0, tzinfo=UTC),
+        "expires_at": datetime(2026, 11, 16, 7, 0, tzinfo=UTC),
+        "subject": "Betreff",
+        "body": "Text",
+    }
+    return PlannedMail(**{**values, **overrides})  # type: ignore[arg-type]
