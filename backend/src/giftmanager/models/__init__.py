@@ -5,6 +5,12 @@ from giftmanager.models.base import Base, TimestampMixin
 from giftmanager.models.gift import Gift, GiftCategory, gift_occasion, gift_person
 from giftmanager.models.gifting import Gifting, GiftingStatus, gifting_person
 from giftmanager.models.note import Note
+from giftmanager.models.notification import (
+    Notification,
+    NotificationStatus,
+    NotificationType,
+    ReferenceType,
+)
 from giftmanager.models.occasion import (
     BIRTHDAY_TYPE_ID,
     CHRISTMAS_TYPE_ID,
@@ -30,11 +36,15 @@ __all__ = [
     "Gifting",
     "GiftingStatus",
     "Note",
+    "Notification",
+    "NotificationStatus",
+    "NotificationType",
     "Occasion",
     "OccasionType",
     "Person",
     "PriceBand",
     "Recurrence",
+    "ReferenceType",
     "ShareLink",
     "Suggestion",
     "SuggestionStatus",

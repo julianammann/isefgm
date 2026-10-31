@@ -469,6 +469,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_mail.py::test_ehlo_uses_sender_domain_without_dns_lookup` | passed |
 | F-13 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | F-13 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
+| F-13 | `tests/test_notifications.py::test_notification_rows_go_with_the_account` | passed |
+| F-13 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -705,6 +707,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-02 | `tests/test_mail.py::test_ehlo_uses_sender_domain_without_dns_lookup` | passed |
 | Q-02 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | Q-02 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
+| Q-02 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | Q-03 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
 | Q-03 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/login-body0]` | passed |

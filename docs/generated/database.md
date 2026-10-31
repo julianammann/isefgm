@@ -33,6 +33,30 @@ Gift idea of an account (F-05): the reusable content of an idea. Visible only to
 | `category` | VARCHAR(16) | no | Kind of gift, feature for suggestions (F-16). `other` when not chosen. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
 
+## notification
+
+Planned and sent e-mail notifications (F-13). One row per planned message; dedup_key makes repeated or parallel scheduler runs harmless (Q-02).
+
+| Column | Type | Nullable | Description |
+| --- | --- | --- | --- |
+| `id` | UUID | no | Primary key, UUIDv7. (PK) |
+| `owner_id` | UUID | no | Account that receives the message. Deleted together with the account. (FK → user_account.id) (Index) |
+| `type` | VARCHAR(16) | no | `birthday`, `christmas`, `easter` or `occasion`. |
+| `reference_type` | VARCHAR(16) | yes | Table that reference_id points into: `person` or `occasion`. NULL without a reference. |
+| `reference_id` | UUID | yes | Row the message is about. Not a foreign key; see reference_type. |
+| `event_date` | DATE | no | Calendar date of the event the message is about. |
+| `scheduled_for` | TIMESTAMP WITH TIME ZONE | no | Earliest send time (UTC). |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | no | Send deadline (UTC). Later than this the message is stale. |
+| `status` | VARCHAR(16) | no | `planned`, `sending`, `sent` or `failed`. |
+| `claimed_at` | TIMESTAMP WITH TIME ZONE | yes | When a dispatcher claimed the row for sending (UTC). |
+| `sent_at` | TIMESTAMP WITH TIME ZONE | yes | When the message was handed to the mail server (UTC). |
+| `error` | TEXT | yes | Reason of the last failure. |
+| `dedup_key` | VARCHAR(255) | no | Identifies the message across planner runs. Unique, so it is never planned twice (Q-02). (unique) |
+| `recipient` | VARCHAR(320) | no | Recipient e-mail address. |
+| `subject` | VARCHAR(200) | no | Subject line. |
+| `body` | TEXT | no | Plain-text message body. |
+| `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |
+
 ## occasion_type
 
 Kind of occasion (F-03). owner_id NULL marks the system-wide types Geburtstag and Weihnachten, created by a migration and read-only for users.
