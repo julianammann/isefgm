@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
+import { resolve } from '$app/paths';
+import { pageQuery } from '$lib/pagination';
+
 import Pagination from './Pagination.svelte';
 
-const href = (p: number) => (p === 1 ? '/gifts' : `/gifts?page=${p}`);
+const href = (p: number) => resolve(`/gifts${pageQuery(p)}`);
 
 describe('Pagination', () => {
   it('renders nothing for a single page', async () => {

@@ -31,10 +31,6 @@
     })
   );
 
-  /** Resolved list URL that keeps the current page. */
-  const listHref = (extra?: Record<string, string>) =>
-    resolve('/occasions') + pageQuery(data.page, extra);
-
   function formatDate(date: string): string {
     const [year, month, day] = date.split('-');
     return `${day}.${month}.${year}`;
@@ -65,7 +61,13 @@
   }
 </script>
 
-<svelte:head><title>Anlässe – Geschenke-Manager</title></svelte:head>
+<svelte:head
+  ><title
+    >{data.page > 1
+      ? `Anlässe – Seite ${data.page} – Geschenke-Manager`
+      : 'Anlässe – Geschenke-Manager'}</title
+  ></svelte:head
+>
 
 <main class="mx-auto max-w-4xl p-8">
   <h1 class="text-2xl font-bold">Anlässe</h1>
@@ -85,6 +87,9 @@
         </button>
       {/if}
     </div>
+    {#if data.successMessage}
+      <p role="status" class="mt-2 text-sm text-green-800">{data.successMessage}</p>
+    {/if}
     {#if data.occasions.length === 0}
       <p class="mt-4 text-sm text-gray-600">Keine Anlässe vorhanden.</p>
     {:else}
@@ -108,8 +113,10 @@
               <span class="text-sm text-gray-600">(Geburtstag wird über die Person gepflegt)</span>
             {:else}
               <div class="flex items-center gap-2">
-                <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- listHref resolves -->
-                <a href={listHref({ edit: occasion.id })} class="text-sm underline">Bearbeiten</a>
+                <a
+                  href={resolve(`/occasions${pageQuery(data.page, { edit: occasion.id })}`)}
+                  class="text-sm underline">Bearbeiten</a
+                >
                 <button
                   type="button"
                   class="text-sm text-red-800 underline"
@@ -126,7 +133,7 @@
     <Pagination
       page={data.page}
       total={data.total}
-      href={(p) => resolve('/occasions') + pageQuery(p)}
+      href={(p) => resolve(`/occasions${pageQuery(p)}`)}
     />
   </section>
 
@@ -161,10 +168,6 @@
       <button type="submit" class="rounded bg-red-700 px-4 py-2 text-white">Löschen</button>
     </form>
   </dialog>
-
-  {#if data.successMessage}
-    <p role="status" class="mt-4 text-sm text-green-800">{data.successMessage}</p>
-  {/if}
 
   <dialog
     id="occasion-form-dialog"
@@ -291,8 +294,9 @@
             {isEdit ? 'Speichern' : 'Anlegen'}
           </button>
           {#if isEdit}
-            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- listHref resolves -->
-            <a href={listHref()} class="text-sm underline">Abbrechen</a>
+            <a href={resolve(`/occasions${pageQuery(data.page)}`)} class="text-sm underline"
+              >Abbrechen</a
+            >
           {:else}
             <button
               type="button"

@@ -35,8 +35,7 @@
   /** Drops `?edit` when the edit dialog is closed with Escape or Abbrechen. */
   function leaveEdit() {
     if (page.url.searchParams.has('edit')) {
-      // eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() is applied to the path
-      goto(resolve('/gifts') + pageQuery(data.page), {
+      goto(resolve(`/gifts${pageQuery(data.page)}`), {
         replaceState: true,
         noScroll: true,
         keepFocus: true
@@ -61,7 +60,13 @@
   }
 </script>
 
-<svelte:head><title>Geschenkideen – Geschenke-Manager</title></svelte:head>
+<svelte:head
+  ><title
+    >{data.page > 1
+      ? `Geschenkideen – Seite ${data.page} – Geschenke-Manager`
+      : 'Geschenkideen – Geschenke-Manager'}</title
+  ></svelte:head
+>
 
 <main class="mx-auto max-w-4xl p-8">
   <h1 class="text-2xl font-bold">Geschenkideen</h1>
@@ -81,6 +86,10 @@
         </button>
       {/if}
     </div>
+    {#if data.success}<p role="status" class="mt-2 text-sm text-green-800">{data.success}</p>{/if}
+    {#if form?.deleteMessage}
+      <p role="alert" class="mt-2 text-sm text-red-800">{form.deleteMessage}</p>
+    {/if}
     {#if data.gifts.length === 0}
       <p class="mt-2 text-sm text-gray-600">Noch keine Geschenkideen erfasst.</p>
     {:else}
@@ -108,14 +117,12 @@
                 </p>
               </div>
               <div class="flex items-center gap-4">
-                <!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() is applied to the path -->
                 <a
-                  href={resolve('/gifts') + pageQuery(data.page, { edit: gift.id })}
+                  href={resolve(`/gifts${pageQuery(data.page, { edit: gift.id })}`)}
                   class="text-sm underline"
                 >
                   Bearbeiten<span class="sr-only">: {gift.title}</span>
                 </a>
-                <!-- eslint-enable svelte/no-navigation-without-resolve -->
                 <button
                   type="button"
                   class="text-sm text-red-800 underline"
@@ -132,7 +139,7 @@
     <Pagination
       page={data.page}
       total={data.total}
-      href={(p) => resolve('/gifts') + pageQuery(p)}
+      href={(p) => resolve(`/gifts${pageQuery(p)}`)}
     />
   </section>
 
@@ -162,11 +169,6 @@
       <button type="submit" class="rounded bg-red-700 px-4 py-2 text-white">Löschen</button>
     </form>
   </dialog>
-
-  {#if data.success}<p role="status" class="mt-4 text-sm text-green-800">{data.success}</p>{/if}
-  {#if form?.deleteMessage}
-    <p role="alert" class="mt-4 text-sm text-red-800">{form.deleteMessage}</p>
-  {/if}
 
   <GiftFormDialog
     bind:open={showForm}
