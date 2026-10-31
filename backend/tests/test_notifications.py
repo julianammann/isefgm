@@ -19,11 +19,14 @@ from giftmanager.services.notification import (
     active_recipients,
     dedup_key,
     dispatch_due,
+    expire,
+    fail_stuck,
     format_day,
     local_at,
     local_date,
     plan,
 )
+from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
 from tests.notifications import (
     add_committed_notification,
@@ -223,3 +226,34 @@ async def test_unclear_result_is_logged_and_not_resent(
     mailer = RecordingMailer()
     await dispatch_due(committed_sessionmaker, mailer, clock)
     assert mailer.sent == []
+
+
+@pytest.mark.requirement("Q-02", "QZ-05")
+async def test_stuck_sending_fails_after_15_minutes(
+    session: AsyncSession, clock: FixedClock, caplog: pytest.LogCaptureFixture
+) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    stuck = make_notification(user, dedup_key="a", status=NotificationStatus.SENDING)
+    stuck.claimed_at = clock.now() - timedelta(minutes=15)
+    fresh = make_notification(user, dedup_key="b", status=NotificationStatus.SENDING)
+    fresh.claimed_at = clock.now() - timedelta(minutes=14, seconds=59)
+    session.add_all([stuck, fresh])
+    await session.flush()
+    assert await fail_stuck(session, clock.now()) == 1
+    await session.refresh(stuck)
+    await session.refresh(fresh)
+    assert (stuck.status, fresh.status) == (NotificationStatus.FAILED, NotificationStatus.SENDING)
+    claimed_at = clock.now() - timedelta(minutes=15)
+    assert stuck.error == "Versandergebnis unklar: hängt seit " + claimed_at.isoformat()
+    assert any(r.levelname == "WARNING" and str(stuck.id) in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.requirement("F-13")
+async def test_expired_planned_row_fails(session: AsyncSession, clock: FixedClock) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    row = make_notification(user, dedup_key="a", expires_at=clock.now())
+    session.add(row)
+    await session.flush()
+    assert await expire(session, clock.now()) == 1
+    await session.refresh(row)
+    assert (row.status, row.error) == (NotificationStatus.FAILED, "Zeitfenster abgelaufen")

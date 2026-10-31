@@ -3,11 +3,11 @@
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import case, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -26,6 +26,7 @@ from giftmanager.models.user import User, UserStatus
 logger = logging.getLogger(__name__)
 
 SEND_HOUR = 8
+STUCK_AFTER = timedelta(minutes=15)
 
 
 def _zone() -> ZoneInfo:
@@ -189,3 +190,44 @@ async def dispatch_due(
                 notification.status = NotificationStatus.FAILED
                 notification.error = "Versandergebnis unklar: " + failure.detail
                 logger.warning("Delivery result of notification %s is unclear", notification_id)
+
+
+async def expire(session: AsyncSession, now: datetime) -> int:
+    """Fail `planned` rows whose send window has passed; they are never sent late."""
+    result = await session.execute(
+        update(Notification)
+        .where(Notification.status == NotificationStatus.PLANNED, Notification.expires_at <= now)
+        .values(status=NotificationStatus.FAILED, error="Zeitfenster abgelaufen")
+        .returning(Notification.id)
+        .execution_options(synchronize_session="fetch")
+    )
+    return len(result.all())
+
+
+async def fail_stuck(session: AsyncSession, now: datetime) -> int:
+    """Fail `sending` rows claimed at least STUCK_AFTER ago. The send outcome is unknown, so they are never resent."""
+    stuck = (
+        await session.execute(
+            select(Notification.id, Notification.claimed_at)
+            .where(
+                Notification.status == NotificationStatus.SENDING,
+                Notification.claimed_at <= now - STUCK_AFTER,
+            )
+            .with_for_update(skip_locked=True)
+        )
+    ).all()
+    if not stuck:
+        return 0
+    errors: dict[UUID, str] = {}
+    for notification_id, claimed_at in stuck:
+        if claimed_at is None:  # excluded by the WHERE clause; only for the type checker
+            continue
+        errors[notification_id] = "Versandergebnis unklar: hängt seit " + claimed_at.isoformat()
+        logger.warning("Notification %s stuck in sending; marked failed", notification_id)
+    await session.execute(
+        update(Notification)
+        .where(Notification.id.in_(list(errors)))
+        .values(status=NotificationStatus.FAILED, error=case(errors, value=Notification.id))
+        .execution_options(synchronize_session="fetch")
+    )
+    return len(errors)

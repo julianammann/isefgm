@@ -481,6 +481,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_notifications.py::test_transient_failure_keeps_rows_planned_and_stops` | passed |
 | F-13 | `tests/test_notifications.py::test_permanent_failure_is_final` | passed |
 | F-13 | `tests/test_notifications.py::test_unclear_result_is_logged_and_not_resent` | passed |
+| F-13 | `tests/test_notifications.py::test_expired_planned_row_fails` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -727,6 +728,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-02 | `tests/test_notifications.py::test_transient_failure_keeps_rows_planned_and_stops` | passed |
 | Q-02 | `tests/test_notifications.py::test_permanent_failure_is_final` | passed |
 | Q-02 | `tests/test_notifications.py::test_unclear_result_is_logged_and_not_resent` | passed |
+| Q-02 | `tests/test_notifications.py::test_stuck_sending_fails_after_15_minutes` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | Q-03 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
 | Q-03 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/login-body0]` | passed |
@@ -876,6 +878,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_notifications.py::test_transient_failure_keeps_rows_planned_and_stops` | passed |
 | QZ-05 | `tests/test_notifications.py::test_permanent_failure_is_final` | passed |
 | QZ-05 | `tests/test_notifications.py::test_unclear_result_is_logged_and_not_resent` | passed |
+| QZ-05 | `tests/test_notifications.py::test_stuck_sending_fails_after_15_minutes` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |
