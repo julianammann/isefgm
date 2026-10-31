@@ -242,6 +242,27 @@ async def test_list_is_sorted_by_month_and_day_across_pages(
     assert names == ["Jan", "A tie", "b tie", "Late March", "Dec"]
 
 
+@pytest.mark.requirement("F-03")
+async def test_list_breaks_day_ties_by_name_ignoring_case(client: AsyncClient, anna: User) -> None:
+    # Byte order and full-date order would both give B, C, a.
+    for name, date in [("B", "2018-05-01"), ("a", "2021-05-01"), ("C", "2019-05-01")]:
+        await client.post(OCCASIONS, json={"name": name, "date": date})
+
+    r = await client.get(OCCASIONS)
+    assert [o["name"] for o in r.json()["items"]] == ["a", "B", "C"]
+
+
+@pytest.mark.requirement("F-03")
+async def test_list_breaks_name_ties_by_id(client: AsyncClient, anna: User) -> None:
+    ids = [
+        (await client.post(OCCASIONS, json={"name": "Fest", "date": date})).json()["id"]
+        for date in ["2022-05-01", "2018-05-01", "2020-05-01"]
+    ]
+
+    r = await client.get(OCCASIONS)
+    assert [o["id"] for o in r.json()["items"]] == sorted(ids)
+
+
 @pytest.mark.requirement("F-03", "Q-01")
 @pytest.mark.parametrize("method", ITEM_METHODS)
 async def test_occasions_of_another_account_are_invisible(

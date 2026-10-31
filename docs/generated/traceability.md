@@ -80,6 +80,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_occasions.py::test_delete_occasion` | passed |
 | F-03 | `tests/test_occasions.py::test_list_is_sorted_by_date_and_paginated` | passed |
 | F-03 | `tests/test_occasions.py::test_list_is_sorted_by_month_and_day_across_pages` | passed |
+| F-03 | `tests/test_occasions.py::test_list_breaks_day_ties_by_name_ignoring_case` | passed |
+| F-03 | `tests/test_occasions.py::test_list_breaks_name_ties_by_id` | passed |
 | F-03 | `tests/test_occasions.py::test_occasions_of_another_account_are_invisible[GET]` | passed |
 | F-03 | `tests/test_occasions.py::test_occasions_of_another_account_are_invisible[PUT]` | passed |
 | F-03 | `tests/test_occasions.py::test_occasions_of_another_account_are_invisible[DELETE]` | passed |
