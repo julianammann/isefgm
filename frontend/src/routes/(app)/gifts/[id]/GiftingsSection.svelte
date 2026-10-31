@@ -5,16 +5,20 @@
     GIFTING_STATUS,
     GIFTING_STATUS_CLASS,
     GIFTING_STATUS_ORDER,
+    TASK_STATUS,
+    TASK_STATUS_ORDER,
     formatDate,
     type GiftingStatus
   } from '$lib/display';
   import type { ActionData, PageData } from './$types';
 
   type Gifting = PageData['giftings'][number];
+  type Task = PageData['tasksByGifting'][string][number];
 
   let {
     gift,
     giftings,
+    tasksByGifting,
     people,
     occasions,
     form
@@ -50,6 +54,45 @@
   // The status select drives which fields are required; it starts from the loaded values.
   let status = $derived<GiftingStatus>(values.status ?? 'idea');
 
+  let taskFormOpen = $state(false);
+  let taskDeleteOpen = $state(false);
+  let taskToDelete = $state.raw<Task | null>(null);
+  /**
+   * One opening of the task dialog, same pattern as `session`: the gifting the task belongs to
+   * (null on a bare idea, which then gets a gifting with the task) and the task to edit.
+   */
+  let taskSession = $state.raw<{ giftingId: string | null; task: Task | null; seen: ActionData }>({
+    giftingId: null,
+    task: null,
+    seen: null
+  });
+  const taskFailed = $derived(form !== taskSession.seen && form?.scope === 'task' ? form : null);
+  const taskValues = $derived(
+    taskFailed?.values ?? {
+      title: taskSession.task?.title ?? '',
+      status: taskSession.task?.status ?? 'open',
+      due_on: taskSession.task?.due_on ?? null
+    }
+  );
+  const taskErrors = $derived(taskFailed?.errors ?? {});
+  const taskAction = $derived(
+    taskSession.task
+      ? '?/updateTask'
+      : taskSession.giftingId
+        ? '?/createTask'
+        : '?/createTaskForGift'
+  );
+
+  function openTaskForm(giftingId: string | null, task: Task | null) {
+    taskSession = { giftingId, task, seen: form };
+    taskFormOpen = true;
+  }
+
+  function askDeleteTask(task: Task) {
+    taskToDelete = task;
+    taskDeleteOpen = true;
+  }
+
   let today = $state('');
   onMount(() => {
     today = new Date().toLocaleDateString('sv-SE');
@@ -67,28 +110,51 @@
 
   // A failed delete closes its dialog, so the page's alert is not hidden behind it.
   $effect(() => {
-    if (form?.scope === 'delete') deleteOpen = false;
+    if (form?.scope === 'delete') {
+      deleteOpen = false;
+      taskDeleteOpen = false;
+    }
   });
 </script>
 
 <section class="mt-10" aria-labelledby="giftings-heading">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h2 id="giftings-heading" class="text-lg font-semibold">Beschenkungen</h2>
-    <button
-      type="button"
-      class="rounded bg-black px-4 py-2 text-white"
-      aria-haspopup="dialog"
-      aria-controls="gifting-form"
-      onclick={() => openForm(null)}
-    >
-      + Beschenkung
-    </button>
+    <span class="flex flex-wrap items-center gap-3">
+      {#if giftings.length === 0}
+        <button
+          type="button"
+          class="rounded border px-4 py-2"
+          aria-haspopup="dialog"
+          aria-controls="task-form"
+          aria-describedby="task-bare-hint"
+          onclick={() => openTaskForm(null, null)}
+        >
+          + Aufgabe
+        </button>
+      {/if}
+      <button
+        type="button"
+        class="rounded bg-black px-4 py-2 text-white"
+        aria-haspopup="dialog"
+        aria-controls="gifting-form"
+        onclick={() => openForm(null)}
+      >
+        + Beschenkung
+      </button>
+    </span>
   </div>
+  {#if giftings.length === 0}
+    <p id="task-bare-hint" class="mt-2 text-sm text-gray-600">
+      „+ Aufgabe“ legt eine Beschenkung mit Status ‚Idee‘ an.
+    </p>
+  {/if}
 
   {#if giftings.length}
     <ul class="mt-4 flex flex-col gap-3">
       {#each giftings as g (g.id)}
         {@const who = g.people.map((p) => p.name).join(', ')}
+        {@const tasks = tasksByGifting[g.id] ?? []}
         <li class="rounded border p-3">
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-sm">
@@ -130,6 +196,57 @@
               <span aria-hidden="true">{GIFTING_STATUS[g.status].icon}</span>
               {GIFTING_STATUS[g.status].label}
             </span>
+          </div>
+
+          <div class="mt-4 border-t pt-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-semibold">Aufgaben</h3>
+              <button
+                type="button"
+                class="text-sm underline"
+                aria-haspopup="dialog"
+                aria-controls="task-form"
+                onclick={() => openTaskForm(g.id, null)}
+              >
+                + Aufgabe<span class="sr-only"> zur Beschenkung{who ? ` für ${who}` : ''}</span>
+              </button>
+            </div>
+            {#if tasks.length}
+              <ul class="mt-2 flex flex-col gap-2">
+                {#each tasks as t (t.id)}
+                  <li class="flex flex-wrap items-center gap-2 text-sm">
+                    <span data-status={t.status}>
+                      <span aria-hidden="true">{TASK_STATUS[t.status].icon}</span>
+                      {TASK_STATUS[t.status].label} – {t.title}
+                    </span>
+                    {#if t.due_on}<span class="text-gray-600">fällig {formatDate(t.due_on)}</span
+                      >{/if}
+                    <span class="ml-auto flex items-center gap-4">
+                      <button
+                        type="button"
+                        class="underline"
+                        aria-haspopup="dialog"
+                        aria-controls="task-form"
+                        onclick={() => openTaskForm(g.id, t)}
+                      >
+                        Bearbeiten<span class="sr-only">: Aufgabe {t.title}</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="text-red-800 underline"
+                        aria-haspopup="dialog"
+                        aria-controls="task-delete"
+                        onclick={() => askDeleteTask(t)}
+                      >
+                        Löschen<span class="sr-only">: Aufgabe {t.title}</span>
+                      </button>
+                    </span>
+                  </li>
+                {/each}
+              </ul>
+            {:else}
+              <p class="mt-2 text-sm text-gray-600">Noch keine Aufgaben.</p>
+            {/if}
           </div>
         </li>
       {/each}
@@ -268,4 +385,80 @@
     Die Beschenkung wird mit ihren Aufgaben endgültig gelöscht. Die Geschenkidee, die Personen und
     der Anlass bleiben erhalten.
   </p>
+</FormDialog>
+
+<FormDialog
+  id="task-form"
+  heading={taskSession.task ? 'Aufgabe bearbeiten' : 'Aufgabe anlegen'}
+  action={taskAction}
+  submitLabel={taskSession.task ? 'Speichern' : 'Anlegen'}
+  bind:open={taskFormOpen}
+  message={taskFailed?.message ?? null}
+>
+  {#key taskSession}
+    {#if taskSession.task}<input type="hidden" name="id" value={taskSession.task.id} />{/if}
+    {#if taskSession.giftingId}
+      <input type="hidden" name="gifting_id" value={taskSession.giftingId} />
+    {:else}
+      <p class="text-sm text-gray-600">Legt eine Beschenkung mit Status ‚Idee‘ an.</p>
+    {/if}
+
+    <label for="task-title" class="text-sm font-medium">Titel</label>
+    <input
+      id="task-title"
+      name="title"
+      type="text"
+      required
+      value={taskValues.title ?? ''}
+      class="rounded border px-3 py-2"
+      aria-invalid={taskErrors.title ? 'true' : undefined}
+      aria-describedby={taskErrors.title ? 'task-title-error' : undefined}
+    />
+    {#if taskErrors.title}
+      <p id="task-title-error" class="text-sm text-red-800">{taskErrors.title}</p>
+    {/if}
+
+    <label for="task-status" class="text-sm font-medium">Status</label>
+    <select
+      id="task-status"
+      name="status"
+      value={taskValues.status ?? 'open'}
+      class="rounded border px-3 py-2"
+      aria-invalid={taskErrors.status ? 'true' : undefined}
+      aria-describedby={taskErrors.status ? 'task-status-error' : undefined}
+    >
+      {#each TASK_STATUS_ORDER as s (s)}
+        <option value={s}>{TASK_STATUS[s].icon} {TASK_STATUS[s].label}</option>
+      {/each}
+    </select>
+    {#if taskErrors.status}
+      <p id="task-status-error" class="text-sm text-red-800">{taskErrors.status}</p>
+    {/if}
+
+    <label for="task-due_on" class="text-sm font-medium">Fälligkeitsdatum (optional)</label>
+    <input
+      id="task-due_on"
+      name="due_on"
+      type="date"
+      value={taskValues.due_on ?? ''}
+      class="rounded border px-3 py-2"
+      aria-invalid={taskErrors.due_on ? 'true' : undefined}
+      aria-describedby={taskErrors.due_on ? 'task-due-on-error' : undefined}
+    />
+    {#if taskErrors.due_on}
+      <p id="task-due-on-error" class="text-sm text-red-800">{taskErrors.due_on}</p>
+    {/if}
+  {/key}
+</FormDialog>
+
+<FormDialog
+  id="task-delete"
+  heading="Aufgabe löschen?"
+  action="?/deleteTask"
+  submitLabel="Löschen"
+  danger
+  bind:open={taskDeleteOpen}
+>
+  <input type="hidden" name="id" value={taskToDelete?.id} />
+  <p class="text-sm">Die Aufgabe „{taskToDelete?.title}“ wird endgültig gelöscht.</p>
 </FormDialog>

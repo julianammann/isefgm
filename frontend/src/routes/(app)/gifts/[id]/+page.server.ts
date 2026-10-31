@@ -25,7 +25,14 @@ import {
   parseImageForm,
   updateImageLabel
 } from '$lib/server/images';
-import { listTasks } from '$lib/server/tasks';
+import {
+  createTask,
+  createTaskForGift,
+  deleteTask,
+  listTasks,
+  parseTaskForm,
+  updateTask
+} from '$lib/server/tasks';
 import type { Result } from '$lib/server/result';
 
 /**
@@ -196,5 +203,44 @@ export const actions: Actions = {
     const result = await deleteGifting(locals.api, id);
     if (!result.ok) return detailFail(result.status, 'delete', { message: result.message });
     detailRedirect(params.id, 'giftingDeleted');
+  },
+
+  createTask: async ({ request, locals, params }) => {
+    const form = await request.formData();
+    const { values, errors } = parseTaskForm(form);
+    if (Object.keys(errors).length) return detailFail(400, 'task', { values, errors });
+    const gifting_id = String(form.get('gifting_id') ?? '');
+    const result = await createTask(locals.api, { ...values, gifting_id });
+    if (!result.ok) return detailFail(result.status, 'task', { values, message: result.message });
+    detailRedirect(params.id, 'taskCreated');
+  },
+
+  updateTask: async ({ request, locals, params }) => {
+    const form = await request.formData();
+    const { values, errors } = parseTaskForm(form);
+    if (Object.keys(errors).length) return detailFail(400, 'task', { values, errors });
+    const gifting_id = String(form.get('gifting_id') ?? '');
+    const result = await updateTask(locals.api, String(form.get('id') ?? ''), {
+      ...values,
+      gifting_id
+    });
+    if (!result.ok) return detailFail(result.status, 'task', { values, message: result.message });
+    detailRedirect(params.id, 'taskUpdated');
+  },
+
+  deleteTask: async ({ request, locals, params }) => {
+    const id = String((await request.formData()).get('id') ?? '');
+    const result = await deleteTask(locals.api, id);
+    if (!result.ok) return detailFail(result.status, 'delete', { message: result.message });
+    detailRedirect(params.id, 'taskDeleted');
+  },
+
+  createTaskForGift: async ({ request, locals, params }) => {
+    const { values, errors } = parseTaskForm(await request.formData());
+    if (Object.keys(errors).length) return detailFail(400, 'task', { values, errors });
+    const gift = unwrap(await getGift(locals.api, params.id));
+    const result = await createTaskForGift(locals.api, gift, values);
+    if (!result.ok) return detailFail(result.status, 'task', { values, message: result.message });
+    detailRedirect(params.id, 'taskCreated');
   }
 };
