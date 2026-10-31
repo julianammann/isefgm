@@ -1,5 +1,10 @@
-/** Pagination helpers shared by the list pages; browser-safe, no server imports. */
+/**
+ * Pagination helpers shared by the list pages; browser-safe, no server imports.
+ *
+ * @module
+ */
 
+/** Entries per list page (QZ-02 allows at most 200 per backend page). */
 export const PAGE_SIZE = 200;
 
 /** Highest page whose offset `(page - 1) * PAGE_SIZE` is still a safe integer. */
