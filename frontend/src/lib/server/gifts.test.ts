@@ -9,6 +9,7 @@ import {
   giftFromForm,
   isPrice,
   listGifts,
+  listGiftsPage,
   parseGiftForm,
   updateGift
 } from './gifts';
@@ -210,5 +211,21 @@ describe('deleteGift', () => {
       message:
         'Die Idee wird von mindestens einer Beschenkung verwendet und kann nicht gelöscht werden.'
     });
+  });
+});
+
+describe('listGiftsPage', () => {
+  it('requests one page of 200 and returns items with the total', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [gift], offset: 400, limit: 200, total: 450 })
+    );
+
+    await expect(listGiftsPage(api, 3)).resolves.toEqual({
+      ok: true,
+      data: { items: [gift], total: 450 }
+    });
+    const query = new URL(requests[0].url).searchParams;
+    expect(requests).toHaveLength(1);
+    expect([query.get('limit'), query.get('offset')]).toEqual(['200', '400']);
   });
 });

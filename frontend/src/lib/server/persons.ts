@@ -9,6 +9,7 @@
  */
 
 import type { components } from '$lib/api/schema';
+import { PAGE_SIZE } from '$lib/pagination';
 
 /** Payload for creating or updating a person. */
 export type Person = components['schemas']['PersonOut'];
@@ -62,7 +63,7 @@ export async function listPersons(api: Api): Promise<Result<Person[]>> {
   const persons: Person[] = [];
   for (;;) {
     const page = await send(
-      api.GET('/api/v1/people', { params: { query: { offset: persons.length } } })
+      api.GET('/api/v1/people', { params: { query: { offset: persons.length, limit: PAGE_SIZE } } })
     );
     if (!page.ok) return page;
     persons.push(...page.data.items);
@@ -70,6 +71,21 @@ export async function listPersons(api: Api): Promise<Result<Person[]>> {
       return { ok: true, data: persons };
     }
   }
+}
+
+/** Returns one page of persons; `total` counts all entries, not only this page. */
+export async function listPersonsPage(
+  api: Api,
+  page: number
+): Promise<Result<{ items: Person[]; total: number }>> {
+  const result = await send(
+    api.GET('/api/v1/people', {
+      params: { query: { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE } }
+    })
+  );
+  return result.ok
+    ? { ok: true, data: { items: result.data.items, total: result.data.total } }
+    : result;
 }
 
 /** Returns one person; 404 if the id is unknown or belongs to another account. */

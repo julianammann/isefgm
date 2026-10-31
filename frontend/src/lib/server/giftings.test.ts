@@ -157,3 +157,14 @@ describe('deleteGifting', () => {
     });
   });
 });
+
+describe('listGiftings page size', () => {
+  it('sends limit=200', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [given], offset: 0, limit: 200, total: 1 })
+    );
+
+    await listGiftings(api);
+    expect(new URL(requests[0].url).searchParams.get('limit')).toBe('200');
+  });
+});

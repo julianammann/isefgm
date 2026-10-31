@@ -9,6 +9,7 @@
  */
 
 import type { components } from '$lib/api/schema';
+import { PAGE_SIZE } from '$lib/pagination';
 
 /** Payload for creating or updating a gift idea. */
 export type GiftIn = components['schemas']['GiftIn'];
@@ -65,7 +66,7 @@ export async function listGifts(api: Api): Promise<Result<GiftOut[]>> {
   const gifts: GiftOut[] = [];
   for (;;) {
     const page = await send(
-      api.GET('/api/v1/gifts', { params: { query: { offset: gifts.length } } })
+      api.GET('/api/v1/gifts', { params: { query: { offset: gifts.length, limit: PAGE_SIZE } } })
     );
     if (!page.ok) return page;
     gifts.push(...page.data.items);
@@ -73,6 +74,21 @@ export async function listGifts(api: Api): Promise<Result<GiftOut[]>> {
       return { ok: true, data: gifts };
     }
   }
+}
+
+/** Returns one page of gift ideas; `total` counts all entries, not only this page. */
+export async function listGiftsPage(
+  api: Api,
+  page: number
+): Promise<Result<{ items: GiftOut[]; total: number }>> {
+  const result = await send(
+    api.GET('/api/v1/gifts', {
+      params: { query: { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE } }
+    })
+  );
+  return result.ok
+    ? { ok: true, data: { items: result.data.items, total: result.data.total } }
+    : result;
 }
 
 /** Returns one gift idea; 404 if the id is unknown or belongs to another account. */

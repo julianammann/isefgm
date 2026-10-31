@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiClient } from '$lib/api/client';
 import type { Occasion, OccasionInput } from './occasions';
-import { deleteOccasion, getOccasion, updateOccasion } from './occasions';
+import { deleteOccasion, getOccasion, listOccasionsPage, updateOccasion } from './occasions';
 
 const occasion: Occasion = {
   id: '01a10a3c-7d2e-7c41-9b0e-3f5a8d2c1e94',
@@ -74,5 +74,21 @@ describe('deleteOccasion', () => {
     });
     expect(requests[0].method).toBe('DELETE');
     expect(new URL(requests[0].url).pathname).toBe(`/api/v1/occasions/${occasion.id}`);
+  });
+});
+
+describe('listOccasionsPage', () => {
+  it('requests one page of 200 and returns items with the total', async () => {
+    const { api, requests } = createApi(async () =>
+      jsonResponse({ items: [occasion], offset: 0, limit: 200, total: 450 })
+    );
+
+    await expect(listOccasionsPage(api, 1)).resolves.toEqual({
+      ok: true,
+      data: { items: [occasion], total: 450 }
+    });
+    const query = new URL(requests[0].url).searchParams;
+    expect(requests).toHaveLength(1);
+    expect([query.get('limit'), query.get('offset')]).toEqual(['200', '0']);
   });
 });
