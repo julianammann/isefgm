@@ -61,21 +61,6 @@ async function send<T>(request: Promise<{ data?: T; response: Response }>): Prom
   }
 }
 
-/** Returns all gift ideas of the current account, newest first; reads every page of the list. */
-export async function listGifts(api: Api): Promise<Result<GiftOut[]>> {
-  const gifts: GiftOut[] = [];
-  for (;;) {
-    const page = await send(
-      api.GET('/api/v1/gifts', { params: { query: { offset: gifts.length, limit: PAGE_SIZE } } })
-    );
-    if (!page.ok) return page;
-    gifts.push(...page.data.items);
-    if (page.data.items.length === 0 || gifts.length >= page.data.total) {
-      return { ok: true, data: gifts };
-    }
-  }
-}
-
 /** Returns one page of gift ideas; `total` counts all entries, not only this page. */
 export async function listGiftsPage(
   api: Api,
