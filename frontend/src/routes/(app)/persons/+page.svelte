@@ -28,11 +28,6 @@
     if (!isEdit && !showForm && formDialog?.open) formDialog.close();
   });
 
-  /** URL of the list at the given page, optionally with extra params. */
-  function listHref(page: number, extra?: Record<string, string>) {
-    return resolve('/persons') + pageQuery(page, extra);
-  }
-
   function openForm() {
     showForm = true;
   }
@@ -43,7 +38,13 @@
   }
 </script>
 
-<svelte:head><title>Personen – Geschenke-Manager</title></svelte:head>
+<svelte:head
+  ><title
+    >{data.page > 1
+      ? `Personen – Seite ${data.page} – Geschenke-Manager`
+      : 'Personen – Geschenke-Manager'}</title
+  ></svelte:head
+>
 
 <main class="mx-auto max-w-4xl p-8">
   <h1 class="text-2xl font-bold">Personen</h1>
@@ -63,6 +64,10 @@
         </button>
       {/if}
     </div>
+    {#if data.success}<p role="status" class="mt-2 text-sm text-green-800">{data.success}</p>{/if}
+    {#if form?.deleteMessage}
+      <p role="alert" class="mt-2 text-sm text-red-800">{form.deleteMessage}</p>
+    {/if}
     {#if data.persons.length === 0}
       <p class="mt-2 text-sm">Noch keine Personen angelegt.</p>
     {:else}
@@ -77,8 +82,10 @@
                 <span class="ml-2 text-sm text-gray-600">{person.relationship}</span>
               {/if}
             </span>
-            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- listHref resolves -->
-            <a href={listHref(data.page, { edit: person.id })} class="text-sm underline">
+            <a
+              href={resolve(`/persons${pageQuery(data.page, { edit: person.id })}`)}
+              class="text-sm underline"
+            >
               Bearbeiten<span class="sr-only">: {person.name}</span>
             </a>
             <button
@@ -92,7 +99,11 @@
         {/each}
       </ul>
     {/if}
-    <Pagination page={data.page} total={data.total} href={(p) => listHref(p)} />
+    <Pagination
+      page={data.page}
+      total={data.total}
+      href={(p) => resolve(`/persons${pageQuery(p)}`)}
+    />
   </section>
 
   <dialog
@@ -121,11 +132,6 @@
       <button type="submit" class="rounded bg-red-700 px-4 py-2 text-white">Löschen</button>
     </form>
   </dialog>
-
-  {#if data.success}<p role="status" class="mt-4 text-sm text-green-800">{data.success}</p>{/if}
-  {#if form?.deleteMessage}
-    <p role="alert" class="mt-4 text-sm text-red-800">{form.deleteMessage}</p>
-  {/if}
 
   <dialog
     id="person-form-dialog"
@@ -211,8 +217,9 @@
             {isEdit ? 'Speichern' : 'Anlegen'}
           </button>
           {#if isEdit}
-            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- listHref resolves -->
-            <a href={listHref(data.page)} class="rounded border px-4 py-2">Abbrechen</a>
+            <a href={resolve(`/persons${pageQuery(data.page)}`)} class="rounded border px-4 py-2"
+              >Abbrechen</a
+            >
           {:else}
             <button
               type="button"
