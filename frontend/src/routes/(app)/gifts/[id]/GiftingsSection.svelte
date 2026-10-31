@@ -109,6 +109,20 @@
     today = new Date().toLocaleDateString('sv-SE');
   });
 
+  /**
+   * Screen-reader name of a gifting, e.g. „Beschenkung für Anna (Geplant, Weihnachten 24.12.2026)“;
+   * status and occasion tell apart giftings without recipients.
+   */
+  function giftingName(g: Gifting) {
+    const who = g.people.map((p) => p.name).join(', ');
+    const details = [
+      GIFTING_STATUS[g.status].label,
+      g.occasion && `${g.occasion.name} ${formatDate(g.occasion_date)}`.trim(),
+      g.given_on && `verschenkt am ${formatDate(g.given_on)}`
+    ];
+    return `Beschenkung${who ? ` für ${who}` : ''} (${details.filter(Boolean).join(', ')})`;
+  }
+
   function openForm(gifting: Gifting | null) {
     session = { gifting, seen: form };
     formOpen = true;
@@ -159,9 +173,10 @@
       {#each giftings as g (g.id)}
         {@const who = g.people.map((p) => p.name).join(', ')}
         {@const tasks = tasksByGifting[g.id] ?? []}
+        {@const name = giftingName(g)}
         <li class="rounded border p-3">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm">
+            <span class="text-sm wrap-anywhere">
               <span class="font-bold">{who || 'Noch keine Empfänger:innen'}</span>
               {#if g.occasion}<span class="ml-2 text-gray-600"
                   >{g.occasion.name} {formatDate(g.occasion_date)}</span
@@ -178,7 +193,7 @@
                 aria-controls="gifting-form"
                 onclick={() => openForm(g)}
               >
-                Bearbeiten<span class="sr-only">: Beschenkung{who ? ` für ${who}` : ''}</span>
+                Bearbeiten<span class="sr-only">: {name}</span>
               </button>
               <button
                 type="button"
@@ -187,7 +202,7 @@
                 aria-controls="gifting-delete"
                 onclick={() => askDelete(g)}
               >
-                Löschen<span class="sr-only">: Beschenkung{who ? ` für ${who}` : ''}</span>
+                Löschen<span class="sr-only">: {name}</span>
               </button>
             </span>
           </div>
@@ -212,14 +227,14 @@
                 aria-controls="task-form"
                 onclick={() => openTaskForm(g.id, null)}
               >
-                + Aufgabe<span class="sr-only"> zur Beschenkung{who ? ` für ${who}` : ''}</span>
+                + Aufgabe<span class="sr-only"> zur {name}</span>
               </button>
             </div>
             {#if tasks.length}
               <ul class="mt-2 flex flex-col gap-2">
                 {#each tasks as t (t.id)}
                   <li class="flex flex-wrap items-center gap-2 text-sm">
-                    <span data-status={t.status}>
+                    <span class="wrap-anywhere" data-status={t.status}>
                       <span aria-hidden="true">{TASK_STATUS[t.status].icon}</span>
                       {TASK_STATUS[t.status].label} – {t.title}
                     </span>
@@ -433,7 +448,7 @@
       aria-describedby={taskErrors.status ? 'task-status-error' : undefined}
     >
       {#each TASK_STATUS_ORDER as s (s)}
-        <option value={s}>{TASK_STATUS[s].icon} {TASK_STATUS[s].label}</option>
+        <option value={s}>{TASK_STATUS[s].label}</option>
       {/each}
     </select>
     {#if taskErrors.status}

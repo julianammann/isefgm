@@ -132,14 +132,24 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 };
 
 /**
- * `update`: validates and saves the idea, then stays on the page. `delete`: removes the idea
- * and returns to the list; 409 while a gifting still uses it.
+ * Every action takes the idea from the URL and the id of the edited item from the form field
+ * `id`. A success redirects back to this page with a `?success=` key (only `delete` leaves for
+ * the list); a failure returns its `scope`, so the page shows the error in the right dialog.
+ *
+ * `update`: validates and saves the idea. `delete`: removes the idea and returns to the list;
+ * 409 while a gifting still uses it.
  *
  * `createNote` / `updateNote` / `deleteNote` and the `*Link` actions: notes and links of this
- * idea, same id convention.
+ * idea.
  *
- * `createGifting` / `updateGifting` / `deleteGifting`: the giftings of this idea; the gifting
- * id comes from the form field `id`, the idea from the URL.
+ * `createImage`: uploads an image (multipart, file checked here as well). `updateImage`
+ * changes only its label, the backend allows nothing else. `deleteImage` removes it.
+ *
+ * `createGifting` / `updateGifting` / `deleteGifting`: the giftings of this idea.
+ *
+ * `createTask` / `updateTask` / `deleteTask`: the tasks of a gifting, named by the form field
+ * `gifting_id`. `createTaskForGift`: on an idea without giftings, creates a gifting with status
+ * `idea` and the task on it; if the task fails, the new gifting is deleted again.
  */
 export const actions: Actions = {
   createImage: async ({ request, locals, params }) => {
@@ -155,9 +165,9 @@ export const actions: Actions = {
   updateImage: async ({ request, locals, params }) => {
     const form = await request.formData();
     const label = String(form.get('label') ?? '').trim();
-    const error = labelError(label);
+    const labelMsg = labelError(label);
     const values = { label };
-    if (error) return detailFail(400, 'image', { values, errors: { label: error } });
+    if (labelMsg) return detailFail(400, 'image', { values, errors: { label: labelMsg } });
     const result = await updateImageLabel(locals.api, String(form.get('id') ?? ''), label);
     if (!result.ok) return detailFail(result.status, 'image', { values, message: result.message });
     detailRedirect(params.id, 'imageUpdated');

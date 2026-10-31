@@ -55,7 +55,7 @@
       {#each notes as n (n.id)}
         <li class="rounded border p-3">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-bold">{n.label}</span>
+            <span class="font-bold wrap-anywhere">{n.label}</span>
             <span class="ml-auto flex items-center gap-4">
               <button
                 type="button"
@@ -77,7 +77,7 @@
               </button>
             </span>
           </div>
-          <p class="mt-2 text-sm whitespace-pre-line">{n.text}</p>
+          <p class="mt-2 text-sm wrap-anywhere whitespace-pre-line">{n.text}</p>
         </li>
       {/each}
     </ul>

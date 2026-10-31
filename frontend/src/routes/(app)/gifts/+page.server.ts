@@ -82,7 +82,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
  *
  * `delete`: removes the gift idea; confirmation happens in the page dialog. 409 while a
  * gifting still uses it.
-
  */
 export const actions: Actions = {
   // ── Gift ideas (F-05) ─────────────────────────────────────────

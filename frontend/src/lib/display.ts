@@ -54,15 +54,20 @@ export const formatDate = (iso: string | null) => (iso ? iso.split('-').reverse(
 export const formatPrice = (price: string | number | null | undefined) =>
   price === null || price === undefined ? '' : String(price).replace('.', ',');
 
-/** One line per gift idea, e.g. „3 Beschenkungen: 2× ◔ Geplant · ✓ Verschenkt“. */
-export function giftingSummary(statuses: GiftingStatus[]): string {
-  if (statuses.length === 0) return 'Noch keine Beschenkung';
+/**
+ * One line per gift idea, e.g. „3 Beschenkungen: 2× ◔ Geplant · ✓ Verschenkt“: `lead`, then the
+ * `parts` joined by „ · “. The icon stays separate, so the page can hide it from screen readers.
+ */
+export function giftingSummary(statuses: GiftingStatus[]): {
+  lead: string;
+  parts: { count: string; icon: string; label: string }[];
+} {
+  if (statuses.length === 0) return { lead: 'Noch keine Beschenkung', parts: [] };
   const parts = GIFTING_STATUS_ORDER.flatMap((status) => {
     const count = statuses.filter((s) => s === status).length;
     if (count === 0) return [];
-    const { icon, label } = GIFTING_STATUS[status];
-    return [`${count > 1 ? `${count}× ` : ''}${icon} ${label}`];
+    return [{ count: count > 1 ? `${count}× ` : '', ...GIFTING_STATUS[status] }];
   });
   const noun = statuses.length === 1 ? 'Beschenkung' : 'Beschenkungen';
-  return `${statuses.length} ${noun}: ${parts.join(' · ')}`;
+  return { lead: `${statuses.length} ${noun}: `, parts };
 }

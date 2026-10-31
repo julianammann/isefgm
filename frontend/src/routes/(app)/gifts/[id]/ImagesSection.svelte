@@ -21,6 +21,8 @@
     seen: null
   });
   let fileError = $state<string | undefined>();
+  /** Whether the file input holds a file; it keeps it after a failed submit. */
+  let hasFile = $state(false);
 
   // A failed delete keeps its dialog open; only the open delete dialog shows the message.
   const deleteFailed = $derived(
@@ -30,12 +32,15 @@
   const label = $derived(failed?.values?.label ?? session.image?.label ?? '');
   const errors = $derived(failed?.errors ?? {});
   const labelMessage = $derived('label' in errors ? errors.label : undefined);
-  const fileMessage = $derived(fileError ?? ('file' in errors ? errors.file : undefined));
+  // The server's file error shows until the user picks another file.
+  let serverFileError = $derived('file' in errors ? errors.file : undefined);
+  const fileMessage = $derived(fileError ?? serverFileError);
   const full = $derived(images.length >= MAX_IMAGES);
 
   function openForm(image: Image | null) {
     session = { image, seen: form };
     fileError = undefined;
+    hasFile = false;
     formOpen = true;
   }
 
@@ -53,8 +58,10 @@
         event.stopImmediatePropagation();
       }
     };
-    input.form?.addEventListener('submit', block, true);
-    return { destroy: () => input.form?.removeEventListener('submit', block, true) };
+    // Kept from mount: `input.form` is already null once the input is removed.
+    const formElement = input.form;
+    formElement?.addEventListener('submit', block, true);
+    return { destroy: () => formElement?.removeEventListener('submit', block, true) };
   }
 </script>
 
@@ -90,7 +97,7 @@
             class="h-48 w-full rounded object-contain"
           />
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="text-sm font-bold">{image.label}</span>
+            <span class="text-sm font-bold wrap-anywhere">{image.label}</span>
             <span class="ml-auto flex items-center gap-4">
               <button
                 type="button"
@@ -154,11 +161,16 @@
         type="file"
         accept={IMAGE_TYPES.join(',')}
         use:guardSubmit
-        onchange={(e) => (fileError = imageFileError(e.currentTarget.files?.[0] ?? null))}
+        onchange={(e) => {
+          const file = e.currentTarget.files?.[0] ?? null;
+          fileError = imageFileError(file);
+          hasFile = file !== null;
+          serverFileError = undefined;
+        }}
         aria-invalid={fileMessage ? 'true' : undefined}
         aria-describedby={fileMessage ? 'image-file-error' : undefined}
       />
-      {#if failed}
+      {#if failed && !hasFile}
         <p class="text-sm text-gray-600">Bitte wähle das Bild erneut aus.</p>
       {/if}
       {#if fileMessage}

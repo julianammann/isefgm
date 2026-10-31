@@ -66,7 +66,9 @@
     {:else}
       <ul class="mt-4 flex flex-col gap-3">
         {#each data.gifts as gift (gift.id)}
-          {@const statuses = (data.giftingsByGift[gift.id] ?? []).map((g) => g.status)}
+          {@const summary = giftingSummary(
+            (data.giftingsByGift[gift.id] ?? []).map((g) => g.status)
+          )}
           <li class="rounded border p-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -78,7 +80,12 @@
                   {#if gift.people.length}
                     · für {gift.people.map((p) => p.name).join(', ')}{/if}
                 </p>
-                <p class="mt-1 text-sm">{giftingSummary(statuses)}</p>
+                <p class="mt-1 text-sm">
+                  {summary.lead}{#each summary.parts as part, i (part.label)}{i
+                      ? ' · '
+                      : ''}{part.count}<span aria-hidden="true">{part.icon}</span>
+                    {part.label}{/each}
+                </p>
               </div>
               <div class="flex items-center gap-4">
                 <a href={resolve(`/gifts?edit=${gift.id}`)} class="text-sm underline">
