@@ -9,26 +9,22 @@ import type { Actions, PageServerLoad } from './$types';
 import {
   createGift,
   deleteGift,
-  giftFromForm,
-  isPrice,
   listGifts,
+  parseGiftForm,
   updateGift,
   type GiftIn
 } from '$lib/server/gifts';
 import {
   createGifting,
   deleteGifting,
-  giftingFromForm,
   groupByGift,
   listGiftings,
+  parseGiftingForm,
   updateGifting,
   type GiftingIn
 } from '$lib/server/giftings';
 import { listPersons } from '$lib/server/persons';
 import { listOccasions } from '$lib/server/occasions';
-
-type FieldErrors = Partial<Record<keyof GiftIn, string>>;
-type GiftingFieldErrors = Partial<Record<keyof GiftingIn, string>>;
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,
@@ -47,71 +43,6 @@ type SuccessKey = keyof typeof successMessages;
 
 function isSuccessKey(key: string | null): key is SuccessKey {
   return key !== null && Object.prototype.hasOwnProperty.call(successMessages, key);
-}
-
-/** Reads and validates the gift idea form. The backend remains the authority on validation. */
-function parseForm(form: FormData): { values: GiftIn; errors: FieldErrors } {
-  const values = giftFromForm(form);
-  const priceFrom = values.price_from === null ? null : String(values.price_from);
-  const priceTo = values.price_to === null ? null : String(values.price_to);
-  const errors: FieldErrors = {};
-  const invalidPrice = 'Bitte gib einen Preis mit höchstens zwei Nachkommastellen an, z. B. 10,99.';
-
-  if (!values.title) errors.title = 'Bitte gib einen Titel an.';
-  else if (values.title.length > 200) {
-    errors.title = 'Der Titel darf höchstens 200 Zeichen lang sein.';
-  }
-  if (values.description && values.description.length > 2000) {
-    errors.description = 'Die Beschreibung darf höchstens 2000 Zeichen lang sein.';
-  }
-  if (priceFrom !== null && !isPrice(priceFrom)) errors.price_from = invalidPrice;
-  if (priceTo !== null && !isPrice(priceTo)) errors.price_to = invalidPrice;
-  else if (
-    priceFrom !== null &&
-    priceTo !== null &&
-    !errors.price_from &&
-    Number(priceFrom) > Number(priceTo)
-  ) {
-    errors.price_to = '„Preis bis“ darf nicht kleiner als „Preis von“ sein.';
-  }
-  if (values.currency && !/^[A-Z]{3}$/.test(values.currency)) {
-    errors.currency = 'Bitte gib einen Währungscode aus drei Buchstaben an, z. B. EUR.';
-  }
-  return { values, errors };
-}
-
-const GIFTING_STATUSES = ['idea', 'planned', 'acquired', 'given'] as const;
-
-/**
- * Reads and validates the gifting form. A given gifting needs recipients, an occasion, its
- * date and the day it was given, like the backend checks. The backend remains the authority.
- */
-function parseGiftingForm(form: FormData): { values: GiftingIn; errors: GiftingFieldErrors } {
-  const status = String(form.get('status') ?? '');
-  const values = giftingFromForm(form, String(form.get('gift_id') ?? ''));
-  const errors: GiftingFieldErrors = {};
-
-  if (!values.gift_id) errors.gift_id = 'Keine Geschenkidee ausgewählt.';
-  if (!(GIFTING_STATUSES as readonly string[]).includes(status)) {
-    errors.status = 'Bitte wähle einen gültigen Status.';
-  }
-  if (values.occasion_date && Number.isNaN(Date.parse(values.occasion_date))) {
-    errors.occasion_date = 'Bitte gib ein gültiges Datum an.';
-  }
-  if (values.given_on && Number.isNaN(Date.parse(values.given_on))) {
-    errors.given_on = 'Bitte gib ein gültiges Datum an.';
-  }
-  if (values.status === 'given') {
-    if (!values.person_ids?.length) {
-      errors.person_ids = 'Für „Verschenkt“ bitte mindestens eine Person auswählen.';
-    }
-    if (!values.occasion_id) errors.occasion_id = 'Für „Verschenkt“ bitte einen Anlass wählen.';
-    if (!values.occasion_date) {
-      errors.occasion_date ??= 'Für „Verschenkt“ bitte den Anlasstermin angeben.';
-    }
-    if (!values.given_on) errors.given_on ??= 'Für „Verschenkt“ bitte das Verschenkdatum angeben.';
-  }
-  return { values, errors };
 }
 
 /**
@@ -183,7 +114,7 @@ export const actions: Actions = {
   // ── Gift ideas (F-05) ─────────────────────────────────────────
 
   create: async ({ request, locals }) => {
-    const { values, errors } = parseForm(await request.formData());
+    const { values, errors } = parseGiftForm(await request.formData());
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await createGift(locals.api, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
@@ -193,7 +124,7 @@ export const actions: Actions = {
   update: async ({ request, locals }) => {
     const form = await request.formData();
     const id = String(form.get('id') ?? '');
-    const { values, errors } = parseForm(form);
+    const { values, errors } = parseGiftForm(form);
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await updateGift(locals.api, id, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });

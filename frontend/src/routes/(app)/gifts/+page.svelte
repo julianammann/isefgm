@@ -4,6 +4,15 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { onMount } from 'svelte';
+  import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
+  import {
+    CATEGORIES,
+    GIFTING_STATUS,
+    GIFTING_STATUS_CLASS,
+    GIFTING_STATUS_ORDER,
+    formatDate,
+    type GiftingStatus
+  } from '$lib/display';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -25,7 +34,6 @@
   const errors = $derived(form?.errors ?? {});
 
   let showForm = $state(false);
-  let formDialog: HTMLDialogElement | undefined = $state();
   let previousEditId = $state<string | null>(null);
   let deleteDialog: HTMLDialogElement | null = null;
   let toDelete = $state<{ id: string; title: string } | null>(null);
@@ -42,7 +50,7 @@
   type Gifting = (typeof data.giftingsByGift)[string][number];
 
   /** Set by the create buttons; `fresh` ignores the values of an earlier failed submit. */
-  let newGifting = $state<{ giftId: string; status: Status } | null>(null);
+  let newGifting = $state<{ giftId: string; status: GiftingStatus } | null>(null);
   // A dialog opened by a create button never edits, even if `?edit_gifting` is still in the URL.
   const isGiftingEdit = $derived(data.editingGifting !== null && newGifting === null);
   let fresh = $state(false);
@@ -74,7 +82,7 @@
     data.gifts.find((gift) => gift.id === giftingValues.gift_id)?.title ?? ''
   );
   // The status select drives which fields are required; it starts from the loaded values.
-  let giftingStatus = $derived<Status>(giftingValues.status ?? 'idea');
+  let giftingStatus = $derived<GiftingStatus>(giftingValues.status ?? 'idea');
 
   let showGiftingForm = $state(false);
   let giftingFormDialog: HTMLDialogElement | undefined = $state();
@@ -82,50 +90,16 @@
   let deleteGiftingDialog: HTMLDialogElement | null = null;
   let giftingToDelete = $state<Gifting | null>(null);
 
-  type Status = 'idea' | 'planned' | 'acquired' | 'given';
-  // Q-07: always show the status as text and symbol; colour is only an addition.
-  const STATUS: Record<Status, { label: string; icon: string }> = {
-    idea: { label: 'Idee', icon: '○' },
-    planned: { label: 'Geplant', icon: '◔' },
-    acquired: { label: 'Besorgt', icon: '◕' },
-    given: { label: 'Verschenkt', icon: '✓' }
-  };
-  const STATUS_ORDER = Object.keys(STATUS) as Status[];
-  const STATUS_CLASS: Record<Status, string> = {
-    idea: 'border-gray-400 text-gray-700',
-    planned: 'border-blue-700 text-blue-800',
-    acquired: 'border-amber-700 text-amber-800',
-    given: 'border-green-700 text-green-800'
-  };
-
-  const CATEGORIES = {
-    books: 'Bücher',
-    games: 'Spiele',
-    experience: 'Erlebnis',
-    clothing: 'Kleidung',
-    tech: 'Technik',
-    food: 'Essen & Trinken',
-    home: 'Wohnen',
-    voucher: 'Gutschein',
-    other: 'Sonstiges'
-  } as const;
-
   let today = $state('');
   onMount(() => {
     today = new Date().toLocaleDateString('sv-SE');
   });
-  const formatDate = (iso: string | null) => (iso ? iso.split('-').reverse().join('.') : '');
-  // Prices come from the API with a decimal point; the form shows them with a decimal comma.
-  const formatPrice = (price: string | number | null | undefined) =>
-    price === null || price === undefined ? '' : String(price).replace('.', ',');
 
   $effect(() => {
     const editId = data.editing?.id ?? null;
     if (previousEditId && !editId) showForm = false;
     if (editId && editId !== previousEditId) showForm = true;
     previousEditId = editId;
-    if (showForm && formDialog && !formDialog.open) formDialog.showModal();
-    if (!isEdit && !showForm && formDialog?.open) formDialog.close();
   });
 
   function openForm() {
@@ -148,7 +122,7 @@
     if (!isGiftingEdit && !showGiftingForm && giftingFormDialog?.open) giftingFormDialog.close();
   });
 
-  function openGiftingForm(giftId: string, status: Status = 'idea') {
+  function openGiftingForm(giftId: string, status: GiftingStatus = 'idea') {
     newGifting = { giftId, status };
     fresh = true;
     showGiftingForm = true;
@@ -236,11 +210,11 @@
 
                       <div class="mt-3 flex items-center gap-2">
                         <span
-                          class={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm ${STATUS_CLASS[g.status]}`}
+                          class={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm ${GIFTING_STATUS_CLASS[g.status]}`}
                           data-status={g.status}
                         >
-                          <span aria-hidden="true">{STATUS[g.status].icon}</span>
-                          {STATUS[g.status].label}
+                          <span aria-hidden="true">{GIFTING_STATUS[g.status].icon}</span>
+                          {GIFTING_STATUS[g.status].label}
                         </span>
                       </div>
                     </li>
@@ -396,8 +370,8 @@
           aria-invalid={giftingErrors.status ? 'true' : undefined}
           aria-describedby={giftingErrors.status ? 'status-error' : undefined}
         >
-          {#each STATUS_ORDER as status (status)}
-            <option value={status}>{STATUS[status].label}</option>
+          {#each GIFTING_STATUS_ORDER as status (status)}
+            <option value={status}>{GIFTING_STATUS[status].label}</option>
           {/each}
         </select>
         {#if giftingErrors.status}
@@ -512,188 +486,15 @@
     {/key}
   </dialog>
 
-  <dialog
-    id="gift-form-dialog"
-    bind:this={formDialog}
-    aria-labelledby="form-heading"
-    class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded border bg-white p-6 shadow-xl backdrop:bg-black/40"
-    onclose={() => {
-      showForm = false;
-      leaveEdit('edit');
-    }}
-  >
-    <h2 id="form-heading" class="text-lg font-semibold">
-      {isEdit ? 'Geschenkidee bearbeiten' : 'Geschenkidee hinzufügen'}
-    </h2>
-    {#key data}
-      <form
-        method="POST"
-        action={isEdit ? '?/update' : '?/create'}
-        use:enhance={() =>
-          async ({ result, update }) => {
-            if (result.type === 'redirect') {
-              saving = true;
-              showForm = false;
-              formDialog?.close();
-            }
-            await update();
-            saving = false;
-          }}
-        novalidate
-        class="mt-4 flex flex-col gap-3"
-      >
-        {#if form?.message && form?.values}
-          <p role="alert" class="text-sm text-red-800">{form.message}</p>
-        {/if}
-        {#if isEdit}<input type="hidden" name="id" value={data.editing?.id} />{/if}
-
-        <label for="title" class="text-sm font-medium">Titel</label>
-        <input
-          id="title"
-          name="title"
-          required
-          maxlength="200"
-          autocomplete="off"
-          value={values.title}
-          class="rounded border px-3 py-2"
-          aria-invalid={errors.title ? 'true' : undefined}
-          aria-describedby={errors.title ? 'title-error' : undefined}
-        />
-        {#if errors.title}<p id="title-error" class="text-sm text-red-800">{errors.title}</p>{/if}
-
-        <label for="description" class="text-sm font-medium">Beschreibung (optional)</label>
-        <textarea
-          id="description"
-          name="description"
-          maxlength="2000"
-          class="rounded border px-3 py-2"
-          aria-invalid={errors.description ? 'true' : undefined}
-          aria-describedby={errors.description ? 'description-error' : undefined}
-          >{values.description ?? ''}</textarea
-        >
-        {#if errors.description}
-          <p id="description-error" class="text-sm text-red-800">{errors.description}</p>
-        {/if}
-
-        <label for="category" class="text-sm font-medium">Kategorie</label>
-        <select
-          id="category"
-          name="category"
-          value={values.category}
-          class="rounded border px-3 py-2"
-        >
-          {#each Object.entries(CATEGORIES) as [value, label] (value)}
-            <option {value}>{label}</option>
-          {/each}
-        </select>
-
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div class="flex flex-col gap-1">
-            <label for="price_from" class="text-sm font-medium">Preis von (optional)</label>
-            <input
-              id="price_from"
-              name="price_from"
-              inputmode="decimal"
-              value={formatPrice(values.price_from)}
-              class="rounded border px-3 py-2"
-              aria-invalid={errors.price_from ? 'true' : undefined}
-              aria-describedby={errors.price_from ? 'price-from-error' : undefined}
-            />
-            {#if errors.price_from}
-              <p id="price-from-error" class="text-sm text-red-800">{errors.price_from}</p>
-            {/if}
-          </div>
-          <div class="flex flex-col gap-1">
-            <label for="price_to" class="text-sm font-medium">Preis bis (optional)</label>
-            <input
-              id="price_to"
-              name="price_to"
-              inputmode="decimal"
-              value={formatPrice(values.price_to)}
-              class="rounded border px-3 py-2"
-              aria-invalid={errors.price_to ? 'true' : undefined}
-              aria-describedby={errors.price_to ? 'price-to-error' : undefined}
-            />
-            {#if errors.price_to}
-              <p id="price-to-error" class="text-sm text-red-800">{errors.price_to}</p>
-            {/if}
-          </div>
-        </div>
-
-        <label for="currency" class="text-sm font-medium">Währung (optional)</label>
-        <input
-          id="currency"
-          name="currency"
-          maxlength="3"
-          placeholder="EUR"
-          value={values.currency ?? ''}
-          class="rounded border px-3 py-2 uppercase"
-          aria-invalid={errors.currency ? 'true' : undefined}
-          aria-describedby={errors.currency ? 'currency-error' : undefined}
-        />
-        {#if errors.currency}
-          <p id="currency-error" class="text-sm text-red-800">{errors.currency}</p>
-        {/if}
-
-        <fieldset class="flex flex-col gap-2">
-          <legend class="text-sm font-medium">Mögliche Empfänger:innen (optional)</legend>
-          {#if data.people.length === 0}
-            <p class="text-sm text-gray-600">Noch keine Personen angelegt.</p>
-          {:else}
-            <div class="max-h-32 overflow-y-auto rounded border p-3">
-              {#each data.people as person (person.id)}
-                <label class="flex items-center gap-2 py-1 text-sm">
-                  <input
-                    type="checkbox"
-                    name="person_ids"
-                    value={person.id}
-                    checked={(values.person_ids ?? []).includes(person.id)}
-                  />
-                  {person.name}
-                </label>
-              {/each}
-            </div>
-          {/if}
-        </fieldset>
-
-        <fieldset class="flex flex-col gap-2">
-          <legend class="text-sm font-medium">Mögliche Anlässe (optional)</legend>
-          {#if data.occasions.length === 0}
-            <p class="text-sm text-gray-600">Noch keine Anlässe angelegt.</p>
-          {:else}
-            <div class="max-h-32 overflow-y-auto rounded border p-3">
-              {#each data.occasions as occasion (occasion.id)}
-                <label class="flex items-center gap-2 py-1 text-sm">
-                  <input
-                    type="checkbox"
-                    name="occasion_ids"
-                    value={occasion.id}
-                    checked={(values.occasion_ids ?? []).includes(occasion.id)}
-                  />
-                  {occasion.name}
-                </label>
-              {/each}
-            </div>
-          {/if}
-        </fieldset>
-
-        <div class="flex items-center gap-4">
-          <button type="submit" class="rounded bg-black px-4 py-2 text-white">
-            {isEdit ? 'Speichern' : 'Anlegen'}
-          </button>
-          {#if isEdit}
-            <a href={resolve('/gifts')} class="rounded border px-4 py-2">Abbrechen</a>
-          {:else}
-            <button
-              type="button"
-              class="rounded border px-4 py-2"
-              onclick={() => formDialog?.close()}
-            >
-              Abbrechen
-            </button>
-          {/if}
-        </div>
-      </form>
-    {/key}
-  </dialog>
+  <GiftFormDialog
+    bind:open={showForm}
+    action={isEdit ? '?/update' : '?/create'}
+    editId={data.editing?.id ?? null}
+    {values}
+    {errors}
+    message={form?.message ?? null}
+    people={data.people}
+    occasions={data.occasions}
+    onclose={() => leaveEdit('edit')}
+  />
 </main>
