@@ -75,7 +75,7 @@ erDiagram
         uuid owner_id FK
         uuid occasion_type_id FK
         text name
-        date date
+        date date "nullable, NULL bei Regel-Anlässen"
         text recurrence "none | yearly"
     }
     person_occasion {
@@ -189,8 +189,8 @@ erDiagram
 | Kein Doppelversand (F-13, Q-02) | `UNIQUE(dedup_key)` auf `notification` |
 | Freigabelink nicht erratbar, widerrufbar, ablaufend (F-14) | 256-Bit-Token, nur `token_hash` gespeichert, `active`, `expires_at` |
 | Kontolöschung löscht alles (F-17) | `ON DELETE CASCADE` auf allen `owner_id` und auf `user_session.user_id`; Dateien aus `attachment.storage_path` werden nach dem Commit gelöscht |
-| Geburtstag nur zusammen mit der Person (F-03, F-04) | Quelle ist `person.birthday`; der Service pflegt daraus genau einen `occasion` vom Typ „Geburtstag“ (jährlich, Datum = Geburtsdatum), verknüpft über `person_occasion` mit genau dieser Person. Über die API ist der Typ nicht wählbar (422) und ein solcher Anlass nicht änderbar oder löschbar (409) |
-| Systemweite Anlasstypen (F-03) | `occasion_type.owner_id IS NULL`; „Geburtstag“ und „Weihnachten“ per Daten-Migration |
+| Regel-Anlässe: Geburtstag, Weihnachten, Ostern je Konto genau einmal (F-03, F-04) | Je Konto drei `occasion`-Zeilen mit `date NULL` und dem Systemtyp als `occasion_type_id`; angelegt bei der Registrierung, für bestehende Konten per Migration. Check-Constraint `ck_occasion_date_only_null_for_rules` erlaubt `date NULL` nur mit einem der drei Systemtypen, der partielle Unique-Index `uq_occasion_owner_rule_type` auf `(owner_id, occasion_type_id) WHERE date IS NULL` hält sie einmalig. Das Datum wird berechnet: Weihnachten am nächsten 24.12., Ostern am nächsten Ostersonntag, Geburtstag hat keins. Es gibt keine Geburtstags-Anlässe je Person mehr; die Person gehört über `person.birthday` zum Geburtstag des Kontos. Eine Verschenkung zu Geburtstag braucht genau einen Empfänger (422). Die Typen sind über die API nicht wählbar (422), Regel-Anlässe nicht änderbar oder löschbar (409) |
+| Systemweite Anlasstypen (F-03) | `occasion_type.owner_id IS NULL`; „Geburtstag“, „Weihnachten“ und „Ostern“ per Daten-Migration |
 | Vorschläge nur aus aggregierten Merkmalen (F-16, Q-04) | Aggregation über `gift.category`, Preisband aus `price_from/price_to`, `occasion_type.name`; nie über `title`, `description`, `note`, `attachment` |
 
 ## Indizes

@@ -1,3 +1,8 @@
+/**
+ * Date text of an occasion in lists and forms.
+ *
+ * @module
+ */
 import type { components } from '$lib/api/schema';
 
 type Occasion = components['schemas']['OccasionOut'];
