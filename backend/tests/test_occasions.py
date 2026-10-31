@@ -222,6 +222,26 @@ async def test_list_is_sorted_by_date_and_paginated(client: AsyncClient, anna: U
     assert [o["name"] for o in second.json()["items"]] == ["C"]
 
 
+@pytest.mark.requirement("F-03")
+async def test_list_is_sorted_by_month_and_day_across_pages(
+    client: AsyncClient, anna: User
+) -> None:
+    for name, date in [
+        ("Dec", "2019-12-24"),
+        ("b tie", "2021-03-05"),
+        ("A tie", "2018-03-05"),
+        ("Late March", "2020-03-20"),
+        ("Jan", "2022-01-02"),
+    ]:
+        await client.post(OCCASIONS, json={"name": name, "date": date})
+
+    names: list[str] = []
+    for offset in (0, 2, 4):
+        r = await client.get(OCCASIONS, params={"limit": 2, "offset": offset})
+        names += [o["name"] for o in r.json()["items"]]
+    assert names == ["Jan", "A tie", "b tie", "Late March", "Dec"]
+
+
 @pytest.mark.requirement("F-03", "Q-01")
 @pytest.mark.parametrize("method", ITEM_METHODS)
 async def test_occasions_of_another_account_are_invisible(
