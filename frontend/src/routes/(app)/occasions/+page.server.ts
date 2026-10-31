@@ -96,7 +96,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     editOccasion = {
       id: occasionResult.data.id,
       name: occasionResult.data.name,
-      date: occasionResult.data.date,
+      // Rule occasions have no stored date; the backend rejects editing them anyway.
+      date: occasionResult.data.date ?? '',
       occasion_type_id: occasionResult.data.occasion_type_id,
       person_ids: occasionResult.data.people.map((person) => person.id),
       recurrence: occasionResult.data.recurrence
