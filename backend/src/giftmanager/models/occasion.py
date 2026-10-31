@@ -129,10 +129,11 @@ class Occasion(Base):
 
     __tablename__ = "occasion"
     __table_args__ = (
+        # IS NOT NULL: a NULL type would make IN NULL, which a CHECK lets pass.
         CheckConstraint(
-            "date IS NOT NULL OR occasion_type_id IN ("
+            "date IS NOT NULL OR (occasion_type_id IS NOT NULL AND occasion_type_id IN ("
             + ", ".join(f"'{type_id}'" for type_id in RULE_TYPES)
-            + ")",
+            + "))",
             name="date_only_null_for_rules",
         ),
         Index(

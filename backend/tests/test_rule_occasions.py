@@ -167,6 +167,18 @@ async def test_a_second_rule_occasion_of_a_type_is_rejected(session: AsyncSessio
             await occasion_service.create_rule_occasions(session, user.id)
 
 
+@pytest.mark.requirement("F-03")
+async def test_only_a_rule_occasion_may_lack_a_date(session: AsyncSession) -> None:
+    user = User(email="anna@example.org", password_hash="x", display_name="Anna")
+    session.add(user)
+    await session.flush()
+
+    with pytest.raises(IntegrityError, match="ck_occasion_date_only_null_for_rules"):
+        async with session.begin_nested():
+            session.add(Occasion(owner_id=user.id, name="Party", recurrence=Recurrence.NONE))
+            await session.flush()
+
+
 # --- Data migration for existing rows -------------------------------------------
 
 BEFORE_RULES = "da408c6d1db0"

@@ -203,8 +203,9 @@ def upgrade() -> None:
     op.create_check_constraint(
         op.f("ck_occasion_date_only_null_for_rules"),
         "occasion",
-        "date IS NOT NULL OR occasion_type_id IN "
-        f"('{BIRTHDAY_TYPE_ID}', '{CHRISTMAS_TYPE_ID}', '{EASTER_TYPE_ID}')",
+        # IS NOT NULL: a NULL type would make IN NULL, which a CHECK lets pass.
+        "date IS NOT NULL OR (occasion_type_id IS NOT NULL AND occasion_type_id IN "
+        f"('{BIRTHDAY_TYPE_ID}', '{CHRISTMAS_TYPE_ID}', '{EASTER_TYPE_ID}'))",
     )
     op.create_index(
         "uq_occasion_owner_rule_type",
