@@ -3,6 +3,8 @@
   import FormDialog from '$lib/components/FormDialog.svelte';
   import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
   import { CATEGORIES, formatPrice } from '$lib/display';
+  import NotesSection from './NotesSection.svelte';
+  import LinksSection from './LinksSection.svelte';
   import GiftingsSection from './GiftingsSection.svelte';
   import ImagesSection from './ImagesSection.svelte';
   import type { ActionData, PageProps } from './$types';
@@ -101,7 +103,8 @@
     <p role="alert" class="mt-4 text-sm text-red-800">{form.message}</p>
   {/if}
 
-  <!-- NotesSection, LinksSection and ImagesSection go here, in this order. -->
+  <NotesSection notes={data.notes} {form} />
+  <LinksSection links={data.links} {form} />
   <ImagesSection images={data.images} {form} />
 
   <GiftingsSection
