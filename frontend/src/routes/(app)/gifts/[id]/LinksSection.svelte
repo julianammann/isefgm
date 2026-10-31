@@ -55,7 +55,7 @@
       {#each links as n (n.id)}
         <li class="rounded border p-3">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-bold">{n.label}</span>
+            <span class="font-bold wrap-anywhere">{n.label}</span>
             <span class="ml-auto flex items-center gap-4">
               <button
                 type="button"

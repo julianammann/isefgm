@@ -48,7 +48,7 @@
   {id}
   bind:this={dialog}
   aria-labelledby="{id}-heading"
-  class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded border bg-white p-6 shadow-xl backdrop:bg-black/40"
+  class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded border bg-white p-6 wrap-anywhere shadow-xl backdrop:bg-black/40"
   onclose={() => {
     open = false;
     if (!saving) onclose?.();
