@@ -75,6 +75,11 @@ export async function listGifts(api: Api): Promise<Result<GiftOut[]>> {
   }
 }
 
+/** Returns one gift idea; 404 if the id is unknown or belongs to another account. */
+export async function getGift(api: Api, id: string): Promise<Result<GiftOut>> {
+  return send(api.GET('/api/v1/gifts/{gift_id}', { params: { path: { gift_id: id } } }));
+}
+
 /** Creates a gift idea and returns it with its new id. */
 export async function createGift(api: Api, input: GiftIn): Promise<Result<GiftOut>> {
   return send(api.POST('/api/v1/gifts', { body: input }));
@@ -137,4 +142,37 @@ export function giftFromForm(form: FormData): GiftIn {
     person_ids: ids(form, 'person_ids'),
     occasion_ids: ids(form, 'occasion_ids')
   };
+}
+
+type FieldErrors = Partial<Record<keyof GiftIn, string>>;
+
+/** Reads and validates the gift idea form. The backend remains the authority on validation. */
+export function parseGiftForm(form: FormData): { values: GiftIn; errors: FieldErrors } {
+  const values = giftFromForm(form);
+  const priceFrom = values.price_from === null ? null : String(values.price_from);
+  const priceTo = values.price_to === null ? null : String(values.price_to);
+  const errors: FieldErrors = {};
+  const invalidPrice = 'Bitte gib einen Preis mit höchstens zwei Nachkommastellen an, z. B. 10,99.';
+
+  if (!values.title) errors.title = 'Bitte gib einen Titel an.';
+  else if (values.title.length > 200) {
+    errors.title = 'Der Titel darf höchstens 200 Zeichen lang sein.';
+  }
+  if (values.description && values.description.length > 2000) {
+    errors.description = 'Die Beschreibung darf höchstens 2000 Zeichen lang sein.';
+  }
+  if (priceFrom !== null && !isPrice(priceFrom)) errors.price_from = invalidPrice;
+  if (priceTo !== null && !isPrice(priceTo)) errors.price_to = invalidPrice;
+  else if (
+    priceFrom !== null &&
+    priceTo !== null &&
+    !errors.price_from &&
+    Number(priceFrom) > Number(priceTo)
+  ) {
+    errors.price_to = '„Preis bis“ darf nicht kleiner als „Preis von“ sein.';
+  }
+  if (values.currency && !/^[A-Z]{3}$/.test(values.currency)) {
+    errors.currency = 'Bitte gib einen Währungscode aus drei Buchstaben an, z. B. EUR.';
+  }
+  return { values, errors };
 }

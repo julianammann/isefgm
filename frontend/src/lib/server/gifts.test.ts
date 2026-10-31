@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiClient } from '$lib/api/client';
 import type { GiftOut } from './gifts';
-import { createGift, deleteGift, giftFromForm, isPrice, listGifts, updateGift } from './gifts';
+import {
+  createGift,
+  deleteGift,
+  getGift,
+  giftFromForm,
+  isPrice,
+  listGifts,
+  parseGiftForm,
+  updateGift
+} from './gifts';
 
 const gift: GiftOut = {
   id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a70',
@@ -67,6 +76,14 @@ describe('giftFromForm', () => {
   });
 });
 
+describe('parseGiftForm', () => {
+  it('requires a title', () => {
+    const f = new FormData();
+    f.set('title', '   ');
+    expect(parseGiftForm(f).errors).toEqual({ title: 'Bitte gib einen Titel an.' });
+  });
+});
+
 describe('isPrice', () => {
   it('accepts whole prices and up to two decimal places', () => {
     for (const price of ['0', '10', '10.5', '10.99', '12345678.99']) {
@@ -115,6 +132,20 @@ describe('listGifts', () => {
       status: 401,
       message: 'Sitzung abgelaufen. Bitte erneut anmelden.'
     });
+  });
+});
+
+describe('getGift', () => {
+  it('maps 404', async () => {
+    const { api, requests } = createApi(async () => jsonResponse({ detail: 'Not found' }, 404));
+
+    await expect(getGift(api, gift.id)).resolves.toEqual({
+      ok: false,
+      status: 404,
+      message: 'Geschenkidee nicht gefunden.'
+    });
+    expect(requests[0].method).toBe('GET');
+    expect(new URL(requests[0].url).pathname).toBe(`/api/v1/gifts/${gift.id}`);
   });
 });
 
