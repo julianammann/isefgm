@@ -16,8 +16,15 @@ import {
 } from '$lib/server/giftings';
 import { listPersons } from '$lib/server/persons';
 import { listOccasions } from '$lib/server/occasions';
-import { labelError, listNotes } from '$lib/server/notes';
-import { listLinks } from '$lib/server/links';
+import {
+  createNote,
+  deleteNote,
+  labelError,
+  listNotes,
+  parseNoteForm,
+  updateNote
+} from '$lib/server/notes';
+import { createLink, deleteLink, listLinks, parseLinkForm, updateLink } from '$lib/server/links';
 import {
   createImage,
   deleteImage,
@@ -128,6 +135,9 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
  * `update`: validates and saves the idea, then stays on the page. `delete`: removes the idea
  * and returns to the list; 409 while a gifting still uses it.
  *
+ * `createNote` / `updateNote` / `deleteNote` and the `*Link` actions: notes and links of this
+ * idea, same id convention.
+ *
  * `createGifting` / `updateGifting` / `deleteGifting`: the giftings of this idea; the gifting
  * id comes from the form field `id`, the idea from the URL.
  */
@@ -172,6 +182,54 @@ export const actions: Actions = {
     const result = await deleteGift(locals.api, params.id);
     if (!result.ok) return detailFail(result.status, 'delete', { message: result.message });
     redirect(303, '/gifts?success=deleted');
+  },
+
+  createNote: async ({ request, locals, params }) => {
+    const { values, errors } = parseNoteForm(await request.formData(), params.id);
+    if (Object.keys(errors).length) return detailFail(400, 'note', { values, errors });
+    const result = await createNote(locals.api, values);
+    if (!result.ok) return detailFail(result.status, 'note', { values, message: result.message });
+    detailRedirect(params.id, 'noteCreated');
+  },
+
+  updateNote: async ({ request, locals, params }) => {
+    const form = await request.formData();
+    const { values, errors } = parseNoteForm(form, params.id);
+    if (Object.keys(errors).length) return detailFail(400, 'note', { values, errors });
+    const result = await updateNote(locals.api, String(form.get('id') ?? ''), values);
+    if (!result.ok) return detailFail(result.status, 'note', { values, message: result.message });
+    detailRedirect(params.id, 'noteUpdated');
+  },
+
+  deleteNote: async ({ request, locals, params }) => {
+    const id = String((await request.formData()).get('id') ?? '');
+    const result = await deleteNote(locals.api, id);
+    if (!result.ok) return detailFail(result.status, 'delete', { message: result.message });
+    detailRedirect(params.id, 'noteDeleted');
+  },
+
+  createLink: async ({ request, locals, params }) => {
+    const { values, errors } = parseLinkForm(await request.formData(), params.id);
+    if (Object.keys(errors).length) return detailFail(400, 'link', { values, errors });
+    const result = await createLink(locals.api, values);
+    if (!result.ok) return detailFail(result.status, 'link', { values, message: result.message });
+    detailRedirect(params.id, 'linkCreated');
+  },
+
+  updateLink: async ({ request, locals, params }) => {
+    const form = await request.formData();
+    const { values, errors } = parseLinkForm(form, params.id);
+    if (Object.keys(errors).length) return detailFail(400, 'link', { values, errors });
+    const result = await updateLink(locals.api, String(form.get('id') ?? ''), values);
+    if (!result.ok) return detailFail(result.status, 'link', { values, message: result.message });
+    detailRedirect(params.id, 'linkUpdated');
+  },
+
+  deleteLink: async ({ request, locals, params }) => {
+    const id = String((await request.formData()).get('id') ?? '');
+    const result = await deleteLink(locals.api, id);
+    if (!result.ok) return detailFail(result.status, 'delete', { message: result.message });
+    detailRedirect(params.id, 'linkDeleted');
   },
 
   createGifting: async ({ request, locals, params }) => {
