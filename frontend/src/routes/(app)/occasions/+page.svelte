@@ -22,14 +22,6 @@
       }
   );
   const errors = $derived(form?.errors ?? {});
-  // shortcut: sorts within one page only, remove once the backend sorts by month/day (#131).
-  const sortedOccasions = $derived(
-    [...data.occasions].sort((first, second) => {
-      const firstMonthDay = first.date.slice(5);
-      const secondMonthDay = second.date.slice(5);
-      return firstMonthDay.localeCompare(secondMonthDay);
-    })
-  );
 
   function formatDate(date: string): string {
     const [year, month, day] = date.split('-');
@@ -94,7 +86,7 @@
       <p class="mt-4 text-sm text-gray-600">Keine Anlässe vorhanden.</p>
     {:else}
       <ul class="mt-4 flex flex-col gap-3">
-        {#each sortedOccasions as occasion (occasion.id)}
+        {#each data.occasions as occasion (occasion.id)}
           <li class="flex items-center justify-between rounded border px-4 py-2">
             <div>
               <p class="font-medium">{occasion.name}</p>
