@@ -2,7 +2,7 @@
  * Gift idea detail page (`/gifts/<id>`): the idea itself and its giftings (F-05, F-06), notes,
  * links and images (F-07) and the tasks of its giftings (F-08).
  *
- * @module
+ * @module routes/(app)/gifts/id/+page.server
  */
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
