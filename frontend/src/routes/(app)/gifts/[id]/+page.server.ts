@@ -16,9 +16,15 @@ import {
 } from '$lib/server/giftings';
 import { listPersons } from '$lib/server/persons';
 import { listOccasions } from '$lib/server/occasions';
-import { listNotes } from '$lib/server/notes';
+import { labelError, listNotes } from '$lib/server/notes';
 import { listLinks } from '$lib/server/links';
-import { listImages } from '$lib/server/images';
+import {
+  createImage,
+  deleteImage,
+  listImages,
+  parseImageForm,
+  updateImageLabel
+} from '$lib/server/images';
 import { listTasks } from '$lib/server/tasks';
 import type { Result } from '$lib/server/result';
 
@@ -119,6 +125,34 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
  * id comes from the form field `id`, the idea from the URL.
  */
 export const actions: Actions = {
+  createImage: async ({ request, locals, params }) => {
+    const { label, file, errors } = parseImageForm(await request.formData());
+    // A file input cannot be refilled, so only the label is returned.
+    const values = { label };
+    if (Object.keys(errors).length || !file) return detailFail(400, 'image', { values, errors });
+    const result = await createImage(locals.api, params.id, label, file);
+    if (!result.ok) return detailFail(result.status, 'image', { values, message: result.message });
+    detailRedirect(params.id, 'imageCreated');
+  },
+
+  updateImage: async ({ request, locals, params }) => {
+    const form = await request.formData();
+    const label = String(form.get('label') ?? '').trim();
+    const error = labelError(label);
+    const values = { label };
+    if (error) return detailFail(400, 'image', { values, errors: { label: error } });
+    const result = await updateImageLabel(locals.api, String(form.get('id') ?? ''), label);
+    if (!result.ok) return detailFail(result.status, 'image', { values, message: result.message });
+    detailRedirect(params.id, 'imageUpdated');
+  },
+
+  deleteImage: async ({ request, locals, params }) => {
+    const id = String((await request.formData()).get('id') ?? '');
+    const result = await deleteImage(locals.api, id);
+    if (!result.ok) return detailFail(result.status, 'delete', { message: result.message });
+    detailRedirect(params.id, 'imageDeleted');
+  },
+
   update: async ({ request, locals, params }) => {
     const { values, errors } = parseGiftForm(await request.formData());
     if (Object.keys(errors).length) return detailFail(400, 'gift', { values, errors });
