@@ -9,7 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 import {
   createGift,
   deleteGift,
-  listGifts,
+  listGiftsPage,
   parseGiftForm,
   updateGift,
   type GiftIn
@@ -17,6 +17,7 @@ import {
 import { groupByGift, listGiftings } from '$lib/server/giftings';
 import { listPersons } from '$lib/server/persons';
 import { listOccasions } from '$lib/server/occasions';
+import { pageCount, pageQuery, parsePage } from '$lib/pagination';
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,
@@ -35,12 +36,13 @@ function isSuccessKey(key: string | null): key is SuccessKey {
 }
 
 /**
- * Loads gift ideas, giftings, people and occasions. `?edit=<id>` returns one idea for the
- * edit form.
+ * Loads one page of gift ideas (`?page=N`; beyond the last page redirects to it) plus giftings,
+ * people and occasions. `?edit=<id>` returns one idea of the page for the edit form.
  */
 export const load: PageServerLoad = async ({ locals, url }) => {
+  const page = parsePage(url);
   const [giftsResult, giftingsResult, peopleResult, occasionsResult] = await Promise.all([
-    listGifts(locals.api),
+    listGiftsPage(locals.api, page),
     listGiftings(locals.api),
     listPersons(locals.api),
     listOccasions(locals.api)
@@ -50,8 +52,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (!peopleResult.ok) error(peopleResult.status, peopleResult.message);
   if (!occasionsResult.ok) error(occasionsResult.status, occasionsResult.message);
 
+  const { items, total } = giftsResult.data;
+  if (total > 0 && page > pageCount(total)) {
+    const params = Object.fromEntries(url.searchParams);
+    delete params.page;
+    redirect(303, '/gifts' + pageQuery(pageCount(total), params));
+  }
+
   const editId = url.searchParams.get('edit');
-  const gift = giftsResult.data.find((g) => g.id === editId);
+  const gift = items.find((g) => g.id === editId);
   const editing: (GiftIn & { id: string }) | null = gift
     ? {
         id: gift.id,
@@ -70,7 +79,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   return {
     editing,
     success: isSuccessKey(success) ? successMessages[success] : null,
-    gifts: giftsResult.data,
+    page,
+    total,
+    gifts: items,
     giftingsByGift: groupByGift(giftingsResult.data),
     people: peopleResult.data,
     occasions: occasionsResult.data
@@ -94,20 +105,20 @@ export const actions: Actions = {
     throw redirect(303, '/gifts?success=created');
   },
 
-  update: async ({ request, locals }) => {
+  update: async ({ request, locals, url }) => {
     const form = await request.formData();
     const id = String(form.get('id') ?? '');
     const { values, errors } = parseGiftForm(form);
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await updateGift(locals.api, id, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
-    throw redirect(303, '/gifts?success=updated');
+    throw redirect(303, '/gifts' + pageQuery(parsePage(url), { success: 'updated' }));
   },
 
-  delete: async ({ request, locals }) => {
+  delete: async ({ request, locals, url }) => {
     const id = String((await request.formData()).get('id') ?? '');
     const result = await deleteGift(locals.api, id);
     if (!result.ok) return fail(result.status, { deleteMessage: result.message });
-    throw redirect(303, '/gifts?success=deleted');
+    throw redirect(303, '/gifts' + pageQuery(parsePage(url), { success: 'deleted' }));
   }
 };

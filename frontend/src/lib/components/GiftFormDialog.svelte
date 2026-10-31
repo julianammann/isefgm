@@ -18,7 +18,7 @@
     onclose
   }: {
     open: boolean;
-    action: '?/create' | '?/update';
+    action: string;
     editId: string | null;
     values: GiftIn;
     errors: Partial<Record<keyof GiftIn, string>>;

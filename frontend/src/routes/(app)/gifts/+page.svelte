@@ -3,8 +3,10 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+  import Pagination from '$lib/components/Pagination.svelte';
   import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
   import { CATEGORIES, giftingSummary } from '$lib/display';
+  import { actionUrl, pageQuery } from '$lib/pagination';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -33,7 +35,12 @@
   /** Drops `?edit` when the edit dialog is closed with Escape or Abbrechen. */
   function leaveEdit() {
     if (page.url.searchParams.has('edit')) {
-      goto(resolve('/gifts'), { replaceState: true, noScroll: true, keepFocus: true });
+      // eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() is applied to the path
+      goto(resolve('/gifts') + pageQuery(data.page), {
+        replaceState: true,
+        noScroll: true,
+        keepFocus: true
+      });
     }
   }
 
@@ -60,7 +67,20 @@
   <h1 class="text-2xl font-bold">Geschenkideen</h1>
 
   <section class="mt-10" aria-labelledby="list-heading">
-    <h2 id="list-heading" class="font-semibold">Übersicht</h2>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="list-heading" class="font-semibold">Übersicht</h2>
+      {#if !isEdit}
+        <button
+          type="button"
+          class="rounded bg-black px-4 py-2 text-white"
+          aria-haspopup="dialog"
+          aria-controls="gift-form-dialog"
+          onclick={openForm}
+        >
+          Geschenkidee hinzufügen
+        </button>
+      {/if}
+    </div>
     {#if data.gifts.length === 0}
       <p class="mt-2 text-sm text-gray-600">Noch keine Geschenkideen erfasst.</p>
     {:else}
@@ -88,9 +108,14 @@
                 </p>
               </div>
               <div class="flex items-center gap-4">
-                <a href={resolve(`/gifts?edit=${gift.id}`)} class="text-sm underline">
+                <!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() is applied to the path -->
+                <a
+                  href={resolve('/gifts') + pageQuery(data.page, { edit: gift.id })}
+                  class="text-sm underline"
+                >
                   Bearbeiten<span class="sr-only">: {gift.title}</span>
                 </a>
+                <!-- eslint-enable svelte/no-navigation-without-resolve -->
                 <button
                   type="button"
                   class="text-sm text-red-800 underline"
@@ -104,6 +129,11 @@
         {/each}
       </ul>
     {/if}
+    <Pagination
+      page={data.page}
+      total={data.total}
+      href={(p) => resolve('/gifts') + pageQuery(p)}
+    />
   </section>
 
   <dialog
@@ -117,7 +147,7 @@
     </p>
     <form
       method="POST"
-      action="?/delete"
+      action={actionUrl('delete', data.page)}
       class="mt-4 flex justify-end gap-3"
       use:enhance={() =>
         async ({ update }) => {
@@ -138,21 +168,9 @@
     <p role="alert" class="mt-4 text-sm text-red-800">{form.deleteMessage}</p>
   {/if}
 
-  {#if !isEdit}
-    <button
-      type="button"
-      class="mt-10 rounded bg-black px-4 py-2 text-white"
-      aria-haspopup="dialog"
-      aria-controls="gift-form-dialog"
-      onclick={openForm}
-    >
-      Geschenkidee hinzufügen
-    </button>
-  {/if}
-
   <GiftFormDialog
     bind:open={showForm}
-    action={isEdit ? '?/update' : '?/create'}
+    action={actionUrl(isEdit ? 'update' : 'create', data.page)}
     editId={data.editing?.id ?? null}
     {values}
     {errors}

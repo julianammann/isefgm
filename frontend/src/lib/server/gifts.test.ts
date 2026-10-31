@@ -8,7 +8,6 @@ import {
   getGift,
   giftFromForm,
   isPrice,
-  listGifts,
   listGiftsPage,
   parseGiftForm,
   updateGift
@@ -106,33 +105,6 @@ describe('isPrice', () => {
     ]) {
       expect(isPrice(price), price).toBe(false);
     }
-  });
-});
-
-describe('listGifts', () => {
-  it('loads every page using the number of collected ideas as the next offset', async () => {
-    const second = { ...gift, id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71', title: 'Buch' };
-    const { api, requests } = createApi(async (request) => {
-      const offset = new URL(request.url).searchParams.get('offset');
-      if (offset === '0') return jsonResponse({ items: [gift], offset: 0, limit: 1, total: 2 });
-      return jsonResponse({ items: [second], offset: 1, limit: 1, total: 2 });
-    });
-
-    await expect(listGifts(api)).resolves.toEqual({ ok: true, data: [gift, second] });
-    expect(requests.map((request) => new URL(request.url).searchParams.get('offset'))).toEqual([
-      '0',
-      '1'
-    ]);
-  });
-
-  it('returns the backend error for a failed page request', async () => {
-    const { api } = createApi(async () => jsonResponse({ detail: 'Unauthorized' }, 401));
-
-    await expect(listGifts(api)).resolves.toEqual({
-      ok: false,
-      status: 401,
-      message: 'Sitzung abgelaufen. Bitte erneut anmelden.'
-    });
   });
 });
 
