@@ -152,6 +152,7 @@
     message={form?.message ?? null}
     people={data.people}
     occasions={data.occasions}
+    keepPosition={false}
     onclose={leaveEdit}
   />
 </main>

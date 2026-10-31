@@ -60,7 +60,8 @@
 
 <svelte:head><title>{gift.title} – Geschenke-Manager</title></svelte:head>
 
-<main class="mx-auto max-w-4xl p-8">
+<!-- Room at the bottom, so the toast never hides the end of the page. -->
+<main class="mx-auto max-w-4xl p-8 {data.success ? 'pb-24' : ''}">
   <a href={resolve('/gifts')} class="text-sm underline">← Alle Geschenkideen</a>
 
   <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
@@ -104,7 +105,14 @@
   </dl>
   {#if gift.description}<p class="mt-4 whitespace-pre-line">{gift.description}</p>{/if}
 
-  {#if data.success}<p role="status" class="mt-4 text-sm text-green-800">{data.success}</p>{/if}
+  <!-- Fixed to the screen, so a save far down the page shows its message where the user is. -->
+  <div role="status" class="pointer-events-none fixed inset-x-0 bottom-4 flex justify-center px-4">
+    {#if data.success}
+      <p class="max-w-md rounded bg-green-800 px-4 py-2 text-sm text-white shadow-lg">
+        {data.success}
+      </p>
+    {/if}
+  </div>
 
   <NotesSection notes={data.notes} {form} />
   <LinksSection links={data.links} {form} />
