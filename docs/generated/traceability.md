@@ -466,6 +466,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_mail.py::test_failure_after_greeting_is_transient[closes-after-greeting]` | passed |
 | F-13 | `tests/test_mail.py::test_failure_after_greeting_is_transient[silent-after-greeting]` | passed |
 | F-13 | `tests/test_mail.py::test_failure_after_greeting_is_transient[closes-after-greeting-with-login]` | passed |
+| F-13 | `tests/test_mail.py::test_ehlo_uses_sender_domain_without_dns_lookup` | passed |
 | F-13 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | F-13 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
@@ -701,6 +702,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-02 | `tests/test_mail.py::test_failure_after_greeting_is_transient[closes-after-greeting]` | passed |
 | Q-02 | `tests/test_mail.py::test_failure_after_greeting_is_transient[silent-after-greeting]` | passed |
 | Q-02 | `tests/test_mail.py::test_failure_after_greeting_is_transient[closes-after-greeting-with-login]` | passed |
+| Q-02 | `tests/test_mail.py::test_ehlo_uses_sender_domain_without_dns_lookup` | passed |
 | Q-02 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | Q-02 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |

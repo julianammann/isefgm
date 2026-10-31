@@ -1,4 +1,5 @@
 import asyncio
+import socket
 import time
 from collections.abc import Iterator
 
@@ -208,6 +209,48 @@ async def test_failure_after_greeting_is_transient(
     finally:
         server.close()
     assert err.value.failure is MailFailure.TRANSIENT
+
+
+async def test_ehlo_uses_sender_domain_without_dns_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
+    _clear_smtp_env(monkeypatch)
+
+    def no_lookup() -> str:
+        raise AssertionError("socket.getfqdn must not be called")
+
+    monkeypatch.setattr(socket, "getfqdn", no_lookup)
+    commands: list[str] = []
+
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        writer.write(b"220 test ESMTP\r\n")
+        in_data = False
+        while line := await reader.readline():
+            text = line.decode().rstrip("\r\n")
+            if in_data:
+                if text == ".":
+                    in_data = False
+                    writer.write(b"250 queued\r\n")
+            else:
+                commands.append(text)
+                verb = text.split(" ")[0].upper()
+                in_data = verb == "DATA"
+                writer.write(
+                    b"354 go\r\n"
+                    if in_data
+                    else b"221 bye\r\n"
+                    if verb == "QUIT"
+                    else b"250 ok\r\n"
+                )
+            await writer.drain()
+        writer.close()
+
+    server = await asyncio.start_server(handle, "127.0.0.1", 0)
+    port = server.sockets[0].getsockname()[1]
+    settings = Settings(_env_file=None, smtp_host="127.0.0.1", smtp_port=port)  # pyright: ignore[reportCallIssue]
+    try:
+        await SmtpMailer(settings).send(_MAIL)
+    finally:
+        server.close()
+    assert commands[0] == "EHLO isefgm.localhost"
 
 
 async def test_invalid_client_config_is_transient(monkeypatch: pytest.MonkeyPatch) -> None:

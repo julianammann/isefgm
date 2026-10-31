@@ -89,6 +89,10 @@ def is_reserved_address(address: str) -> bool:
     return any(domain == d or domain.endswith(f".{d}") for d in _RESERVED_DOMAINS)
 
 
+def _sender_domain(settings: Settings) -> str:
+    return parseaddr(settings.smtp_from)[1].rpartition("@")[2]
+
+
 class SmtpMailer:
     """`Mailer` that delivers over SMTP using the `smtp_*` settings."""
 
@@ -104,7 +108,7 @@ class SmtpMailer:
             message["To"] = mail.to
             message["Subject"] = mail.subject
             message["Date"] = formatdate(localtime=False)
-            message["Message-ID"] = make_msgid(domain=parseaddr(s.smtp_from)[1].rpartition("@")[2])
+            message["Message-ID"] = make_msgid(domain=_sender_domain(s))
             message.set_content(mail.body)
         except Exception as exc:  # e.g. CR/LF in a header; nothing was sent
             raise MailError(MailFailure.PERMANENT, str(exc)) from exc
@@ -118,6 +122,8 @@ class SmtpMailer:
                 username=s.smtp_username,
                 password=s.smtp_password.get_secret_value() if s.smtp_password else None,
                 timeout=s.smtp_timeout_seconds,
+                # Explicit: otherwise aiosmtplib calls socket.getfqdn(), a DNS lookup on every send.
+                local_hostname=_sender_domain(s),
             )
         except Exception as exc:  # e.g. a host with CR/LF; a fixed config retries fine
             raise MailError(MailFailure.TRANSIENT, str(exc)) from exc
