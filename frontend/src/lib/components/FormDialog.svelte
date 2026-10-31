@@ -28,6 +28,7 @@
 
   $effect(() => {
     if (open && dialog && !dialog.open) dialog.showModal();
+    if (!open && dialog?.open) dialog.close();
   });
 </script>
 
