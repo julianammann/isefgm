@@ -1,6 +1,6 @@
 /**
- * Gift ideas page (`/gifts`): list, create, edit and delete gift ideas (F-04, F-05)
- * and their giftings (F-06).
+ * Gift ideas page (`/gifts`): overview, create, edit and delete gift ideas (F-04, F-05).
+ * Giftings are managed on the detail page.
  *
  * @module
  */
@@ -14,15 +14,7 @@ import {
   updateGift,
   type GiftIn
 } from '$lib/server/gifts';
-import {
-  createGifting,
-  deleteGifting,
-  groupByGift,
-  listGiftings,
-  parseGiftingForm,
-  updateGifting,
-  type GiftingIn
-} from '$lib/server/giftings';
+import { groupByGift, listGiftings } from '$lib/server/giftings';
 import { listPersons } from '$lib/server/persons';
 import { listOccasions } from '$lib/server/occasions';
 
@@ -33,10 +25,7 @@ import { listOccasions } from '$lib/server/occasions';
 const successMessages = {
   created: 'Geschenkidee angelegt!',
   updated: 'Änderungen gespeichert!',
-  deleted: 'Geschenkidee gelöscht!',
-  giftingCreated: 'Beschenkung angelegt!',
-  giftingUpdated: 'Änderungen an der Beschenkung gespeichert!',
-  giftingDeleted: 'Beschenkung gelöscht!'
+  deleted: 'Geschenkidee gelöscht!'
 } as const;
 
 type SuccessKey = keyof typeof successMessages;
@@ -46,8 +35,8 @@ function isSuccessKey(key: string | null): key is SuccessKey {
 }
 
 /**
- * Loads gift ideas, giftings, people and occasions. `?edit=<id>` returns one idea and
- * `?edit_gifting=<id>` one gifting for the edit form.
+ * Loads gift ideas, giftings, people and occasions. `?edit=<id>` returns one idea for the
+ * edit form.
  */
 export const load: PageServerLoad = async ({ locals, url }) => {
   const [giftsResult, giftingsResult, peopleResult, occasionsResult] = await Promise.all([
@@ -76,24 +65,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
         occasion_ids: gift.occasions.map((occasion) => occasion.id)
       }
     : null;
-  const editGiftingId = url.searchParams.get('edit_gifting');
-  const gifting = giftingsResult.data.find((g) => g.id === editGiftingId);
-  const editingGifting: (GiftingIn & { id: string }) | null = gifting
-    ? {
-        id: gifting.id,
-        gift_id: gifting.gift.id,
-        status: gifting.status,
-        person_ids: gifting.people.map((person) => person.id),
-        occasion_id: gifting.occasion?.id ?? null,
-        occasion_date: gifting.occasion_date,
-        given_on: gifting.given_on
-      }
-    : null;
   const success = url.searchParams.get('success');
 
   return {
     editing,
-    editingGifting,
     success: isSuccessKey(success) ? successMessages[success] : null,
     gifts: giftsResult.data,
     giftingsByGift: groupByGift(giftingsResult.data),
@@ -107,8 +82,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
  *
  * `delete`: removes the gift idea; confirmation happens in the page dialog. 409 while a
  * gifting still uses it.
- *
- * `createGifting` / `updateGifting` / `deleteGifting`: the same flow for giftings.
+
  */
 export const actions: Actions = {
   // ── Gift ideas (F-05) ─────────────────────────────────────────
@@ -136,41 +110,5 @@ export const actions: Actions = {
     const result = await deleteGift(locals.api, id);
     if (!result.ok) return fail(result.status, { deleteMessage: result.message });
     throw redirect(303, '/gifts?success=deleted');
-  },
-
-  // ── Giftings (F-06) ───────────────────────────────────────────
-  // Same flow as the gift ideas; the form keys are prefixed so both dialogs keep their state.
-
-  createGifting: async ({ request, locals }) => {
-    const { values, errors } = parseGiftingForm(await request.formData());
-    if (Object.keys(errors).length) {
-      return fail(400, { giftingValues: values, giftingErrors: errors });
-    }
-    const result = await createGifting(locals.api, values);
-    if (!result.ok) {
-      return fail(result.status, { giftingValues: values, giftingMessage: result.message });
-    }
-    throw redirect(303, '/gifts?success=giftingCreated');
-  },
-
-  updateGifting: async ({ request, locals }) => {
-    const form = await request.formData();
-    const id = String(form.get('id') ?? '');
-    const { values, errors } = parseGiftingForm(form);
-    if (Object.keys(errors).length) {
-      return fail(400, { giftingValues: values, giftingErrors: errors });
-    }
-    const result = await updateGifting(locals.api, id, values);
-    if (!result.ok) {
-      return fail(result.status, { giftingValues: values, giftingMessage: result.message });
-    }
-    throw redirect(303, '/gifts?success=giftingUpdated');
-  },
-
-  deleteGifting: async ({ request, locals }) => {
-    const id = String((await request.formData()).get('id') ?? '');
-    const result = await deleteGifting(locals.api, id);
-    if (!result.ok) return fail(result.status, { deleteMessage: result.message });
-    throw redirect(303, '/gifts?success=giftingDeleted');
   }
 };
