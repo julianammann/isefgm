@@ -9,6 +9,7 @@
  */
 
 import type { components } from '$lib/api/schema';
+import { PAGE_SIZE } from '$lib/pagination';
 import { ids, text } from './gifts';
 
 /** Payload for creating or updating a gifting. */
@@ -65,7 +66,9 @@ export async function listGiftings(api: Api): Promise<Result<GiftingOut[]>> {
   const giftings: GiftingOut[] = [];
   for (;;) {
     const page = await send(
-      api.GET('/api/v1/giftings', { params: { query: { offset: giftings.length } } })
+      api.GET('/api/v1/giftings', {
+        params: { query: { offset: giftings.length, limit: PAGE_SIZE } }
+      })
     );
     if (!page.ok) return page;
     giftings.push(...page.data.items);
