@@ -473,7 +473,7 @@ export interface paths {
         };
         /**
          * List occasion types
-         * @description Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
+         * @description Returns the system-wide types Geburtstag, Weihnachten and Ostern followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
          */
         get: operations["listOccasionTypes"];
         put?: never;
@@ -513,13 +513,13 @@ export interface paths {
         };
         /**
          * List occasions
-         * @description Returns the occasions of the current account, sorted by month and day (the year is ignored), one page at a time. `total` counts all occasions of the account.
+         * @description Returns the occasions of the current account, one page at a time: the rule occasions Geburtstag, Weihnachten and Ostern first, then the others sorted by month and day (the year is ignored). `total` counts all occasions of the account.
          */
         get: operations["listOccasions"];
         put?: never;
         /**
          * Create occasion
-         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createOccasion"];
         delete?: never;
@@ -542,13 +542,13 @@ export interface paths {
         get: operations["getOccasion"];
         /**
          * Update occasion
-         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person.
+         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A rule occasion (Geburtstag, Weihnachten, Ostern) cannot be changed or deleted; this returns 409.
          */
         put: operations["updateOccasion"];
         post?: never;
         /**
          * Delete occasion
-         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person. An occasion used by a gifting cannot be deleted; this returns 409.
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A rule occasion (Geburtstag, Weihnachten, Ostern) cannot be changed or deleted; this returns 409. An occasion used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteOccasion"];
         options?: never;
@@ -1550,7 +1550,7 @@ export interface components {
             name: string;
             /**
              * Occasion Type Id
-             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag: birthday occasions come from a person's birthday.
+             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag, Weihnachten or Ostern: those rule occasions exist once per account.
              * @example null
              */
             occasion_type_id?: string | null;
@@ -1576,11 +1576,10 @@ export interface components {
         OccasionOut: {
             /**
              * Date
-             * Format: date
-             * @description Date as a plain date.
+             * @description Date as a plain date. Null only for Geburtstag; Weihnachten and Ostern carry their next date.
              * @example 2019-06-21
              */
-            date: string;
+            date: string | null;
             /**
              * Id
              * Format: uuid
@@ -1616,7 +1615,18 @@ export interface components {
              * @example yearly
              */
             recurrence: components["schemas"]["Recurrence"];
+            /**
+             * @description `birthday`, `christmas` or `easter` for the rule occasions of the account; null for own occasions.
+             * @example null
+             */
+            rule: components["schemas"]["OccasionRule"] | null;
         };
+        /**
+         * OccasionRule
+         * @description How the date of a rule occasion is derived.
+         * @enum {string}
+         */
+        OccasionRule: "birthday" | "christmas" | "easter";
         /**
          * OccasionTypeOut
          * @description An occasion type. System-wide types are read-only.

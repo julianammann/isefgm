@@ -5,7 +5,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
+from giftmanager.api.v1.occasions import occasion_out
 from giftmanager.core.auth import CurrentUser
+from giftmanager.core.clock import ClockDep, local_today
 from giftmanager.core.db import SessionDep
 from giftmanager.models import Gifting
 from giftmanager.schemas.common import Page, PageParams, problem_responses
@@ -90,6 +92,7 @@ async def get_person_overview(
     person_id: uuid.UUID,
     user: CurrentUser,
     session: SessionDep,
+    clock: ClockDep,
     page: Annotated[PageParams, Query()],
 ) -> PersonOverviewOut:
     """Return the person view of a person of the current account."""
@@ -124,7 +127,7 @@ async def get_person_overview(
             offset=page.offset,
         ),
         occasions=Page[OccasionOut](
-            items=[OccasionOut.model_validate(occasion) for occasion in occasions],
+            items=[occasion_out(occasion, local_today(clock)) for occasion in occasions],
             total=occasions_total,
             limit=page.limit,
             offset=page.offset,

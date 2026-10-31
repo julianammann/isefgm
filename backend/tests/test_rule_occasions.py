@@ -331,3 +331,77 @@ def test_migration_downgrade_restores_birthdays_per_person(database_url: str) ->
     assert lena[1:] == ("Geburtstag Lena", dt.date(1990, 5, 1), ids["lena"])
     assert giftings == [(ids["at_birthday"], lena[0])]
     assert easter_types == []
+
+
+OCCASIONS = "/api/v1/occasions"
+OWN_BODY = {"name": "Abschlussfeier", "date": "2021-01-07", "recurrence": "none"}
+
+
+@pytest.fixture
+async def rule_account(
+    client: AsyncClient, session: AsyncSession, clock: FixedClock
+) -> list[dict[str, Any]]:
+    """Log in an account with its rule occasions on 2026-10-31 and return them as listed."""
+    clock.current = datetime(2026, 10, 31, 10, 0, tzinfo=UTC)
+    user = await log_in_new_user(client, session, "rules@example.org")
+    await occasion_service.create_rule_occasions(session, user.id)
+    return (await client.get(OCCASIONS)).json()["items"]
+
+
+@pytest.mark.requirement("F-03", "F-04")
+async def test_rule_occasions_come_first_with_their_dates(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    await client.post(OCCASIONS, json=OWN_BODY)
+    items = (await client.get(OCCASIONS)).json()["items"]
+    assert [(i["name"], i["date"], i["rule"], i["people"]) for i in items] == [
+        ("Geburtstag", None, "birthday", []),
+        ("Weihnachten", "2026-12-24", "christmas", []),
+        ("Ostern", "2027-03-28", "easter", []),
+        ("Abschlussfeier", "2021-01-07", None, []),
+    ]
+
+
+@pytest.mark.requirement("F-03", "F-04")
+async def test_rule_block_counts_towards_the_first_page(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    for name in ["A", "B", "C"]:
+        await client.post(OCCASIONS, json={**OWN_BODY, "name": name})
+    first = (await client.get(OCCASIONS, params={"limit": 2})).json()
+    second = (await client.get(OCCASIONS, params={"limit": 2, "offset": 2})).json()
+    assert [i["name"] for i in first["items"]] == ["Geburtstag", "Weihnachten"]
+    assert [i["name"] for i in second["items"]] == ["Ostern", "A"]
+    assert first["total"] == 6
+
+
+@pytest.mark.requirement("F-03", "F-04")
+async def test_rule_occasion_cannot_be_changed_or_deleted(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    for item in rule_account:
+        url = f"{OCCASIONS}/{item['id']}"
+        assert (await client.put(url, json=OWN_BODY)).status_code == 409
+        assert (await client.delete(url)).status_code == 409
+        assert (await client.get(url)).status_code == 200
+
+
+@pytest.mark.requirement("F-03", "F-04")
+@pytest.mark.parametrize("type_id", [BIRTHDAY_TYPE_ID, CHRISTMAS_TYPE_ID, EASTER_TYPE_ID])
+async def test_rule_types_cannot_be_chosen(
+    client: AsyncClient, rule_account: list[dict[str, Any]], type_id: uuid.UUID
+) -> None:
+    body = {**OWN_BODY, "occasion_type_id": str(type_id)}
+    own = (await client.post(OCCASIONS, json=OWN_BODY)).json()["id"]
+    assert (await client.post(OCCASIONS, json=body)).status_code == 422
+    assert (await client.put(f"{OCCASIONS}/{own}", json=body)).status_code == 422
+
+
+@pytest.mark.requirement("F-03", "F-04")
+async def test_get_one_rule_occasion_has_its_date(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    easter = next(i for i in rule_account if i["rule"] == "easter")
+    r = await client.get(f"{OCCASIONS}/{easter['id']}")
+    assert r.status_code == 200
+    assert (r.json()["date"], r.json()["rule"]) == ("2027-03-28", "easter")

@@ -137,20 +137,11 @@ async def test_occasion_date_survives_time_boundaries(
 
 
 @pytest.mark.requirement("F-03")
-async def test_one_off_is_the_default_and_fixed_types_can_be_used(
-    client: AsyncClient, anna: User
-) -> None:
-    r = await client.post(
-        OCCASIONS,
-        json={
-            "name": "Weihnachten 2026",
-            "date": "2026-12-24",
-            "occasion_type_id": str(CHRISTMAS_TYPE_ID),
-        },
-    )
+async def test_one_off_is_the_default(client: AsyncClient, anna: User) -> None:
+    r = await client.post(OCCASIONS, json={"name": "Jubiläum", "date": "2026-12-24"})
     assert r.status_code == 201
     assert r.json()["recurrence"] == "none"
-    assert r.json()["occasion_type_id"] == str(CHRISTMAS_TYPE_ID)
+    assert r.json()["occasion_type_id"] is None
 
 
 @pytest.mark.requirement("F-03", "Q-08")

@@ -38,7 +38,7 @@ class NotFoundError(DomainError):
 
 class ConflictError(DomainError):
     """The request conflicts with the current state, e.g. an e-mail address is already
-    registered or a derived birthday occasion is edited directly."""
+    registered or a rule occasion is edited directly."""
 
     status_code = 409
     title = "Conflict"

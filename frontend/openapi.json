@@ -1218,7 +1218,7 @@
                 "type": "null"
               }
             ],
-            "description": "Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag: birthday occasions come from a person's birthday.",
+            "description": "Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag, Weihnachten or Ostern: those rule occasions exist once per account.",
             "examples": [
               null
             ],
@@ -1259,13 +1259,20 @@
         "description": "An occasion as the frontend sees it.",
         "properties": {
           "date": {
-            "description": "Date as a plain date.",
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date as a plain date. Null only for Geburtstag; Weihnachten and Ostern carry their next date.",
             "examples": [
               "2019-06-21"
             ],
-            "format": "date",
-            "title": "Date",
-            "type": "string"
+            "title": "Date"
           },
           "id": {
             "description": "Occasion ID (UUIDv7).",
@@ -1322,6 +1329,20 @@
             "examples": [
               "yearly"
             ]
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OccasionRule"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`birthday`, `christmas` or `easter` for the rule occasions of the account; null for own occasions.",
+            "examples": [
+              null
+            ]
           }
         },
         "required": [
@@ -1329,11 +1350,22 @@
           "name",
           "date",
           "recurrence",
+          "rule",
           "occasion_type_id",
           "people"
         ],
         "title": "OccasionOut",
         "type": "object"
+      },
+      "OccasionRule": {
+        "description": "How the date of a rule occasion is derived.",
+        "enum": [
+          "birthday",
+          "christmas",
+          "easter"
+        ],
+        "title": "OccasionRule",
+        "type": "string"
       },
       "OccasionTypeOut": {
         "description": "An occasion type. System-wide types are read-only.",
@@ -5119,7 +5151,7 @@
     },
     "/api/v1/occasion-types": {
       "get": {
-        "description": "Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.",
+        "description": "Returns the system-wide types Geburtstag, Weihnachten and Ostern followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.",
         "operationId": "listOccasionTypes",
         "parameters": [
           {
@@ -5250,7 +5282,7 @@
     },
     "/api/v1/occasions": {
       "get": {
-        "description": "Returns the occasions of the current account, sorted by month and day (the year is ignored), one page at a time. `total` counts all occasions of the account.",
+        "description": "Returns the occasions of the current account, one page at a time: the rule occasions Geburtstag, Weihnachten and Ostern first, then the others sorted by month and day (the year is ignored). `total` counts all occasions of the account.",
         "operationId": "listOccasions",
         "parameters": [
           {
@@ -5315,7 +5347,7 @@
         ]
       },
       "post": {
-        "description": "Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.",
+        "description": "Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.",
         "operationId": "createOccasion",
         "requestBody": {
           "content": {
@@ -5377,7 +5409,7 @@
     },
     "/api/v1/occasions/{occasion_id}": {
       "delete": {
-        "description": "Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person. An occasion used by a gifting cannot be deleted; this returns 409.",
+        "description": "Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A rule occasion (Geburtstag, Weihnachten, Ostern) cannot be changed or deleted; this returns 409. An occasion used by a gifting cannot be deleted; this returns 409.",
         "operationId": "deleteOccasion",
         "parameters": [
           {
@@ -5504,7 +5536,7 @@
         ]
       },
       "put": {
-        "description": "Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person.",
+        "description": "Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A rule occasion (Geburtstag, Weihnachten, Ostern) cannot be changed or deleted; this returns 409.",
         "operationId": "updateOccasion",
         "parameters": [
           {
@@ -7155,7 +7187,7 @@
       "name": "people"
     },
     {
-      "description": "Occasion types and occasions (F-03). The types Geburtstag and Weihnachten are system-wide and read-only; occasions are one-off or yearly and visible only to their account (Q-01).",
+      "description": "Occasion types and occasions (F-03). The types Geburtstag, Weihnachten and Ostern are system-wide and read-only; occasions are one-off or yearly and visible only to their account (Q-01). Geburtstag, Weihnachten and Ostern also exist once per account as rule occasions, which are read-only.",
       "name": "occasions"
     },
     {

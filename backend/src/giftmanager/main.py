@@ -39,9 +39,10 @@ OPENAPI_TAGS = [
     },
     {
         "name": "occasions",
-        "description": "Occasion types and occasions (F-03). The types Geburtstag and "
-        "Weihnachten are system-wide and read-only; occasions are one-off or yearly and "
-        "visible only to their account (Q-01).",
+        "description": "Occasion types and occasions (F-03). The types Geburtstag, "
+        "Weihnachten and Ostern are system-wide and read-only; occasions are one-off or "
+        "yearly and visible only to their account (Q-01). Geburtstag, Weihnachten and Ostern "
+        "also exist once per account as rule occasions, which are read-only.",
     },
     {
         "name": "images",

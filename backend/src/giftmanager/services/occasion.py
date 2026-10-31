@@ -5,12 +5,11 @@ import calendar
 import datetime as dt
 import uuid
 
-from sqlalchemy import ColumnElement, extract, func, or_, select
+from sqlalchemy import ColumnElement, case, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import ConflictError, NotFoundError
 from giftmanager.models import (
-    BIRTHDAY_TYPE_ID,
     RULE_NAMES,
     RULE_TYPES,
     Occasion,
@@ -57,10 +56,17 @@ async def get_occasion_type(
 async def list_occasions(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Occasion], int]:
-    """Return one page of the owner's occasions, sorted by month and day of the year (year ignored), and the total count."""
+    """Return one page of the owner's occasions and the total count: the rule occasions first
+    (Geburtstag, Weihnachten, Ostern), then the others by month and day (year ignored)."""
+    rule_rank = case(
+        {type_id: rank for rank, type_id in enumerate(RULE_TYPES)},
+        value=Occasion.occasion_type_id,
+        else_=len(RULE_TYPES),
+    )
     return await paginate(
         session,
         owned(Occasion, owner_id).order_by(
+            rule_rank,
             extract("month", Occasion.date),
             extract("day", Occasion.date),
             func.lower(Occasion.name),
@@ -151,10 +157,10 @@ async def delete_occasion(
 async def _get_editable_occasion(
     session: AsyncSession, owner_id: uuid.UUID, occasion_id: uuid.UUID
 ) -> Occasion:
-    """Return the owner's occasion, unless it is a birthday, which follows its person."""
+    """Return the owner's occasion, unless it is a rule occasion, which nobody can change."""
     occasion = await get_occasion(session, owner_id, occasion_id)
-    if occasion.occasion_type_id == BIRTHDAY_TYPE_ID:
-        raise ConflictError("A birthday occasion follows the person's birthday; edit the person")
+    if occasion.occasion_type_id in RULE_TYPES:
+        raise ConflictError("A rule occasion cannot be changed or deleted")
     return occasion
 
 
