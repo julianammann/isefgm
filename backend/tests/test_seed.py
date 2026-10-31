@@ -11,6 +11,7 @@ from giftmanager.core.config import get_settings
 from giftmanager.core.db import get_engine, get_sessionmaker
 from giftmanager.models import (
     Gift,
+    GiftCategory,
     Gifting,
     GiftingStatus,
     Person,
@@ -102,6 +103,20 @@ async def _given() -> tuple[int, int]:
         await get_engine().dispose()
 
 
+async def _gifts() -> list[tuple[str, GiftCategory, str, str | None]]:
+    """Owner email, category, title and description of every gift of the test accounts."""
+    try:
+        async with get_sessionmaker()() as session:
+            rows = await session.execute(
+                select(User.email, Gift.category, Gift.title, Gift.description)
+                .join(User, User.id == Gift.owner_id)
+                .where(User.email.in_([email for email, _ in seed.ACCOUNTS]))
+            )
+            return [tuple(row) for row in rows]
+    finally:
+        await get_engine().dispose()
+
+
 async def _tasks() -> list[tuple[str, dt.date | None, dt.date | None]]:
     """Title, due date and the gifting's occasion date of every task of the test accounts."""
     try:
@@ -131,6 +146,13 @@ def test_seeds_every_account_and_can_run_again(
     given, without_recipient = asyncio.run(_given())
     assert given > 0
     assert without_recipient == 0
+    gifts = asyncio.run(_gifts())
+    # Unique per account, each title from its category, each description from its title.
+    assert len({(email, title) for email, _, title, _ in gifts}) == len(gifts)
+    for _, category, title, description in gifts:
+        ideas = seed.GIFT_IDEAS[category]
+        (template,) = [t for t in ideas if title.startswith(t.split("{{")[0])]
+        assert description is None or description in ideas[template]
     tasks = asyncio.run(_tasks())
     assert tasks
     for title, due_on, occasion_date in tasks:
