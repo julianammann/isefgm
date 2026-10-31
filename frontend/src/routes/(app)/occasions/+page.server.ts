@@ -7,12 +7,13 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
+import { pageCount, pageQuery, parsePage } from '$lib/pagination';
 import { listPersons } from '$lib/server/persons';
 import {
   createOccasion,
   deleteOccasion,
   getOccasion,
-  listOccasions,
+  listOccasionsPage,
   listOccasionTypes,
   updateOccasion,
   type OccasionInput
@@ -66,11 +67,18 @@ function parseForm(form: FormData): { values: OccasionInput; errors: FieldErrors
   };
 }
 
-/** Loads all occasions; `?edit=<id>` returns one for the edit form. */
+/** Loads one page of occasions; `?edit=<id>` returns one for the edit form. */
 export const load: PageServerLoad = async ({ locals, url }) => {
-  const result = await listOccasions(locals.api);
+  const page = parsePage(url);
+  const result = await listOccasionsPage(locals.api, page);
   if (!result.ok) error(result.status, result.message);
-  const occasions = result.data;
+  const { items: occasions, total } = result.data;
+
+  const last = pageCount(total);
+  if (page > last && total > 0) {
+    const others = Object.fromEntries([...url.searchParams].filter(([key]) => key !== 'page'));
+    redirect(303, '/occasions' + pageQuery(last, others));
+  }
 
   const typesResult = await listOccasionTypes(locals.api);
   if (!typesResult.ok) error(typesResult.status, typesResult.message);
@@ -98,7 +106,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const successKey = url.searchParams.get('success');
   const successMessage = isSuccessKey(successKey) ? successMessages[successKey] : null;
 
-  return { occasions, occasionTypes, people, editOccasion, successMessage };
+  return { occasions, page, total, occasionTypes, people, editOccasion, successMessage };
 };
 
 /** Handles form submissions for creating, updating, and deleting occasions. */
@@ -117,10 +125,10 @@ export const actions: Actions = {
       return fail(result.status, { values, errors: actionErrors });
     }
 
-    throw redirect(303, `?success=created`);
+    throw redirect(303, '/occasions?success=created');
   },
 
-  update: async ({ request, locals }) => {
+  update: async ({ request, locals, url }) => {
     const form = await request.formData();
     const id = String(form.get('id') ?? '').trim();
     const { values, errors } = parseForm(form);
@@ -140,10 +148,10 @@ export const actions: Actions = {
       return fail(result.status, { values, errors: actionErrors });
     }
 
-    throw redirect(303, `?success=updated`);
+    throw redirect(303, '/occasions' + pageQuery(parsePage(url), { success: 'updated' }));
   },
 
-  delete: async ({ request, locals }) => {
+  delete: async ({ request, locals, url }) => {
     const form = await request.formData();
     const id = String(form.get('id') ?? '').trim();
 
@@ -158,6 +166,6 @@ export const actions: Actions = {
       return fail(result.status, { errors });
     }
 
-    throw redirect(303, `?success=deleted`);
+    throw redirect(303, '/occasions' + pageQuery(parsePage(url), { success: 'deleted' }));
   }
 };

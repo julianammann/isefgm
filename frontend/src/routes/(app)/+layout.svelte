@@ -8,7 +8,11 @@
 </script>
 
 <header class="border-b">
-  <nav class="mx-auto flex max-w-4xl items-center gap-6 p-4" aria-label="Hauptnavigation">
+  <!-- Wraps on narrow screens instead of widening the page. -->
+  <nav
+    class="mx-auto flex max-w-4xl flex-wrap items-center gap-x-6 gap-y-2 p-4"
+    aria-label="Hauptnavigation"
+  >
     <a class="font-bold" href={resolve('/')}>Geschenke-Manager</a>
     <span class="ml-auto flex items-center gap-2 text-sm">
       <StatusDot status={data.status} />

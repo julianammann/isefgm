@@ -1,6 +1,8 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
+  import Pagination from '$lib/components/Pagination.svelte';
+  import { actionUrl, pageQuery } from '$lib/pagination';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -20,6 +22,7 @@
       }
   );
   const errors = $derived(form?.errors ?? {});
+  // shortcut: sorts within one page only, remove once the backend sorts by month/day (#131).
   const sortedOccasions = $derived(
     [...data.occasions].sort((first, second) => {
       const firstMonthDay = first.date.slice(5);
@@ -58,13 +61,35 @@
   }
 </script>
 
-<svelte:head><title>Anlässe – Geschenke-Manager</title></svelte:head>
+<svelte:head
+  ><title
+    >{data.page > 1
+      ? `Anlässe – Seite ${data.page} – Geschenke-Manager`
+      : 'Anlässe – Geschenke-Manager'}</title
+  ></svelte:head
+>
 
 <main class="mx-auto max-w-4xl p-8">
   <h1 class="text-2xl font-bold">Anlässe</h1>
 
   <section class="mt-10" aria-labelledby="list-heading">
-    <h2 id="list-heading" class="font-semibold">Übersicht</h2>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="list-heading" class="font-semibold">Übersicht</h2>
+      {#if !isEdit}
+        <button
+          type="button"
+          class="rounded bg-black px-4 py-2 text-white"
+          aria-haspopup="dialog"
+          aria-controls="occasion-form-dialog"
+          onclick={openForm}
+        >
+          Anlass anlegen
+        </button>
+      {/if}
+    </div>
+    {#if data.successMessage}
+      <p role="status" class="mt-2 text-sm text-green-800">{data.successMessage}</p>
+    {/if}
     {#if data.occasions.length === 0}
       <p class="mt-4 text-sm text-gray-600">Keine Anlässe vorhanden.</p>
     {:else}
@@ -88,8 +113,9 @@
               <span class="text-sm text-gray-600">(Geburtstag wird über die Person gepflegt)</span>
             {:else}
               <div class="flex items-center gap-2">
-                <a href={resolve(`/occasions?edit=${occasion.id}`)} class="text-sm underline"
-                  >Bearbeiten</a
+                <a
+                  href={resolve(`/occasions${pageQuery(data.page, { edit: occasion.id })}`)}
+                  class="text-sm underline">Bearbeiten</a
                 >
                 <button
                   type="button"
@@ -104,6 +130,11 @@
         {/each}
       </ul>
     {/if}
+    <Pagination
+      page={data.page}
+      total={data.total}
+      href={(p) => resolve(`/occasions${pageQuery(p)}`)}
+    />
   </section>
 
   <dialog
@@ -119,7 +150,7 @@
     </p>
     <form
       method="POST"
-      action="?/delete"
+      action={actionUrl('delete', data.page)}
       class="mt-4 flex justify-end gap-3"
       use:enhance={() =>
         async ({ result, update }) => {
@@ -138,22 +169,6 @@
     </form>
   </dialog>
 
-  {#if data.successMessage}
-    <p role="status" class="mt-4 text-sm text-green-800">{data.successMessage}</p>
-  {/if}
-
-  {#if !isEdit}
-    <button
-      type="button"
-      class="mt-10 rounded bg-black px-4 py-2 text-white"
-      aria-haspopup="dialog"
-      aria-controls="occasion-form-dialog"
-      onclick={openForm}
-    >
-      Anlass anlegen
-    </button>
-  {/if}
-
   <dialog
     id="occasion-form-dialog"
     bind:this={formDialog}
@@ -167,7 +182,7 @@
     {#key data}
       <form
         method="POST"
-        action={isEdit ? '?/update' : '?/create'}
+        action={actionUrl(isEdit ? 'update' : 'create', data.page)}
         use:enhance={() =>
           async ({ result, update }) => {
             if (result.type === 'redirect') {
@@ -279,7 +294,9 @@
             {isEdit ? 'Speichern' : 'Anlegen'}
           </button>
           {#if isEdit}
-            <a href={resolve('/occasions')} class="text-sm underline">Abbrechen</a>
+            <a href={resolve(`/occasions${pageQuery(data.page)}`)} class="text-sm underline"
+              >Abbrechen</a
+            >
           {:else}
             <button
               type="button"

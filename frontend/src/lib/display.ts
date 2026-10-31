@@ -1,0 +1,78 @@
+/**
+ * Display labels and formatters shared by the gift list and the gift idea detail page.
+ * Holds no server imports, so pages and components can use it in the browser.
+ *
+ * @module
+ */
+import type { components } from '$lib/api/schema';
+
+type GiftCategory = components['schemas']['GiftCategory'];
+type TaskStatus = components['schemas']['TaskStatus'];
+
+/** Progress of a gifting: `idea`, `planned`, `acquired` or `given`. */
+export type GiftingStatus = components['schemas']['GiftingStatus'];
+
+/** German label and symbol per gifting status; Q-07: status is always text and symbol, colour only adds. */
+export const GIFTING_STATUS: Record<GiftingStatus, { label: string; icon: string }> = {
+  idea: { label: 'Idee', icon: '○' },
+  planned: { label: 'Geplant', icon: '◔' },
+  acquired: { label: 'Besorgt', icon: '◕' },
+  given: { label: 'Verschenkt', icon: '✓' }
+};
+/** Gifting statuses in workflow order, from idea to given. */
+export const GIFTING_STATUS_ORDER = Object.keys(GIFTING_STATUS) as GiftingStatus[];
+/** Tailwind border and text colour classes per gifting status. */
+export const GIFTING_STATUS_CLASS: Record<GiftingStatus, string> = {
+  idea: 'border-gray-400 text-gray-700',
+  planned: 'border-blue-700 text-blue-800',
+  acquired: 'border-amber-700 text-amber-800',
+  given: 'border-green-700 text-green-800'
+};
+
+/** German label and symbol per task status. */
+export const TASK_STATUS: Record<TaskStatus, { label: string; icon: string }> = {
+  open: { label: 'Offen', icon: '○' },
+  in_progress: { label: 'In Bearbeitung', icon: '◔' },
+  done: { label: 'Erledigt', icon: '✓' },
+  discarded: { label: 'Verworfen', icon: '✕' }
+};
+/** Task statuses in workflow order, from open to discarded. */
+export const TASK_STATUS_ORDER = Object.keys(TASK_STATUS) as TaskStatus[];
+
+/** German label per gift category. */
+export const CATEGORIES: Record<GiftCategory, string> = {
+  books: 'Bücher',
+  games: 'Spiele',
+  experience: 'Erlebnis',
+  clothing: 'Kleidung',
+  tech: 'Technik',
+  food: 'Essen & Trinken',
+  home: 'Wohnen',
+  voucher: 'Gutschein',
+  other: 'Sonstiges'
+};
+
+/** Turns an ISO date (`2026-12-24`) into the German form (`24.12.2026`). */
+export const formatDate = (iso: string | null) => (iso ? iso.split('-').reverse().join('.') : '');
+
+/** Shows an API price (decimal point) with a German decimal comma; empty for no price. */
+export const formatPrice = (price: string | number | null | undefined) =>
+  price === null || price === undefined ? '' : String(price).replace('.', ',');
+
+/**
+ * One line per gift idea, e.g. „3 Beschenkungen: 2× ◔ Geplant · ✓ Verschenkt“: `lead`, then the
+ * `parts` joined by „ · “. The icon stays separate, so the page can hide it from screen readers.
+ */
+export function giftingSummary(statuses: GiftingStatus[]): {
+  lead: string;
+  parts: { count: string; icon: string; label: string }[];
+} {
+  if (statuses.length === 0) return { lead: 'Noch keine Beschenkung', parts: [] };
+  const parts = GIFTING_STATUS_ORDER.flatMap((status) => {
+    const count = statuses.filter((s) => s === status).length;
+    if (count === 0) return [];
+    return [{ count: count > 1 ? `${count}× ` : '', ...GIFTING_STATUS[status] }];
+  });
+  const noun = statuses.length === 1 ? 'Beschenkung' : 'Beschenkungen';
+  return { lead: `${statuses.length} ${noun}: `, parts };
+}
