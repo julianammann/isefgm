@@ -63,7 +63,7 @@ def _type_out(occasion_type: OccasionType) -> OccasionTypeOut:
     "",
     operation_id="listOccasionTypes",
     summary="List occasion types",
-    description="Returns the system-wide types Geburtstag, Weihnachten and Ostern followed by the "
+    description="Returns the system-wide types (Geburtstag, Ostern, Weihnachten, by name) followed by the "
     "account's own types. System-wide types are read-only: there is no endpoint to change "
     "or delete them.",
     responses=problem_responses(401),

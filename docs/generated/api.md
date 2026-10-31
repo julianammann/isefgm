@@ -101,7 +101,7 @@ Occasion types and occasions (F-03). The types Geburtstag, Weihnachten and Oster
 
 | Endpoint | operationId | Purpose | Behaviour | Status |
 | --- | --- | --- | --- | --- |
-| `GET /api/v1/occasion-types` | `listOccasionTypes` | List occasion types | Returns the system-wide types Geburtstag, Weihnachten and Ostern followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them. | 200, 401, 422 |
+| `GET /api/v1/occasion-types` | `listOccasionTypes` | List occasion types | Returns the system-wide types (Geburtstag, Ostern, Weihnachten, by name) followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them. | 200, 401, 422 |
 | `GET /api/v1/occasion-types/{occasion_type_id}` | `getOccasionType` | Show occasion type | Returns one system-wide type or one of the account's own types. A type of another account returns 404. | 200, 401, 404, 422 |
 | `GET /api/v1/occasions` | `listOccasions` | List occasions | Returns the occasions of the current account, one page at a time: the rule occasions Geburtstag, Weihnachten and Ostern first, then the others sorted by month and day (the year is ignored). `total` counts all occasions of the account. | 200, 401, 422 |
 | `POST /api/v1/occasions` | `createOccasion` | Create occasion | Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. | 201, 401, 404, 422 |

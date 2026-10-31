@@ -305,7 +305,7 @@ def test_migration_downgrade_restores_birthdays_per_person(database_url: str) ->
         command.upgrade(cfg, "head")
         command.downgrade(cfg, BEFORE_RULES)
 
-        [birthdays, giftings, easter_types] = asyncio.run(
+        [birthdays, giftings, easter_types, christmases] = asyncio.run(
             _run_sql(
                 url,
                 [
@@ -314,12 +314,19 @@ def test_migration_downgrade_restores_birthdays_per_person(database_url: str) ->
                         "LEFT JOIN person_occasion po ON po.occasion_id = o.id "
                         "WHERE o.occasion_type_id = :birthday ORDER BY o.name"
                     ),
-                    "SELECT id, occasion_id FROM gifting WHERE id = :at_birthday",
+                    "SELECT id, occasion_id FROM gifting WHERE id IN (:at_birthday, :at_xmas)",
                     "SELECT id FROM occasion_type WHERE id = :easter_type",
+                    (
+                        "SELECT id, date FROM occasion WHERE occasion_type_id = :christmas "
+                        "AND owner_id = :anna"
+                    ),
                 ],
                 {
                     "birthday": BIRTHDAY_TYPE_ID,
+                    "christmas": CHRISTMAS_TYPE_ID,
+                    "anna": ids["anna"],
                     "at_birthday": ids["at_birthday"],
+                    "at_xmas": ids["at_xmas"],
                     "easter_type": EASTER_TYPE_ID,
                 },
             )
@@ -329,7 +336,9 @@ def test_migration_downgrade_restores_birthdays_per_person(database_url: str) ->
     assert lena[0] != ids["lena_bd"]  # created by the downgrade, not left over
     assert anton[1:] == ("Geburtstag Anton", dt.date(1985, 12, 24), ids["anton"])
     assert lena[1:] == ("Geburtstag Lena", dt.date(1990, 5, 1), ids["lena"])
-    assert giftings == [(ids["at_birthday"], lena[0])]
+    [christmas] = christmases
+    assert christmas[1] == dt.date(datetime.now(UTC).year, 12, 24)
+    assert dict(giftings) == {ids["at_birthday"]: lena[0], ids["at_xmas"]: christmas[0]}
     assert easter_types == []
 
 
@@ -359,6 +368,21 @@ async def test_rule_occasions_come_first_with_their_dates(
         ("Weihnachten", "2026-12-24", "christmas", []),
         ("Ostern", "2027-03-28", "easter", []),
         ("Abschlussfeier", "2021-01-07", None, []),
+    ]
+
+
+@pytest.mark.requirement("F-03", "F-04")
+async def test_gift_idea_lists_rule_occasions_before_own_ones(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    own = (await client.post(OCCASIONS, json=OWN_BODY)).json()["id"]
+    ids = [own, *(item["id"] for item in reversed(rule_account))]
+    gift = (await client.post("/api/v1/gifts", json={"title": "Pi", "occasion_ids": ids})).json()
+    assert [o["name"] for o in gift["occasions"]] == [
+        "Geburtstag",
+        "Weihnachten",
+        "Ostern",
+        "Abschlussfeier",
     ]
 
 

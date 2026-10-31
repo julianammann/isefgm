@@ -132,7 +132,7 @@
             "type": "array"
           },
           "occasions": {
-            "description": "Occasions the idea is meant for, sorted by date.",
+            "description": "Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.",
             "examples": [
               [
                 {
@@ -479,7 +479,7 @@
             "type": "string"
           },
           "occasions": {
-            "description": "Occasions the idea is meant for, sorted by date.",
+            "description": "Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.",
             "examples": [
               [
                 {
@@ -2118,7 +2118,7 @@
           },
           "occasions": {
             "$ref": "#/components/schemas/Page_OccasionOut_",
-            "description": "Occasions that concern the person, sorted by date.",
+            "description": "Occasions that concern the person: the account's Geburtstag first when the person has a birthday, then the linked occasions by date.",
             "examples": [
               {
                 "items": [],
@@ -5151,7 +5151,7 @@
     },
     "/api/v1/occasion-types": {
       "get": {
-        "description": "Returns the system-wide types Geburtstag, Weihnachten and Ostern followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.",
+        "description": "Returns the system-wide types (Geburtstag, Ostern, Weihnachten, by name) followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.",
         "operationId": "listOccasionTypes",
         "parameters": [
           {

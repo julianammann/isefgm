@@ -473,7 +473,7 @@ export interface paths {
         };
         /**
          * List occasion types
-         * @description Returns the system-wide types Geburtstag, Weihnachten and Ostern followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
+         * @description Returns the system-wide types (Geburtstag, Ostern, Weihnachten, by name) followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
          */
         get: operations["listOccasionTypes"];
         put?: never;
@@ -945,7 +945,7 @@ export interface components {
             notes: components["schemas"]["NoteOut"][];
             /**
              * Occasions
-             * @description Occasions the idea is meant for, sorted by date.
+             * @description Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.
              * @example [
              *       {
              *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
@@ -1118,7 +1118,7 @@ export interface components {
             id: string;
             /**
              * Occasions
-             * @description Occasions the idea is meant for, sorted by date.
+             * @description Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.
              * @example [
              *       {
              *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
@@ -1978,7 +1978,7 @@ export interface components {
              */
             ideas: components["schemas"]["Page_GiftOut_"];
             /**
-             * @description Occasions that concern the person, sorted by date.
+             * @description Occasions that concern the person: the account's Geburtstag first when the person has a birthday, then the linked occasions by date.
              * @example {
              *       "items": [],
              *       "limit": 50,

@@ -118,6 +118,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_rule_occasions.py::test_migration_folds_birthdays_and_christmas_into_rule_occasions` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_migration_downgrade_restores_birthdays_per_person` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_occasions_come_first_with_their_dates` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_gift_idea_lists_rule_occasions_before_own_ones` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_block_counts_towards_the_first_page` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_occasion_cannot_be_changed_or_deleted` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_types_cannot_be_chosen[type_id0]` | passed |
@@ -160,6 +161,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-04 | `tests/test_rule_occasions.py::test_migration_folds_birthdays_and_christmas_into_rule_occasions` | passed |
 | F-04 | `tests/test_rule_occasions.py::test_migration_downgrade_restores_birthdays_per_person` | passed |
 | F-04 | `tests/test_rule_occasions.py::test_rule_occasions_come_first_with_their_dates` | passed |
+| F-04 | `tests/test_rule_occasions.py::test_gift_idea_lists_rule_occasions_before_own_ones` | passed |
 | F-04 | `tests/test_rule_occasions.py::test_rule_block_counts_towards_the_first_page` | passed |
 | F-04 | `tests/test_rule_occasions.py::test_rule_occasion_cannot_be_changed_or_deleted` | passed |
 | F-04 | `tests/test_rule_occasions.py::test_rule_types_cannot_be_chosen[type_id0]` | passed |

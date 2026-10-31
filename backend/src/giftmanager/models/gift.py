@@ -24,6 +24,13 @@ from giftmanager.models.occasion import Occasion
 from giftmanager.models.person import Person
 
 
+def _rule_rank():
+    # Imported late: the service module imports the models.
+    from giftmanager.services.occasion import RULE_RANK
+
+    return RULE_RANK
+
+
 class GiftCategory(enum.StrEnum):
     """Kind of gift; the aggregated feature for suggestions (F-16)."""
 
@@ -156,6 +163,6 @@ class Gift(TimestampMixin, Base):
     )
     occasions: Mapped[list[Occasion]] = relationship(
         secondary=gift_occasion,
-        order_by=lambda: [Occasion.date, func.lower(Occasion.name), Occasion.id],
+        order_by=lambda: [_rule_rank(), Occasion.date, func.lower(Occasion.name), Occasion.id],
         lazy="selectin",
     )
