@@ -9,9 +9,15 @@
   let formOpen = $state(false);
   let deleteOpen = $state(false);
   let toDelete = $state.raw<Note | null>(null);
+  /** The action result present when the delete dialog opened, so an older failure stays hidden. */
+  let deleteSeen = $state.raw<ActionData>(null);
   /** One opening of the form dialog: the note to edit (null for a new one) and the earlier action result. */
   let session = $state.raw<{ note: Note | null; seen: ActionData }>({ note: null, seen: null });
 
+  // A failed delete keeps its dialog open; only the open delete dialog shows the message.
+  const deleteFailed = $derived(
+    deleteOpen && form !== deleteSeen && form?.scope === 'delete' ? form : null
+  );
   const failed = $derived(form !== session.seen && form?.scope === 'note' ? form : null);
   const values = $derived(
     failed?.values ?? { label: session.note?.label ?? '', text: session.note?.text ?? '' }
@@ -25,13 +31,9 @@
 
   function askDelete(note: Note) {
     toDelete = note;
+    deleteSeen = form;
     deleteOpen = true;
   }
-
-  // A failed delete closes its dialog, so the page's alert is not hidden behind it.
-  $effect(() => {
-    if (form?.scope === 'delete') deleteOpen = false;
-  });
 </script>
 
 <section class="mt-10" aria-labelledby="notes-heading">
@@ -127,6 +129,7 @@
   submitLabel="Löschen"
   danger
   bind:open={deleteOpen}
+  message={deleteFailed?.message ?? null}
 >
   <input type="hidden" name="id" value={toDelete?.id} />
   <p class="text-sm">„{toDelete?.label}“ wird endgültig gelöscht.</p>
