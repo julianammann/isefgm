@@ -571,7 +571,7 @@ export interface paths {
         put?: never;
         /**
          * Create person
-         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
+         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null. Through `birthday` the person belongs to the account's rule occasion Geburtstag.
          */
         post: operations["createPerson"];
         delete?: never;
@@ -594,13 +594,13 @@ export interface paths {
         get: operations["getPerson"];
         /**
          * Update person
-         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. Through `birthday` the person belongs to the account's rule occasion Geburtstag. A person of another account returns 404, like a missing one.
          */
         put: operations["updatePerson"];
         post?: never;
         /**
          * Delete person
-         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
+         * @description Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.
          */
         delete: operations["deletePerson"];
         options?: never;

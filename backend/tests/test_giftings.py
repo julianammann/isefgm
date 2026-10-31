@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.models import (
+    BIRTHDAY_TYPE_ID,
     Gift,
     Gifting,
     GiftingStatus,
@@ -19,6 +20,7 @@ from giftmanager.models import (
     User,
     gifting_person,
 )
+from giftmanager.services import occasion as occasion_service
 from tests.accounts import log_in_new_user
 from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
@@ -479,24 +481,31 @@ async def test_occasion_with_giftings_cannot_be_deleted(client: AsyncClient, ann
 
 
 @pytest.mark.requirement("F-03", "F-06")
-@pytest.mark.parametrize(("method", "body"), [("DELETE", None), ("PUT", {"name": "Lena"})])
-async def test_birthday_with_giftings_cannot_be_removed(
-    client: AsyncClient, anna: User, method: str, body: dict[str, object] | None
+async def test_birthday_and_person_can_go_although_a_gifting_uses_the_birthday(
+    client: AsyncClient, session: AsyncSession, anna: User
 ) -> None:
-    # Deleting the person or clearing the birthday would delete the birthday occasion.
-    lena = await create_person(client, "Lena", "1990-05-01")
-    [birthday] = (await client.get(OCCASIONS)).json()["items"]
-    pi = await create_gift(client)
-    await client.post(
-        GIFTINGS, json={"gift_id": pi, "person_ids": [lena], "occasion_id": birthday["id"]}
+    await occasion_service.create_rule_occasions(session, anna.id)
+    birthday = await session.scalar(
+        select(Occasion.id).where(
+            Occasion.owner_id == anna.id, Occasion.occasion_type_id == BIRTHDAY_TYPE_ID
+        )
     )
+    lena = await create_person(client, "Lena", "1990-05-01")
+    pi = await create_gift(client)
+    gifting = (
+        await client.post(
+            GIFTINGS, json={"gift_id": pi, "person_ids": [lena], "occasion_id": str(birthday)}
+        )
+    ).json()
 
-    r = await client.request(method, f"{PEOPLE}/{lena}", json=body)
-    assert r.status_code == 409
-    assert r.json()["title"] == "Conflict"
+    assert (await client.put(f"{PEOPLE}/{lena}", json={"name": "Lena"})).status_code == 200
+    assert (await client.delete(f"{PEOPLE}/{lena}")).status_code == 204
+    # Each request has its own session in production; drop what this one still holds.
+    session.expire_all()
 
-    assert (await client.get(f"{PEOPLE}/{lena}")).json()["birthday"] == "1990-05-01"
-    assert (await client.get(f"{OCCASIONS}/{birthday['id']}")).status_code == 200
+    shown = (await client.get(f"{GIFTINGS}/{gifting['id']}")).json()
+    assert shown["occasion"]["id"] == str(birthday)
+    assert shown["people"] == []
 
 
 @pytest.mark.requirement("F-06")

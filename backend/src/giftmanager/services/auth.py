@@ -18,6 +18,7 @@ from giftmanager.core.security import (
     verify_password,
 )
 from giftmanager.models import User, UserSession, UserStatus
+from giftmanager.services.occasion import create_rule_occasions
 
 # last_seen_at and expires_at are written at most this often to keep reads cheap.
 _LAST_SEEN_GRANULARITY = timedelta(minutes=5)
@@ -29,7 +30,7 @@ def normalize_email(email: str) -> str:
 
 
 async def register(session: AsyncSession, *, email: str, password: str, display_name: str) -> User:
-    """Create an account.
+    """Create an account with its rule occasions Geburtstag, Weihnachten and Ostern.
 
     Raises:
         ConflictError: The e-mail address is already registered.
@@ -51,6 +52,7 @@ async def register(session: AsyncSession, *, email: str, password: str, display_
         if "uq_user_account_email" not in str(exc.orig):
             raise
         raise ConflictError("E-mail address is already registered") from exc
+    await create_rule_occasions(session, user.id)
     return user
 
 

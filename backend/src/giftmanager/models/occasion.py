@@ -4,7 +4,19 @@ import datetime as dt
 import enum
 import uuid
 
-from sqlalchemy import Column, Date, Enum, ForeignKey, String, Table, Uuid, func
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    Date,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    Table,
+    Uuid,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from giftmanager.models.base import Base
@@ -66,7 +78,7 @@ class OccasionType(Base):
     __table_args__ = (
         {
             "comment": "Kind of occasion (F-03). owner_id NULL marks the system-wide types "
-            "Geburtstag and Weihnachten, created by a migration and read-only for users."
+            "Geburtstag, Weihnachten and Ostern, created by migrations and read-only for users."
         },
     )
 
@@ -117,10 +129,24 @@ class Occasion(Base):
 
     __tablename__ = "occasion"
     __table_args__ = (
+        CheckConstraint(
+            "date IS NOT NULL OR occasion_type_id IN ("
+            + ", ".join(f"'{type_id}'" for type_id in RULE_TYPES)
+            + ")",
+            name="date_only_null_for_rules",
+        ),
+        Index(
+            "uq_occasion_owner_rule_type",
+            "owner_id",
+            "occasion_type_id",
+            unique=True,
+            postgresql_where=text("date IS NULL"),
+        ),
         {
             "comment": "Occasion of an account (F-03). Stores the rule (date and recurrence); "
-            "a concrete year is stored where the occasion is used. Visible only to its "
-            "owner (Q-01)."
+            "a concrete year is stored where the occasion is used. Every account has the rule "
+            "occasions Geburtstag, Weihnachten and Ostern exactly once, without a date. "
+            "Visible only to its owner (Q-01)."
         },
     )
 
@@ -138,8 +164,10 @@ class Occasion(Base):
         comment="Type of the occasion. NULL for an own occasion without a type.",
     )
     name: Mapped[str] = mapped_column(String(100), comment="Title, e.g. Hochzeitstag.")
-    date: Mapped[dt.date] = mapped_column(
-        Date, comment="Date as a plain calendar date (Q-08). First occurrence for yearly ones."
+    date: Mapped[dt.date | None] = mapped_column(
+        Date,
+        comment="Date as a plain calendar date (Q-08). First occurrence for yearly ones. "
+        "NULL only for a rule occasion, whose date follows its rule.",
     )
     recurrence: Mapped[Recurrence] = mapped_column(
         _recurrence_column("occasion_recurrence"),

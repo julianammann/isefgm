@@ -139,7 +139,6 @@ async def is_gift_in_use(session: AsyncSession, gift_id: uuid.UUID) -> bool:
 async def is_occasion_in_use(session: AsyncSession, occasion_id: uuid.UUID) -> bool:
     """Return whether any gifting refers to the occasion."""
 
-    # Used by delete_occasion and delete_birthday (services/occasion.py)
-    # and update_person (services/person.py).
+    # Used by delete_occasion (services/occasion.py).
     statement = select(exists().where(Gifting.occasion_id == occasion_id))
     return bool(await session.scalar(statement))
