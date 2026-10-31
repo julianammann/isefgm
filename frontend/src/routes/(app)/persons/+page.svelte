@@ -1,6 +1,8 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
+  import Pagination from '$lib/components/Pagination.svelte';
+  import { actionUrl, pageQuery } from '$lib/pagination';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -26,6 +28,11 @@
     if (!isEdit && !showForm && formDialog?.open) formDialog.close();
   });
 
+  /** URL of the list at the given page, optionally with extra params. */
+  function listHref(page: number, extra?: Record<string, string>) {
+    return resolve('/persons') + pageQuery(page, extra);
+  }
+
   function openForm() {
     showForm = true;
   }
@@ -42,7 +49,20 @@
   <h1 class="text-2xl font-bold">Personen</h1>
 
   <section class="mt-10" aria-labelledby="list-heading">
-    <h2 id="list-heading" class="font-semibold">Übersicht</h2>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 id="list-heading" class="font-semibold">Übersicht</h2>
+      {#if !isEdit}
+        <button
+          type="button"
+          class="rounded bg-black px-4 py-2 text-white"
+          aria-haspopup="dialog"
+          aria-controls="person-form-dialog"
+          onclick={openForm}
+        >
+          Person hinzufügen
+        </button>
+      {/if}
+    </div>
     {#if data.persons.length === 0}
       <p class="mt-2 text-sm">Noch keine Personen angelegt.</p>
     {:else}
@@ -57,7 +77,8 @@
                 <span class="ml-2 text-sm text-gray-600">{person.relationship}</span>
               {/if}
             </span>
-            <a href={resolve(`/persons?edit=${person.id}`)} class="text-sm underline">
+            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- listHref resolves -->
+            <a href={listHref(data.page, { edit: person.id })} class="text-sm underline">
               Bearbeiten<span class="sr-only">: {person.name}</span>
             </a>
             <button
@@ -71,6 +92,7 @@
         {/each}
       </ul>
     {/if}
+    <Pagination page={data.page} total={data.total} href={(p) => listHref(p)} />
   </section>
 
   <dialog
@@ -84,7 +106,7 @@
     </p>
     <form
       method="POST"
-      action="?/delete"
+      action={actionUrl('delete', data.page)}
       class="mt-4 flex justify-end gap-3"
       use:enhance={() =>
         async ({ update }) => {
@@ -105,18 +127,6 @@
     <p role="alert" class="mt-4 text-sm text-red-800">{form.deleteMessage}</p>
   {/if}
 
-  {#if !isEdit}
-    <button
-      type="button"
-      class="mt-10 rounded bg-black px-4 py-2 text-white"
-      aria-haspopup="dialog"
-      aria-controls="person-form-dialog"
-      onclick={openForm}
-    >
-      Person hinzufügen
-    </button>
-  {/if}
-
   <dialog
     id="person-form-dialog"
     bind:this={formDialog}
@@ -130,7 +140,7 @@
     {#key data}
       <form
         method="POST"
-        action={isEdit ? '?/update' : '?/create'}
+        action={isEdit ? actionUrl('update', data.page) : actionUrl('create', data.page)}
         use:enhance={() =>
           async ({ result, update }) => {
             if (result.type === 'redirect') {
@@ -201,7 +211,8 @@
             {isEdit ? 'Speichern' : 'Anlegen'}
           </button>
           {#if isEdit}
-            <a href={resolve('/persons')} class="rounded border px-4 py-2">Abbrechen</a>
+            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- listHref resolves -->
+            <a href={listHref(data.page)} class="rounded border px-4 py-2">Abbrechen</a>
           {:else}
             <button
               type="button"
