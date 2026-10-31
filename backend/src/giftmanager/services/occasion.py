@@ -9,7 +9,14 @@ from sqlalchemy import ColumnElement, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import ConflictError, NotFoundError
-from giftmanager.models import BIRTHDAY_TYPE_ID, Occasion, OccasionType, Person, Recurrence
+from giftmanager.models import (
+    BIRTHDAY_TYPE_ID,
+    Occasion,
+    OccasionRule,
+    OccasionType,
+    Person,
+    Recurrence,
+)
 from giftmanager.services import gifting as gifting_service
 from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
@@ -210,3 +217,27 @@ def next_occurrence(start: dt.date, recurrence: Recurrence, today: dt.date) -> d
     if candidate < today:
         candidate = _in_year(start, today.year + 1)
     return candidate
+
+
+def easter_sunday(year: int) -> dt.date:
+    """Gregorian Easter Sunday (anonymous Gregorian algorithm)."""
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    el = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 19 * el) // 433
+    month = (h + el - 7 * m + 90) // 25
+    day = (h + el - 7 * m + 33 * month + 19) % 32
+    return dt.date(year, month, day)
+
+
+def rule_date(rule: OccasionRule, today: dt.date) -> dt.date | None:
+    """Next date of a rule occasion from today on; None for the birthday, which has no date."""
+    if rule is OccasionRule.BIRTHDAY:
+        return None
+    if rule is OccasionRule.CHRISTMAS:
+        return next_occurrence(dt.date(today.year, 12, 24), Recurrence.YEARLY, today)
+    easter = easter_sunday(today.year)
+    return easter if easter >= today else easter_sunday(today.year + 1)

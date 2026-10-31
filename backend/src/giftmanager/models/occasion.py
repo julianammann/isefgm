@@ -12,6 +12,27 @@ from giftmanager.models.person import Person
 
 BIRTHDAY_TYPE_ID = uuid.UUID("01a107a9-211b-7486-a304-d5d673618f5b")
 CHRISTMAS_TYPE_ID = uuid.UUID("01a107a9-211b-7486-a304-d5d72f070565")
+EASTER_TYPE_ID = uuid.UUID("01a192b1-5746-70d6-84f1-1c759ffbdf91")
+
+
+class OccasionRule(enum.StrEnum):
+    """How the date of a rule occasion is derived."""
+
+    BIRTHDAY = "birthday"
+    CHRISTMAS = "christmas"
+    EASTER = "easter"
+
+
+RULE_TYPES = {
+    BIRTHDAY_TYPE_ID: OccasionRule.BIRTHDAY,
+    CHRISTMAS_TYPE_ID: OccasionRule.CHRISTMAS,
+    EASTER_TYPE_ID: OccasionRule.EASTER,
+}
+RULE_NAMES = {
+    OccasionRule.BIRTHDAY: "Geburtstag",
+    OccasionRule.CHRISTMAS: "Weihnachten",
+    OccasionRule.EASTER: "Ostern",
+}
 
 
 class Recurrence(enum.StrEnum):
