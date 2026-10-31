@@ -40,16 +40,22 @@
 
   let editOpen = $state(false);
   let deleteOpen = $state(false);
+  /** The action result present when the delete dialog opened, so an older failure stays hidden. */
+  let deleteSeen = $state.raw<ActionData>(null);
+  // A failed delete keeps its dialog open; only the open delete dialog shows the message.
+  const deleteFailed = $derived(
+    deleteOpen && form !== deleteSeen && form?.scope === 'delete' ? form : null
+  );
 
   function openEdit() {
     session = { seen: form };
     editOpen = true;
   }
 
-  // A failed delete closes its dialog, so the alert below is not hidden behind it.
-  $effect(() => {
-    if (form?.scope === 'delete') deleteOpen = false;
-  });
+  function askDelete() {
+    deleteSeen = form;
+    deleteOpen = true;
+  }
 </script>
 
 <svelte:head><title>{gift.title} – Geschenke-Manager</title></svelte:head>
@@ -74,7 +80,7 @@
         class="text-sm text-red-800 underline"
         aria-haspopup="dialog"
         aria-controls="gift-delete"
-        onclick={() => (deleteOpen = true)}
+        onclick={askDelete}
       >
         Löschen<span class="sr-only">: {gift.title}</span>
       </button>
@@ -99,9 +105,6 @@
   {#if gift.description}<p class="mt-4 whitespace-pre-line">{gift.description}</p>{/if}
 
   {#if data.success}<p role="status" class="mt-4 text-sm text-green-800">{data.success}</p>{/if}
-  {#if form?.scope === 'delete'}
-    <p role="alert" class="mt-4 text-sm text-red-800">{form.message}</p>
-  {/if}
 
   <NotesSection notes={data.notes} {form} />
   <LinksSection links={data.links} {form} />
@@ -137,6 +140,7 @@
     submitLabel="Löschen"
     danger
     bind:open={deleteOpen}
+    message={deleteFailed?.message ?? null}
   >
     <p class="text-sm">„{gift.title}“ wird mit allen zugehörigen Daten endgültig gelöscht.</p>
   </FormDialog>

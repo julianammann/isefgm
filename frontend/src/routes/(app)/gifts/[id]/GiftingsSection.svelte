@@ -29,6 +29,8 @@
   let formOpen = $state(false);
   let deleteOpen = $state(false);
   let toDelete = $state.raw<Gifting | null>(null);
+  /** The action result present when the delete dialog opened, so an older failure stays hidden. */
+  let deleteSeen = $state.raw<ActionData>(null);
   /**
    * One opening of the form dialog: the gifting to edit (null for a new one) and the action
    * result present at that moment, which belongs to an earlier opening. A new object per
@@ -57,6 +59,14 @@
   let taskFormOpen = $state(false);
   let taskDeleteOpen = $state(false);
   let taskToDelete = $state.raw<Task | null>(null);
+  let taskDeleteSeen = $state.raw<ActionData>(null);
+  // A failed delete keeps its dialog open; only the open delete dialog shows the message.
+  const deleteFailed = $derived(
+    deleteOpen && form !== deleteSeen && form?.scope === 'delete' ? form : null
+  );
+  const taskDeleteFailed = $derived(
+    taskDeleteOpen && form !== taskDeleteSeen && form?.scope === 'delete' ? form : null
+  );
   /**
    * One opening of the task dialog, same pattern as `session`: the gifting the task belongs to
    * (null on a bare idea, which then gets a gifting with the task) and the task to edit.
@@ -90,6 +100,7 @@
 
   function askDeleteTask(task: Task) {
     taskToDelete = task;
+    taskDeleteSeen = form;
     taskDeleteOpen = true;
   }
 
@@ -105,16 +116,9 @@
 
   function askDelete(gifting: Gifting) {
     toDelete = gifting;
+    deleteSeen = form;
     deleteOpen = true;
   }
-
-  // A failed delete closes its dialog, so the page's alert is not hidden behind it.
-  $effect(() => {
-    if (form?.scope === 'delete') {
-      deleteOpen = false;
-      taskDeleteOpen = false;
-    }
-  });
 </script>
 
 <section class="mt-10" aria-labelledby="giftings-heading">
@@ -379,6 +383,7 @@
   submitLabel="Löschen"
   danger
   bind:open={deleteOpen}
+  message={deleteFailed?.message ?? null}
 >
   <input type="hidden" name="id" value={toDelete?.id} />
   <p class="text-sm">
@@ -458,6 +463,7 @@
   submitLabel="Löschen"
   danger
   bind:open={taskDeleteOpen}
+  message={taskDeleteFailed?.message ?? null}
 >
   <input type="hidden" name="id" value={taskToDelete?.id} />
   <p class="text-sm">Die Aufgabe „{taskToDelete?.title}“ wird endgültig gelöscht.</p>

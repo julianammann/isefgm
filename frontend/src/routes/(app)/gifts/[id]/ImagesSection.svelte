@@ -10,6 +10,8 @@
   let formOpen = $state(false);
   let deleteOpen = $state(false);
   let toDelete = $state.raw<Image | null>(null);
+  /** The action result present when the delete dialog opened, so an older failure stays hidden. */
+  let deleteSeen = $state.raw<ActionData>(null);
   /**
    * One opening of the form dialog: the image to relabel (null for an upload) and the action
    * result present at that moment, which belongs to an earlier opening.
@@ -20,6 +22,10 @@
   });
   let fileError = $state<string | undefined>();
 
+  // A failed delete keeps its dialog open; only the open delete dialog shows the message.
+  const deleteFailed = $derived(
+    deleteOpen && form !== deleteSeen && form?.scope === 'delete' ? form : null
+  );
   const failed = $derived(form !== session.seen && form?.scope === 'image' ? form : null);
   const label = $derived(failed?.values?.label ?? session.image?.label ?? '');
   const errors = $derived(failed?.errors ?? {});
@@ -35,6 +41,7 @@
 
   function askDelete(image: Image) {
     toDelete = image;
+    deleteSeen = form;
     deleteOpen = true;
   }
 
@@ -49,11 +56,6 @@
     input.form?.addEventListener('submit', block, true);
     return { destroy: () => input.form?.removeEventListener('submit', block, true) };
   }
-
-  // A failed delete closes its dialog, so the page's alert is not hidden behind it.
-  $effect(() => {
-    if (form?.scope === 'delete') deleteOpen = false;
-  });
 </script>
 
 <section class="mt-10" aria-labelledby="images-heading">
@@ -173,6 +175,7 @@
   submitLabel="Löschen"
   danger
   bind:open={deleteOpen}
+  message={deleteFailed?.message ?? null}
 >
   <input type="hidden" name="id" value={toDelete?.id} />
   <p class="text-sm">„{toDelete?.label}“ wird endgültig gelöscht.</p>
