@@ -1,9 +1,9 @@
 """Helpers for notification tests."""
 
 from datetime import UTC, date, datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.models import User
 from giftmanager.models.notification import Notification, NotificationStatus, NotificationType
@@ -15,6 +15,12 @@ async def make_user(session: AsyncSession, email: str) -> User:
     session.add(user)
     await session.flush()
     return user
+
+
+async def make_committed_user(maker: async_sessionmaker[AsyncSession]) -> User:
+    """Account that is really committed, so parallel sessions can see it."""
+    async with maker() as s, s.begin():
+        return await make_user(s, f"{uuid4()}@committed.isefgm.localhost")
 
 
 def make_notification(

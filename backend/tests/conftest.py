@@ -14,6 +14,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
@@ -21,6 +22,7 @@ from giftmanager.core.clock import get_clock
 from giftmanager.core.config import get_settings
 from giftmanager.core.db import get_session
 from giftmanager.main import app
+from giftmanager.models.user import User
 
 
 @pytest.fixture(scope="session")
@@ -44,6 +46,18 @@ async def session(database_url: str) -> AsyncIterator[AsyncSession]:
         async with maker() as s:
             yield s
         await trans.rollback()
+    await engine.dispose()
+
+
+@pytest.fixture
+async def committed_sessionmaker(
+    database_url: str,
+) -> AsyncIterator[async_sessionmaker[AsyncSession]]:
+    """Own engine whose commits are real, for tests with parallel sessions."""
+    engine = create_async_engine(database_url)
+    yield async_sessionmaker(engine, expire_on_commit=False)
+    async with engine.begin() as conn:  # notifications go via ON DELETE CASCADE
+        await conn.execute(delete(User).where(User.email.like("%@committed.isefgm.localhost")))
     await engine.dispose()
 
 

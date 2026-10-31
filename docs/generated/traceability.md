@@ -473,6 +473,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_notifications.py::test_notification_rows_go_with_the_account` | passed |
 | F-13 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
 | F-13 | `tests/test_notifications.py::test_dedup_key_covers_account_reference_date_type_and_interval` | passed |
+| F-13 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
+| F-13 | `tests/test_notifications.py::test_parallel_planning_creates_one_row` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -711,6 +713,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-02 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
 | Q-02 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
 | Q-02 | `tests/test_notifications.py::test_dedup_key_covers_account_reference_date_type_and_interval` | passed |
+| Q-02 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
+| Q-02 | `tests/test_notifications.py::test_parallel_planning_creates_one_row` | passed |
 | Q-03 | `tests/test_auth.py::test_register_validates_password_length` | passed |
 | Q-03 | `tests/test_auth.py::test_login_rejects_wrong_password_and_unknown_user` | passed |
 | Q-03 | `tests/test_auth.py::test_busy_password_checks_are_rejected_before_the_database[/api/v1/auth/login-body0]` | passed |
@@ -777,6 +781,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_share_links.py::test_create_returns_the_token_once` | passed |
 | Q-03 | `tests/test_share_links.py::test_every_link_gets_its_own_token` | passed |
 | Q-03 | `tests/test_uploads.py::test_storage_path_is_random_per_account` | passed |
+| Q-04 | `tests/test_notifications.py::test_active_recipients_skip_reserved_and_deleted` | passed |
 | Q-04 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-04 | `tests/test_suggestions.py::test_features_of_fewer_than_three_accounts_are_not_suggested` | passed |
 | Q-04 | `tests/test_suggestions.py::test_own_ideas_do_not_count_towards_the_accounts` | passed |
@@ -851,6 +856,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[2020-02-29-yearly-2100-02-28-2100-02-28]` | passed |
 | Q-08 | `tests/test_occasions.py::test_next_occurrence[1996-02-29-yearly-2000-02-28-2000-02-29]` | passed |
 | Q-09 | `tests/test_main.py::test_schema_export_does_not_depend_on_app_env` | passed |
+| QZ-05 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
+| QZ-05 | `tests/test_notifications.py::test_parallel_planning_creates_one_row` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |
