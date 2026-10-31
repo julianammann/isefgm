@@ -44,6 +44,14 @@ class ConflictError(DomainError):
     title = "Conflict"
 
 
+class UnprocessableError(DomainError):
+    """The request is well formed but breaks a business rule, e.g. a birthday gifting
+    without exactly one recipient."""
+
+    status_code = 422
+    title = "Unprocessable Content"
+
+
 class ContentTooLargeError(DomainError):
     """An upload exceeds a size limit, in bytes or in pixels."""
 

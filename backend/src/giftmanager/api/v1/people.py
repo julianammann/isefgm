@@ -117,6 +117,7 @@ async def get_person_overview(
 
     ideas, ideas_total = overview.ideas
     occasions, occasions_total = overview.occasions
+    today = local_today(clock)
     return PersonOverviewOut(
         given=with_tasks(overview.given),
         giftings=with_tasks(overview.giftings),
@@ -127,7 +128,7 @@ async def get_person_overview(
             offset=page.offset,
         ),
         occasions=Page[OccasionOut](
-            items=[occasion_out(occasion, local_today(clock)) for occasion in occasions],
+            items=[occasion_out(occasion, today) for occasion in occasions],
             total=occasions_total,
             limit=page.limit,
             offset=page.offset,

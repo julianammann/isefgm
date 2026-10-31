@@ -53,20 +53,23 @@ async def get_occasion_type(
     return occasion_type
 
 
+# Geburtstag, Weihnachten, Ostern first, every other occasion after them.
+RULE_RANK = case(
+    {type_id: rank for rank, type_id in enumerate(RULE_TYPES)},
+    value=Occasion.occasion_type_id,
+    else_=len(RULE_TYPES),
+)
+
+
 async def list_occasions(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Occasion], int]:
     """Return one page of the owner's occasions and the total count: the rule occasions first
     (Geburtstag, Weihnachten, Ostern), then the others by month and day (year ignored)."""
-    rule_rank = case(
-        {type_id: rank for rank, type_id in enumerate(RULE_TYPES)},
-        value=Occasion.occasion_type_id,
-        else_=len(RULE_TYPES),
-    )
     return await paginate(
         session,
         owned(Occasion, owner_id).order_by(
-            rule_rank,
+            RULE_RANK,
             extract("month", Occasion.date),
             extract("day", Occasion.date),
             func.lower(Occasion.name),

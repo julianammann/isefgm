@@ -405,3 +405,77 @@ async def test_get_one_rule_occasion_has_its_date(
     r = await client.get(f"{OCCASIONS}/{easter['id']}")
     assert r.status_code == 200
     assert (r.json()["date"], r.json()["rule"]) == ("2027-03-28", "easter")
+
+
+async def _gifting_body(
+    client: AsyncClient, occasion_id: str, person_ids: list[str]
+) -> dict[str, Any]:
+    gift = await client.post("/api/v1/gifts", json={"title": "Book"})
+    assert gift.status_code == 201, gift.text
+    return {"gift_id": gift.json()["id"], "occasion_id": occasion_id, "person_ids": person_ids}
+
+
+async def _person(client: AsyncClient, name: str, birthday: str | None = None) -> str:
+    r = await client.post("/api/v1/people", json={"name": name, "birthday": birthday})
+    assert r.status_code == 201, r.text
+    return r.json()["id"]
+
+
+def _rule_id(items: list[dict[str, Any]], rule: str) -> str:
+    return next(i["id"] for i in items if i["rule"] == rule)
+
+
+@pytest.mark.requirement("F-03", "F-06")
+async def test_birthday_gifting_needs_exactly_one_recipient(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    lena = await _person(client, "Lena")
+    anton = await _person(client, "Anton")
+    birthday = _rule_id(rule_account, "birthday")
+    for people, expected in [([], 422), ([lena, anton], 422), ([lena], 201), ([lena, lena], 201)]:
+        body = await _gifting_body(client, birthday, people)
+        r = await client.post("/api/v1/giftings", json=body)
+        assert r.status_code == expected, r.text
+        if expected == 422:
+            assert r.json()["detail"] == "A birthday gifting needs exactly one recipient"
+
+
+@pytest.mark.requirement("F-03", "F-06")
+async def test_switching_to_birthday_checks_the_recipients(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    lena = await _person(client, "Lena")
+    anton = await _person(client, "Anton")
+    body = await _gifting_body(client, _rule_id(rule_account, "christmas"), [lena, anton])
+    created = await client.post("/api/v1/giftings", json=body)
+    assert created.status_code == 201, created.text
+    url = f"/api/v1/giftings/{created.json()['id']}"
+    r = await client.put(url, json={**body, "occasion_id": _rule_id(rule_account, "birthday")})
+    assert r.status_code == 422
+    assert r.json()["detail"] == "A birthday gifting needs exactly one recipient"
+    after = (await client.get(url)).json()
+    assert after["occasion"]["name"] == "Weihnachten"
+    assert {p["id"] for p in after["people"]} == {lena, anton}
+
+
+@pytest.mark.requirement("F-03", "F-06")
+async def test_birthday_recipient_needs_no_birthday(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    anton = await _person(client, "Anton")
+    body = await _gifting_body(client, _rule_id(rule_account, "birthday"), [anton])
+    assert (await client.post("/api/v1/giftings", json=body)).status_code == 201
+
+
+@pytest.mark.requirement("F-03", "F-09")
+async def test_person_overview_lists_the_birthday_only_with_a_birthday(
+    client: AsyncClient, rule_account: list[dict[str, Any]]
+) -> None:
+    lena = await _person(client, "Lena", "1990-05-17")
+    anton = await _person(client, "Anton")
+    with_birthday = (await client.get(f"/api/v1/people/{lena}/overview")).json()
+    first = with_birthday["occasions"]["items"][0]
+    assert (first["name"], first["date"], first["rule"]) == ("Geburtstag", None, "birthday")
+    assert with_birthday["occasions"]["total"] == 1
+    without = (await client.get(f"/api/v1/people/{anton}/overview")).json()
+    assert without["occasions"]["items"] == []

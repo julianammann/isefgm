@@ -11,8 +11,15 @@ from datetime import date
 from sqlalchemy import Select, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.core.errors import NotFoundError
-from giftmanager.models import Gift, Gifting, GiftingStatus, Occasion, Person
+from giftmanager.core.errors import NotFoundError, UnprocessableError
+from giftmanager.models import (
+    BIRTHDAY_TYPE_ID,
+    Gift,
+    Gifting,
+    GiftingStatus,
+    Occasion,
+    Person,
+)
 from giftmanager.services.ownership import get_all_owned, get_owned, paginate
 
 
@@ -44,6 +51,12 @@ async def get_gifting(session: AsyncSession, owner_id: uuid.UUID, gifting_id: uu
     return gifting
 
 
+def _check_birthday_recipient(occasion: Occasion | None, people: list[Person]) -> None:
+    """A birthday gifting is for the person whose birthday it is: exactly one recipient."""
+    if occasion is not None and occasion.occasion_type_id == BIRTHDAY_TYPE_ID and len(people) != 1:
+        raise UnprocessableError("A birthday gifting needs exactly one recipient")
+
+
 async def create_gifting(
     session: AsyncSession,
     owner_id: uuid.UUID,
@@ -60,6 +73,7 @@ async def create_gifting(
     Raises:
         NotFoundError: The idea, a person or the occasion does not exist or belongs to
             another account.
+        UnprocessableError: The occasion is Geburtstag and there is not exactly one recipient.
     """
     gift = await get_owned(session, Gift, owner_id, gift_id)
     people = await get_all_owned(session, Person, owner_id, person_ids)
@@ -67,6 +81,7 @@ async def create_gifting(
     occasion = None
     if occasion_id is not None:
         occasion = await get_owned(session, Occasion, owner_id, occasion_id)
+    _check_birthday_recipient(occasion, people)
 
     gifting = Gifting(
         gift=gift,
@@ -99,6 +114,7 @@ async def update_gifting(
     Raises:
         NotFoundError: The gifting, the idea, a person or the occasion does not exist or
             belongs to another account.
+        UnprocessableError: The occasion is Geburtstag and there is not exactly one recipient.
     """
     gifting = await get_gifting(session, owner_id, gifting_id)
     gift = await get_owned(session, Gift, owner_id, gift_id)
@@ -107,6 +123,7 @@ async def update_gifting(
     occasion = None
     if occasion_id is not None:
         occasion = await get_owned(session, Occasion, owner_id, occasion_id)
+    _check_birthday_recipient(occasion, people)
 
     gifting.gift = gift
     gifting.status = status
