@@ -5,7 +5,7 @@ import calendar
 import datetime as dt
 import uuid
 
-from sqlalchemy import ColumnElement, func, or_, select
+from sqlalchemy import ColumnElement, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import ConflictError, NotFoundError
@@ -48,10 +48,15 @@ async def get_occasion_type(
 async def list_occasions(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Occasion], int]:
-    """Return one page of the owner's occasions, sorted by date, and the total count."""
+    """Return one page of the owner's occasions, sorted by month and day of the year (year ignored), and the total count."""
     return await paginate(
         session,
-        owned(Occasion, owner_id).order_by(Occasion.date, func.lower(Occasion.name), Occasion.id),
+        owned(Occasion, owner_id).order_by(
+            extract("month", Occasion.date),
+            extract("day", Occasion.date),
+            func.lower(Occasion.name),
+            Occasion.id,
+        ),
         limit=limit,
         offset=offset,
     )
