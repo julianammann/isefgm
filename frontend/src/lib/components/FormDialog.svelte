@@ -1,5 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import type { Snippet } from 'svelte';
 
   let {
@@ -11,6 +13,7 @@
     message = null,
     danger = false,
     enctype,
+    keepPosition = true,
     onclose,
     children
   }: {
@@ -22,6 +25,8 @@
     message?: string | null;
     danger?: boolean;
     enctype?: 'multipart/form-data';
+    /** After a save that redirects back to this page, keep the scroll position and the focus. */
+    keepPosition?: boolean;
     /** Called when the dialog is dismissed (Escape, Abbrechen), not after a successful save. */
     onclose?: () => void;
     children: Snippet;
@@ -59,9 +64,20 @@
       return async ({ result, update }) => {
         if (result.type === 'redirect') {
           saving = true;
+          // Closing first returns the focus to the button that opened the dialog.
           dialog?.close();
         }
-        await update();
+        if (
+          keepPosition &&
+          result.type === 'redirect' &&
+          new URL(result.location, page.url).pathname === page.url.pathname
+        ) {
+          // Same as update(), minus SvelteKit's scroll-to-top and focus reset.
+          // eslint-disable-next-line svelte/no-navigation-without-resolve -- server redirect target
+          await goto(result.location, { invalidateAll: true, noScroll: true, keepFocus: true });
+        } else {
+          await update();
+        }
         saving = false;
         pending = false;
       };

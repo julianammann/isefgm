@@ -14,6 +14,7 @@
     message,
     people,
     occasions,
+    keepPosition,
     onclose
   }: {
     open: boolean;
@@ -24,6 +25,8 @@
     message: string | null;
     people: { id: string; name: string }[];
     occasions: { id: string; name: string }[];
+    /** See `FormDialog`; the list turns it off and keeps SvelteKit's reset after a save. */
+    keepPosition?: boolean;
     /** Called when the dialog is dismissed (Escape, Abbrechen), not after a successful save. */
     onclose?: () => void;
   } = $props();
@@ -38,6 +41,7 @@
   submitLabel={isEdit ? 'Speichern' : 'Anlegen'}
   bind:open
   {message}
+  {keepPosition}
   {onclose}
 >
   <!-- people/occasions are new arrays whenever the page data reloads: re-create the fields then,
