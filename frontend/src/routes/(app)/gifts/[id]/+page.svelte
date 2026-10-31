@@ -4,6 +4,7 @@
   import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
   import { CATEGORIES, formatPrice } from '$lib/display';
   import GiftingsSection from './GiftingsSection.svelte';
+  import ImagesSection from './ImagesSection.svelte';
   import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -101,6 +102,7 @@
   {/if}
 
   <!-- NotesSection, LinksSection and ImagesSection go here, in this order. -->
+  <ImagesSection images={data.images} {form} />
 
   <GiftingsSection
     gift={data.gift}
