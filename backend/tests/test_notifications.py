@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from dataclasses import replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 import pytest
@@ -11,17 +11,29 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from giftmanager.models.notification import Notification, NotificationType
+from giftmanager.core.clock import Clock
+from giftmanager.core.mail import Mail, MailFailure
+from giftmanager.models.notification import Notification, NotificationStatus, NotificationType
 from giftmanager.models.user import UserStatus
 from giftmanager.services.notification import (
     active_recipients,
     dedup_key,
+    dispatch_due,
     format_day,
     local_at,
     local_date,
     plan,
 )
-from tests.notifications import make_committed_user, make_notification, make_user, planned_mail
+from tests.mail import RecordingMailer
+from tests.notifications import (
+    add_committed_notification,
+    make_committed_user,
+    make_notification,
+    make_user,
+    planned_mail,
+    reload,
+    statuses_of,
+)
 
 
 @pytest.mark.requirement("F-13")
@@ -122,3 +134,92 @@ async def test_active_recipients_skip_reserved_and_deleted(
     messages = [r.getMessage() for r in caplog.records]
     assert any(str(reserved.id) in m for m in messages)
     assert not any("example.org" in m for m in messages)
+
+
+Maker = async_sessionmaker[AsyncSession]
+SEND_TIME = datetime(2026, 11, 12, 7, 0, tzinfo=UTC)
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_dispatch_sends_and_records(committed_sessionmaker: Maker, clock: Clock) -> None:
+    clock.current = SEND_TIME  # pyright: ignore[reportAttributeAccessIssue]
+    row = await add_committed_notification(committed_sessionmaker)
+    mailer = RecordingMailer()
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 1
+    assert mailer.sent == [Mail(to=row.recipient, subject="Betreff", body="Text")]
+    stored = await reload(committed_sessionmaker, row.id)
+    assert (stored.status, stored.sent_at, stored.error) == (
+        NotificationStatus.SENT,
+        clock.now(),
+        None,
+    )
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_not_sent_before_scheduled_for(committed_sessionmaker: Maker, clock: Clock) -> None:
+    clock.current = SEND_TIME  # pyright: ignore[reportAttributeAccessIssue]
+    await add_committed_notification(
+        committed_sessionmaker, scheduled_for=clock.now() + timedelta(minutes=1)
+    )
+    assert await dispatch_due(committed_sessionmaker, RecordingMailer(), clock) == 0
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_parallel_dispatch_sends_each_once(
+    committed_sessionmaker: Maker, clock: Clock
+) -> None:
+    clock.current = SEND_TIME  # pyright: ignore[reportAttributeAccessIssue]
+    for i in range(10):
+        await add_committed_notification(committed_sessionmaker, dedup_key=f"k{i}")
+    mailer = RecordingMailer(delay=0.01)
+    sent = await asyncio.gather(
+        *(dispatch_due(committed_sessionmaker, mailer, clock) for _ in range(2))
+    )
+    assert sum(sent) == 10
+    assert len(mailer.sent) == 10
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_transient_failure_keeps_rows_planned_and_stops(
+    committed_sessionmaker: Maker, clock: Clock
+) -> None:
+    clock.current = SEND_TIME  # pyright: ignore[reportAttributeAccessIssue]
+    for i in range(2):
+        await add_committed_notification(committed_sessionmaker, dedup_key=f"k{i}")
+    mailer = RecordingMailer(fail_with=MailFailure.TRANSIENT)
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 0
+    assert await statuses_of(committed_sessionmaker) == [NotificationStatus.PLANNED] * 2
+    mailer.fail_with = None
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 2
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_permanent_failure_is_final(committed_sessionmaker: Maker, clock: Clock) -> None:
+    clock.current = SEND_TIME  # pyright: ignore[reportAttributeAccessIssue]
+    row = await add_committed_notification(committed_sessionmaker)
+    await dispatch_due(
+        committed_sessionmaker, RecordingMailer(fail_with=MailFailure.PERMANENT), clock
+    )
+    mailer = RecordingMailer()
+    await dispatch_due(committed_sessionmaker, mailer, clock)
+    assert mailer.sent == []
+    assert (await reload(committed_sessionmaker, row.id)).status is NotificationStatus.FAILED
+
+
+@pytest.mark.requirement("F-13", "Q-02", "QZ-05")
+async def test_unclear_result_is_logged_and_not_resent(
+    committed_sessionmaker: Maker, clock: Clock, caplog: pytest.LogCaptureFixture
+) -> None:
+    clock.current = SEND_TIME  # pyright: ignore[reportAttributeAccessIssue]
+    row = await add_committed_notification(committed_sessionmaker)
+    await dispatch_due(
+        committed_sessionmaker, RecordingMailer(fail_with=MailFailure.UNCLEAR), clock
+    )
+    stored = await reload(committed_sessionmaker, row.id)
+    assert stored.status is NotificationStatus.FAILED
+    assert stored.error is not None
+    assert stored.error.startswith("Versandergebnis unklar")
+    assert any(r.levelname == "WARNING" and str(row.id) in r.getMessage() for r in caplog.records)
+    mailer = RecordingMailer()
+    await dispatch_due(committed_sessionmaker, mailer, clock)
+    assert mailer.sent == []

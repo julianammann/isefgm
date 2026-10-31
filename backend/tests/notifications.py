@@ -1,8 +1,10 @@
 """Helpers for notification tests."""
 
 from datetime import UTC, date, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.models import User
@@ -60,3 +62,27 @@ def planned_mail(**overrides: object) -> PlannedMail:
         "body": "Text",
     }
     return PlannedMail(**{**values, **overrides})  # type: ignore[arg-type]
+
+
+async def add_committed_notification(
+    maker: async_sessionmaker[AsyncSession], **overrides: Any
+) -> Notification:
+    """Committed account plus one committed notification row."""
+    user = await make_committed_user(maker)
+    overrides.setdefault("dedup_key", str(uuid4()))
+    async with maker() as s, s.begin():
+        row = make_notification(user, **overrides)
+        s.add(row)
+        await s.flush()
+        s.expunge(row)
+    return row
+
+
+async def reload(maker: async_sessionmaker[AsyncSession], id: UUID) -> Notification:
+    async with maker() as s:
+        return await s.get_one(Notification, id)
+
+
+async def statuses_of(maker: async_sessionmaker[AsyncSession]) -> list[NotificationStatus]:
+    async with maker() as s:
+        return list(await s.scalars(select(Notification.status).order_by(Notification.dedup_key)))

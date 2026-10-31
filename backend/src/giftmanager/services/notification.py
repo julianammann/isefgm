@@ -1,4 +1,4 @@
-"""Send-time, dedup-key and text helpers for notifications (F-13)."""
+"""Planning and dispatch of notification mails (F-13)."""
 
 import logging
 from collections.abc import Iterable
@@ -9,10 +9,11 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from giftmanager.core.clock import Clock
 from giftmanager.core.config import get_settings
-from giftmanager.core.mail import is_reserved_address
+from giftmanager.core.mail import Mail, Mailer, MailError, MailFailure, is_reserved_address
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.models.notification import (
     Notification,
@@ -126,3 +127,65 @@ async def plan(session: AsyncSession, mails: Iterable[PlannedMail]) -> int:
         .returning(Notification.id)
     )
     return len(result.all())
+
+
+async def claim_next(session: AsyncSession, now: datetime) -> Notification | None:
+    """Lock the oldest due `planned` row, skipping rows other dispatchers hold, and mark it `sending`."""
+    notification = await session.scalar(
+        select(Notification)
+        .where(
+            Notification.status == NotificationStatus.PLANNED,
+            Notification.scheduled_for <= now,
+            Notification.expires_at > now,
+        )
+        .order_by(Notification.scheduled_for, Notification.id)
+        .limit(1)
+        .with_for_update(skip_locked=True)
+    )
+    if notification is not None:
+        notification.status = NotificationStatus.SENDING
+        notification.claimed_at = now
+    return notification
+
+
+async def dispatch_due(
+    sessionmaker: async_sessionmaker[AsyncSession], mailer: Mailer, clock: Clock
+) -> int:
+    """Send every due mail once and record the outcome; returns the number sent.
+
+    Claim and outcome are separate transactions so no row lock is held while sending.
+    A transient failure puts the row back to `planned` and ends the run.
+    """
+    sent = 0
+    while True:
+        async with sessionmaker() as session, session.begin():
+            claimed = await claim_next(session, clock.now())
+            if claimed is None:
+                return sent
+            notification_id = claimed.id
+            mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
+
+        failure: MailError | None = None
+        try:
+            await mailer.send(mail)
+        except MailError as exc:
+            failure = exc
+
+        async with sessionmaker() as session, session.begin():
+            notification = await session.get_one(Notification, notification_id)
+            if failure is None:
+                notification.status = NotificationStatus.SENT
+                notification.sent_at = clock.now()
+                notification.error = None
+                sent += 1
+            elif failure.failure is MailFailure.TRANSIENT:
+                notification.status = NotificationStatus.PLANNED
+                notification.error = failure.detail
+                return sent
+            elif failure.failure is MailFailure.PERMANENT:
+                notification.status = NotificationStatus.FAILED
+                notification.error = failure.detail
+            else:
+                notification.status = NotificationStatus.FAILED
+                notification.error = "Versandergebnis unklar: " + failure.detail
+                logger.warning("Delivery result of notification %s is unclear", notification_id)
