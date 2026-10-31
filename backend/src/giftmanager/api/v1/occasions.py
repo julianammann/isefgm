@@ -82,8 +82,8 @@ async def get_occasion_type(
     "",
     operation_id="listOccasions",
     summary="List occasions",
-    description="Returns the occasions of the current account, sorted by date, one page at "
-    "a time. `total` counts all occasions of the account.",
+    description="Returns the occasions of the current account, sorted by month and day "
+    "(the year is ignored), one page at a time. `total` counts all occasions of the account.",
     responses=problem_responses(401),
 )
 async def list_occasions(
