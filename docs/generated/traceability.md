@@ -498,6 +498,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-11 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
 | F-11 | `tests/test_season_overview.py::test_rule_occasions_next_to_a_user_defined_type` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_reminds_person_without_gifting` | passed |
+| F-12 | `tests/test_occasion_reminder.py::test_line_break_in_a_name_does_not_reach_the_subject` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_acquired_gift_does_not_suppress_the_rest` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_no_mail_when_everything_is_acquired_or_given` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_gifting_for_another_year_does_not_count` | passed |
@@ -1045,6 +1046,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day3-utc3]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_date_switches_at_berlin_midnight` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_reminds_person_without_gifting` | passed |
+| QZ-09 | `tests/test_occasion_reminder.py::test_line_break_in_a_name_does_not_reach_the_subject` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_acquired_gift_does_not_suppress_the_rest` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_no_mail_when_everything_is_acquired_or_given` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_gifting_for_another_year_does_not_count` | passed |
