@@ -102,3 +102,24 @@ async def test_occasion_without_people_needs_an_open_gifting(session: AsyncSessi
     await add_gifting(session, candle, [], GiftingStatus.IDEA, occasion, EVENT)
     [mail] = only(user, await due(session, OPEN))
     assert "- Kerze für ohne Empfänger (Idee)" in mail.body
+
+
+@pytest.mark.requirement("F-12", "Q-01", "Q-04")
+async def test_each_account_sees_only_its_own_reminders(session: AsyncSession) -> None:
+    names = {
+        "a@isefgm.localhost": "Anna",
+        "b@isefgm.localhost": "Bernd",
+        "test1@example.org": "Sven",
+    }
+    for email, name in names.items():
+        user = await make_user(session, email)
+        person = await add_person(session, user, name, None)
+        occasion = await add_occasion(session, user, f"Feier {name}", EVENT, people=[person])
+        gift = await add_gift(session, user, f"{name}-Buch")
+        await add_gifting(session, gift, [person], GiftingStatus.PLANNED, occasion, EVENT)
+    mails = {m.recipient: m.body for m in await due(session, OPEN)}
+    assert "test1@example.org" not in mails
+    for mine, other in (("a@isefgm.localhost", "Bernd"), ("b@isefgm.localhost", "Anna")):
+        own = names[mine]
+        assert f"{own}-Buch für {own}" in mails[mine]
+        assert other not in mails[mine] and "Sven" not in mails[mine]
