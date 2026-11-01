@@ -16,6 +16,8 @@
     form?.values ?? data.editing ?? { name: '', birthday: null, relationship: null, notes: null }
   );
   const errors = $derived(form?.errors ?? {});
+  /** The toast turns red after a delete, so removing a person does not look like saving one. */
+  const deleted = $derived(page.url.searchParams.get('success') === 'deleted');
 
   let showForm = $state(false);
   let previousEditId = $state<string | null>(null);
@@ -58,7 +60,8 @@
   ></svelte:head
 >
 
-<main class="mx-auto max-w-4xl p-8">
+<!-- Room at the bottom, so the toast never hides the end of the page. -->
+<main class="mx-auto max-w-4xl p-8 {data.success ? 'pb-24' : ''}">
   <h1 class="text-2xl font-bold">Personen</h1>
 
   <section class="mt-10" aria-labelledby="list-heading">
@@ -76,7 +79,6 @@
         </button>
       {/if}
     </div>
-    {#if data.success}<p role="status" class="mt-2 text-sm text-green-800">{data.success}</p>{/if}
     {#if form?.deleteMessage}
       <p role="alert" class="mt-2 text-sm text-red-800">{form.deleteMessage}</p>
     {/if}
@@ -155,8 +157,20 @@
     </form>
   </dialog>
 
-  <!-- data.persons is a new array whenever the page data reloads: re-create the dialog then, so
-       a saved person's input is gone; a failed submit keeps the dialog and its focus. -->
+  <!-- Fixed to the screen, so the message shows where the user is. -->
+  <div role="status" class="pointer-events-none fixed inset-x-0 bottom-4 flex justify-center px-4">
+    {#if data.success}
+      <p
+        class="max-w-md rounded px-4 py-2 text-sm text-white shadow-lg {deleted
+          ? 'bg-red-800'
+          : 'bg-green-800'}"
+      >
+        {data.success}
+      </p>
+    {/if}
+  </div>
+
+  <!-- data.persons is a new array whenever the page data reloads: re-create the dialog then, so a saved person's input is gone; a failed submit keeps the dialog and its focus. -->
   {#key data.persons}
     <PersonFormDialog
       bind:open={showForm}
