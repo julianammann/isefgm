@@ -94,3 +94,31 @@ describe('update', () => {
     });
   });
 });
+
+/** Delete event with a backend that answers DELETE with `response`. */
+function deleteEvent(response: unknown) {
+  const DELETE = vi.fn().mockResolvedValue(response);
+  return {
+    event: { locals: { api: { DELETE } }, params: { id: 'p1' } } as unknown as ActionEvent,
+    DELETE
+  };
+}
+
+describe('delete', () => {
+  it('deletes the person from the URL and returns to the list', async () => {
+    const { event, DELETE } = deleteEvent(status(204));
+    await expect(actions.delete(event)).rejects.toMatchObject({
+      status: 303,
+      location: '/persons?success=deleted'
+    });
+    expect(DELETE.mock.calls[0][1]).toMatchObject({ params: { path: { person_id: 'p1' } } });
+  });
+
+  it('keeps the delete dialog open with the backend error', async () => {
+    const { event } = deleteEvent(status(404));
+    await expect(actions.delete(event)).resolves.toMatchObject({
+      status: 404,
+      data: { scope: 'delete', message: 'Person nicht gefunden.' }
+    });
+  });
+});

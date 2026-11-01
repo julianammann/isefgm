@@ -8,6 +8,7 @@
     formatDate,
     formatPrice
   } from '$lib/display';
+  import FormDialog from '$lib/components/FormDialog.svelte';
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
   import type { ActionData, PageProps } from './$types';
 
@@ -22,7 +23,7 @@
    */
   let session = $state.raw<{ seen: ActionData }>({ seen: null });
   let editOpen = $state(false);
-  const personForm = $derived(form !== session.seen ? form : null);
+  const personForm = $derived(form !== session.seen && form?.scope === 'person' ? form : null);
   const values = $derived(
     personForm?.values ?? {
       name: person.name,
@@ -35,6 +36,19 @@
   function openEdit() {
     session = { seen: form };
     editOpen = true;
+  }
+
+  let deleteOpen = $state(false);
+  /** The action result present when the delete dialog opened, so an older failure stays hidden. */
+  let deleteSeen = $state.raw<ActionData>(null);
+  // A failed delete keeps its dialog open; only the open delete dialog shows the message.
+  const deleteFailed = $derived(
+    deleteOpen && form !== deleteSeen && form?.scope === 'delete' ? form : null
+  );
+
+  function askDelete() {
+    deleteSeen = form;
+    deleteOpen = true;
   }
 
   /** Price range of an idea, e.g. „20,00 – 30,00 EUR“ or „ab 20,00“; empty without a price. */
@@ -106,15 +120,26 @@
 
   <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
     <h1 class="text-2xl font-bold">{person.name}</h1>
-    <button
-      type="button"
-      class="text-sm underline"
-      aria-haspopup="dialog"
-      aria-controls="person-form-dialog"
-      onclick={openEdit}
-    >
-      Bearbeiten<span class="sr-only">: {person.name}</span>
-    </button>
+    <div class="flex items-center gap-4">
+      <button
+        type="button"
+        class="text-sm underline"
+        aria-haspopup="dialog"
+        aria-controls="person-form-dialog"
+        onclick={openEdit}
+      >
+        Bearbeiten<span class="sr-only">: {person.name}</span>
+      </button>
+      <button
+        type="button"
+        class="text-sm text-red-800 underline"
+        aria-haspopup="dialog"
+        aria-controls="person-delete"
+        onclick={askDelete}
+      >
+        Löschen<span class="sr-only">: {person.name}</span>
+      </button>
+    </div>
   </div>
   {#if person.birthday || person.relationship}
     <dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
@@ -226,4 +251,16 @@
       message={personForm?.message ?? null}
     />
   {/key}
+
+  <FormDialog
+    id="person-delete"
+    heading="Person löschen?"
+    action="?/delete"
+    submitLabel="Löschen"
+    danger
+    bind:open={deleteOpen}
+    message={deleteFailed?.message ?? null}
+  >
+    <p class="text-sm">„{person.name}“ wird mit allen zugehörigen Daten endgültig gelöscht.</p>
+  </FormDialog>
 </main>

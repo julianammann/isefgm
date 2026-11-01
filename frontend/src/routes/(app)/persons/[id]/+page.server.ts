@@ -1,13 +1,14 @@
 /**
  * Person view (`/persons/<id>`): past gifts and planned giftings side by side, each with its
  * occasion, procurement state and tasks, plus the gift ideas and occasions of the person (F-09).
- * The person itself is edited here as well (F-02).
+ * The person itself is edited and deleted here as well (F-02).
  *
  * @module routes/(app)/persons/id/+page.server
  */
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
+  deletePerson,
   getPerson,
   getPersonOverview,
   parsePersonForm,
@@ -42,14 +43,25 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 
 /**
  * `update`: validates and saves the person from the URL, then shows this page again with a
- * success message; field errors return with 400 and keep the dialog open.
+ * success message; field errors return with 400 and keep the dialog open. `delete`: removes the
+ * person and returns to the list. A failure returns its `scope`, so the page shows the error in
+ * the right dialog.
  */
 export const actions: Actions = {
   update: async ({ request, locals, params }) => {
     const { values, errors } = parsePersonForm(await request.formData());
-    if (Object.keys(errors).length) return fail(400, { values, errors });
+    if (Object.keys(errors).length) return fail(400, { scope: 'person' as const, values, errors });
     const result = await updatePerson(locals.api, params.id, values);
-    if (!result.ok) return fail(result.status, { values, message: result.message });
+    if (!result.ok) {
+      return fail(result.status, { scope: 'person' as const, values, message: result.message });
+    }
     redirect(303, `/persons/${encodeURIComponent(params.id)}?success=updated`);
+  },
+
+  delete: async ({ locals, params }) => {
+    const result = await deletePerson(locals.api, params.id);
+    if (!result.ok)
+      return fail(result.status, { scope: 'delete' as const, message: result.message });
+    redirect(303, '/persons?success=deleted');
   }
 };
