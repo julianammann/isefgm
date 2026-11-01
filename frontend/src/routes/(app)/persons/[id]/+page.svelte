@@ -5,7 +5,8 @@
     GIFTING_STATUS,
     GIFTING_STATUS_CLASS,
     TASK_STATUS,
-    formatDate
+    formatDate,
+    formatPrice
   } from '$lib/display';
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
   import type { ActionData, PageProps } from './$types';
@@ -34,6 +35,14 @@
   function openEdit() {
     session = { seen: form };
     editOpen = true;
+  }
+
+  /** Price range of an idea, e.g. „20,00 – 30,00 EUR“ or „ab 20,00“; empty without a price. */
+  function price(idea: (typeof overview.ideas.items)[number]) {
+    const from = formatPrice(idea.price_from);
+    const to = formatPrice(idea.price_to);
+    const range = from && to ? `${from} – ${to}` : from ? `ab ${from}` : to ? `bis ${to}` : '';
+    return range && idea.currency ? `${range} ${idea.currency}` : range;
   }
 
   /** „3 weitere nicht angezeigt“ when a list has more entries than one page. */
@@ -121,23 +130,35 @@
   {/if}
   {#if person.notes}<p class="mt-4 whitespace-pre-line">{person.notes}</p>{/if}
 
-  <!-- F-09: past and planned side by side, so both are visible at the same time. -->
-  <div class="mt-10 grid gap-8 md:grid-cols-2">
-    <section aria-labelledby="given-heading">
-      <h2 id="given-heading" class="text-lg font-semibold">
-        Vergangene Geschenke ({overview.given.total})
+  <div class="mt-10 grid gap-8">
+    <section aria-labelledby="occasions-heading">
+      <h2 id="occasions-heading" class="text-lg font-semibold">
+        Anlässe ({overview.occasions.total})
       </h2>
-      {@render giftings(overview.given, 'Noch nichts verschenkt.')}
+      <div class="mt-3 rounded border p-3">
+        {#if overview.occasions.items.length === 0}
+          <p class="mt-2 text-sm text-gray-600">Keine Anlässe.</p>
+        {:else}
+          <ul class="flex flex-col gap-1">
+            {#each overview.occasions.items as occasion (occasion.id)}
+              <li>
+                {occasion.name}
+                {#if occasion.date}
+                  <span class="text-sm text-gray-600">
+                    {formatDate(occasion.date)}{occasion.recurrence === 'yearly'
+                      ? ' · jährlich'
+                      : ''}
+                  </span>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        {#if more(overview.occasions)}
+          <p class="mt-2 text-sm text-gray-600">{more(overview.occasions)}</p>
+        {/if}
+      </div>
     </section>
-    <section aria-labelledby="planned-heading">
-      <h2 id="planned-heading" class="text-lg font-semibold">
-        Geplante Beschenkungen ({overview.giftings.total})
-      </h2>
-      {@render giftings(overview.giftings, 'Keine offenen Beschenkungen.')}
-    </section>
-  </div>
-
-  <div class="mt-10 grid gap-8 md:grid-cols-2">
     <section aria-labelledby="ideas-heading">
       <h2 id="ideas-heading" class="text-lg font-semibold">
         Geschenkideen ({overview.ideas.total})
@@ -145,11 +166,24 @@
       {#if overview.ideas.items.length === 0}
         <p class="mt-2 text-sm text-gray-600">Keine offenen Geschenkideen.</p>
       {:else}
-        <ul class="mt-3 flex flex-col gap-1">
+        <ul class="mt-3 flex flex-col gap-3">
           {#each overview.ideas.items as idea (idea.id)}
-            <li>
-              <a href={resolve(`/gifts/${idea.id}`)} class="underline">{idea.title}</a>
-              <span class="text-sm text-gray-600">{CATEGORIES[idea.category]}</span>
+            <li class="rounded border p-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <a href={resolve(`/gifts/${idea.id}`)} class="font-semibold underline">
+                  {idea.title}
+                </a>
+                <span class="rounded-full border px-2 py-0.5 text-sm">
+                  {CATEGORIES[idea.category]}
+                </span>
+              </div>
+              {#if price(idea) || idea.occasions.length}
+                <p class="mt-1 text-sm text-gray-600">
+                  {price(idea)}
+                  {#if price(idea) && idea.occasions.length}·{/if}
+                  {#if idea.occasions.length}für {idea.occasions.map((o) => o.name).join(', ')}{/if}
+                </p>
+              {/if}
             </li>
           {/each}
         </ul>
@@ -158,29 +192,17 @@
         <p class="mt-2 text-sm text-gray-600">{more(overview.ideas)}</p>
       {/if}
     </section>
-    <section aria-labelledby="occasions-heading">
-      <h2 id="occasions-heading" class="text-lg font-semibold">
-        Anlässe ({overview.occasions.total})
+    <section aria-labelledby="planned-heading">
+      <h2 id="planned-heading" class="text-lg font-semibold">
+        Geplante Beschenkungen ({overview.giftings.total})
       </h2>
-      {#if overview.occasions.items.length === 0}
-        <p class="mt-2 text-sm text-gray-600">Keine Anlässe.</p>
-      {:else}
-        <ul class="mt-3 flex flex-col gap-1">
-          {#each overview.occasions.items as occasion (occasion.id)}
-            <li>
-              {occasion.name}
-              {#if occasion.date}
-                <span class="text-sm text-gray-600">
-                  {formatDate(occasion.date)}{occasion.recurrence === 'yearly' ? ' · jährlich' : ''}
-                </span>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      {/if}
-      {#if more(overview.occasions)}
-        <p class="mt-2 text-sm text-gray-600">{more(overview.occasions)}</p>
-      {/if}
+      {@render giftings(overview.giftings, 'Keine offenen Beschenkungen.')}
+    </section>
+    <section aria-labelledby="given-heading">
+      <h2 id="given-heading" class="text-lg font-semibold">
+        Vergangene Geschenke ({overview.given.total})
+      </h2>
+      {@render giftings(overview.given, 'Noch nichts verschenkt.')}
     </section>
   </div>
 
