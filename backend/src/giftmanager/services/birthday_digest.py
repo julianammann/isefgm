@@ -9,8 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gift import Gift, gift_person
-from giftmanager.models.gifting import Gifting, GiftingStatus
+from giftmanager.models.gifting import Gifting, GiftingStatus, gifting_person
 from giftmanager.models.notification import NotificationType
+from giftmanager.models.occasion import Recurrence
 from giftmanager.models.person import Person
 from giftmanager.models.user import User
 from giftmanager.services.notification import (
@@ -20,6 +21,8 @@ from giftmanager.services.notification import (
     local_at,
     local_date,
 )
+from giftmanager.services.occasion import next_occurrence
+from giftmanager.services.ownership import owned
 
 MONTH_NAMES = (
     "Januar",
@@ -54,29 +57,70 @@ def digest_window(now: datetime) -> tuple[date, datetime, datetime]:
     return birthday_month, local_at(send_day), local_at(birthday_month)
 
 
-async def _ideas_by_person(session: AsyncSession, person_ids: list[UUID]) -> dict[UUID, list[Gift]]:
-    given = exists().where(Gifting.gift_id == Gift.id, Gifting.status == GiftingStatus.GIVEN)
-    rows = await session.execute(
-        select(gift_person.c.person_id, Gift)
-        .join(Gift, Gift.id == gift_person.c.gift_id)
-        .where(gift_person.c.person_id.in_(person_ids), ~given)
-        .order_by(func.lower(Gift.title), Gift.id)
+async def _ideas_by_person(
+    session: AsyncSession, user_id: UUID, person_ids: list[UUID]
+) -> dict[UUID, list[tuple[UUID, str]]]:
+    """Per person: linked gifts not yet given to them, plus gifts of their open giftings."""
+    given_to_person = (
+        exists()
+        .where(
+            Gifting.gift_id == Gift.id,
+            Gifting.status == GiftingStatus.GIVEN,
+            gifting_person.c.gifting_id == Gifting.id,
+            gifting_person.c.person_id == gift_person.c.person_id,
+        )
+        .correlate(Gift, gift_person)
     )
-    ideas: dict[UUID, list[Gift]] = {}
-    for person_id, gift in rows:
-        ideas.setdefault(person_id, []).append(gift)
+    linked = (
+        select(
+            gift_person.c.person_id.label("person_id"),
+            Gift.id.label("gift_id"),
+            Gift.title.label("title"),
+        )
+        .join(Gift, Gift.id == gift_person.c.gift_id)
+        .where(gift_person.c.person_id.in_(person_ids), Gift.owner_id == user_id, ~given_to_person)
+    )
+    planned = (
+        select(
+            gifting_person.c.person_id.label("person_id"),
+            Gift.id.label("gift_id"),
+            Gift.title.label("title"),
+        )
+        .join(Gifting, Gifting.id == gifting_person.c.gifting_id)
+        .join(Gift, Gift.id == Gifting.gift_id)
+        .where(
+            gifting_person.c.person_id.in_(person_ids),
+            Gift.owner_id == user_id,
+            Gifting.status.in_((GiftingStatus.IDEA, GiftingStatus.PLANNED, GiftingStatus.ACQUIRED)),
+        )
+    )
+    both = linked.union(planned).subquery()  # UNION drops a gift listed by both parts
+    rows = await session.execute(
+        select(both.c.person_id, both.c.gift_id, both.c.title).order_by(
+            func.lower(both.c.title), both.c.gift_id
+        )
+    )
+    ideas: dict[UUID, list[tuple[UUID, str]]] = {}
+    for person_id, gift_id, title in rows:
+        ideas.setdefault(person_id, []).append((gift_id, title))
     return ideas
 
 
-def _body(user: User, month: date, people: list[Person], ideas: dict[UUID, list[Gift]]) -> str:
+def _body(
+    user: User, month: date, people: list[Person], ideas: dict[UUID, list[tuple[UUID, str]]]
+) -> str:
     origin = get_settings().origin
     month_name = MONTH_NAMES[month.month - 1]
     blocks: list[str] = []
     for person in people:
         birthday = cast(date, person.birthday)  # the month filter excludes NULL
-        lines = [f"{format_day(birthday)} {person.name}"]
+        # same day as the backend shows it: 29.02. becomes 28.02. outside leap years
+        day = cast(date, next_occurrence(birthday, Recurrence.YEARLY, month))
+        lines = [f"{format_day(day)} {person.name}"]
         gifts = ideas.get(person.id, [])
-        lines += [f"- {g.title}: {origin}/gifts/{g.id}" for g in gifts] or ["- noch keine Ideen"]
+        lines += [f"- {title}: {origin}/gifts/{gift_id}" for gift_id, title in gifts] or [
+            "- noch keine Ideen"
+        ]
         blocks.append("\n".join(lines))
     return (
         f"Hallo {user.display_name},\n\n"
@@ -90,18 +134,18 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
     """Digest mails of the current window, one per account with a birthday in the month."""
     month, scheduled_for, expires_at = digest_window(now)
     mails: list[PlannedMail] = []
-    # shortcut: one query per account, fine for the test accounts, revisit with many accounts.
+    # shortcut: two queries per account (people, ideas), fine for the test accounts, revisit with many accounts.
     for user in await active_recipients(session):
         people = list(
             await session.scalars(
-                select(Person)
-                .where(Person.owner_id == user.id, extract("month", Person.birthday) == month.month)
+                owned(Person, user.id)
+                .where(extract("month", Person.birthday) == month.month)
                 .order_by(extract("day", Person.birthday), func.lower(Person.name), Person.id)
             )
         )
         if not people:
             continue
-        ideas = await _ideas_by_person(session, [p.id for p in people])
+        ideas = await _ideas_by_person(session, user.id, [p.id for p in people])
         mails.append(
             PlannedMail(
                 owner_id=user.id,

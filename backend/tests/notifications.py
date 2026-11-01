@@ -117,22 +117,34 @@ async def add_gift(
     return gift
 
 
-async def add_given_gifting(
-    session: AsyncSession, user: User, gift: Gift, person: Person
+async def add_gifting(
+    session: AsyncSession,
+    gift: Gift,
+    people: Iterable[Person],
+    status: GiftingStatus,
+    occasion: Occasion | None = None,
+    occasion_date: date | None = None,
 ) -> Gifting:
-    """Given gifting with its own occasion, so the CHECK `given_complete` holds."""
-    day = date(2025, 5, 1)
-    occasion = Occasion(owner_id=user.id, name="Feier", date=day, recurrence=Recurrence.NONE)
-    session.add(occasion)
-    await session.flush()
+    """Gifting of `gift` to `people`; a given one gets `given_on`, so the CHECK `given_complete` holds."""
     gifting = Gifting(
         gift_id=gift.id,
-        status=GiftingStatus.GIVEN,
-        occasion_id=occasion.id,
-        occasion_date=day,
-        given_on=day,
-        people=[person],
+        status=status,
+        occasion_id=occasion.id if occasion else None,
+        occasion_date=occasion_date,
+        given_on=occasion_date if status is GiftingStatus.GIVEN else None,
+        people=list(people),
     )
     session.add(gifting)
     await session.flush()
     return gifting
+
+
+async def add_given_gifting(
+    session: AsyncSession, user: User, gift: Gift, person: Person
+) -> Gifting:
+    """Given gifting with its own occasion."""
+    day = date(2025, 5, 1)
+    occasion = Occasion(owner_id=user.id, name="Feier", date=day, recurrence=Recurrence.NONE)
+    session.add(occasion)
+    await session.flush()
+    return await add_gifting(session, gift, [person], GiftingStatus.GIVEN, occasion, day)

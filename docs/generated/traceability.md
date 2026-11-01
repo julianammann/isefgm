@@ -466,6 +466,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-10 | `tests/test_birthday_digest.py::test_caught_up_later_in_the_month` | passed |
 | F-10 | `tests/test_birthday_digest.py::test_no_mail_without_birthdays` | passed |
 | F-10 | `tests/test_birthday_digest.py::test_feb_29_is_in_the_february_mail` | passed |
+| F-10 | `tests/test_birthday_digest.py::test_ideas_given_to_someone_else_stay_listed` | passed |
+| F-10 | `tests/test_birthday_digest.py::test_open_giftings_are_listed_once` | passed |
+| F-10 | `tests/test_birthday_digest.py::test_gift_only_given_to_the_person_is_not_listed` | passed |
+| F-10 | `tests/test_birthday_digest.py::test_summer_time_send_hour` | passed |
 | F-10 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people` | passed |
 | F-10 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once` | passed |
 | F-10 | `tests/test_config.py::test_origin_drops_trailing_slash[http://localhost:3000/]` | passed |
@@ -944,6 +948,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-01 | `tests/test_birthday_digest.py::test_caught_up_later_in_the_month` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_no_mail_without_birthdays` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_feb_29_is_in_the_february_mail` | passed |
+| QZ-01 | `tests/test_birthday_digest.py::test_ideas_given_to_someone_else_stay_listed` | passed |
+| QZ-01 | `tests/test_birthday_digest.py::test_open_giftings_are_listed_once` | passed |
+| QZ-01 | `tests/test_birthday_digest.py::test_gift_only_given_to_the_person_is_not_listed` | passed |
+| QZ-01 | `tests/test_birthday_digest.py::test_summer_time_send_hour` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once` | passed |
 | QZ-05 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once` | passed |
@@ -983,6 +991,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_birthday_digest.py::test_caught_up_later_in_the_month` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_no_mail_without_birthdays` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_feb_29_is_in_the_february_mail` | passed |
+| QZ-09 | `tests/test_birthday_digest.py::test_ideas_given_to_someone_else_stay_listed` | passed |
+| QZ-09 | `tests/test_birthday_digest.py::test_open_giftings_are_listed_once` | passed |
+| QZ-09 | `tests/test_birthday_digest.py::test_gift_only_given_to_the_person_is_not_listed` | passed |
+| QZ-09 | `tests/test_birthday_digest.py::test_summer_time_send_hour` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |

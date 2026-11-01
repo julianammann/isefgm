@@ -6,12 +6,14 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
+from giftmanager.models.gifting import GiftingStatus
 from giftmanager.scheduler import run_once
 from giftmanager.services.birthday_digest import due
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
 from tests.notifications import (
     add_gift,
+    add_gifting,
     add_given_gifting,
     add_person,
     make_committed_user,
@@ -73,7 +75,10 @@ async def test_before_eight_on_the_first_the_new_month_is_not_planned(
 ) -> None:
     user = await make_user(session, "konto@isefgm.localhost")
     await add_person(session, user, "Anna", date(1990, 12, 3))
-    assert only(user, await due(session, NOV_1 - timedelta(minutes=1))) == []
+    await add_person(session, user, "Nina", date(1990, 11, 30))
+    [mail] = only(user, await due(session, NOV_1 - timedelta(minutes=1)))
+    assert "30.11. Nina" in mail.body and "Anna" not in mail.body
+    assert (mail.event_date, mail.expires_at) == (date(2026, 11, 1), NOV_1)
 
 
 async def test_caught_up_later_in_the_month(session: AsyncSession) -> None:
@@ -93,7 +98,52 @@ async def test_feb_29_is_in_the_february_mail(session: AsyncSession) -> None:
     user = await make_user(session, "konto@isefgm.localhost")
     await add_person(session, user, "Fritz", date(2000, 2, 29))
     [mail] = only(user, await due(session, datetime(2027, 1, 1, 7, 0, tzinfo=UTC)))
-    assert "29.02. Fritz" in mail.body
+    assert "28.02. Fritz" in mail.body
+    [leap] = only(user, await due(session, datetime(2028, 1, 1, 7, 0, tzinfo=UTC)))
+    assert "29.02. Fritz" in leap.body
+
+
+async def test_ideas_given_to_someone_else_stay_listed(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", date(1990, 12, 3))
+    bernd = await add_person(session, user, "Bernd", date(1985, 12, 31))
+    shared = await add_gift(session, user, "Tasse", people=[anna, bernd])
+    await add_given_gifting(session, user, shared, bernd)
+    [mail] = only(user, await due(session, NOV_1))
+    anna_block = mail.body.split("31.12. Bernd")[0]
+    assert f"- Tasse: {ORIGIN}/gifts/{shared.id}" in anna_block
+    assert "Tasse" not in mail.body.split("31.12. Bernd")[1]
+
+
+async def test_open_giftings_are_listed_once(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", date(1990, 12, 3))
+    unlinked = await add_gift(session, user, "Buch")
+    linked = await add_gift(session, user, "Tasse", people=[anna])
+    await add_gifting(session, unlinked, [anna], GiftingStatus.PLANNED, None, None)
+    await add_gifting(session, linked, [anna], GiftingStatus.PLANNED, None, None)
+    [mail] = only(user, await due(session, NOV_1))
+    assert mail.body.count(f"/gifts/{unlinked.id}") == 1
+    assert mail.body.count(f"/gifts/{linked.id}") == 1
+
+
+async def test_gift_only_given_to_the_person_is_not_listed(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", date(1990, 12, 3))
+    gift = await add_gift(session, user, "Buch")
+    await add_given_gifting(session, user, gift, anna)
+    [mail] = only(user, await due(session, NOV_1))
+    assert "Buch" not in mail.body
+    assert "03.12. Anna\n- noch keine Ideen" in mail.body
+
+
+async def test_summer_time_send_hour(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    await add_person(session, user, "Jul", date(1990, 7, 10))
+    before = only(user, await due(session, datetime(2027, 6, 1, 5, 59, tzinfo=UTC)))
+    assert all(m.event_date != date(2027, 7, 1) for m in before)
+    [mail] = only(user, await due(session, datetime(2027, 6, 1, 6, 0, tzinfo=UTC)))
+    assert mail.scheduled_for == datetime(2027, 6, 1, 6, 0, tzinfo=UTC)
 
 
 @pytest.mark.requirement("F-10", "Q-01", "Q-04")
