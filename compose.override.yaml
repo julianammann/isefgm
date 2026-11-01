@@ -25,6 +25,21 @@ services:
 
   scheduler:
     build: *backend-build
+    environment:
+      SMTP_HOST: isefgm-mailpit
+
+  # Local test inbox: SMTP on 1025, web UI on http://localhost:8025.
+  mailpit:
+    image: docker.io/axllent/mailpit:v1.31.6@sha256:23fe39e81bde596a918000b3135c0f85dc8bb4c9ea6be274b051143f3e300387
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      app-net:
+        aliases: [isefgm-mailpit]
 
   frontend:
     build:

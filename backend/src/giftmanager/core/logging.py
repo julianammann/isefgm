@@ -39,7 +39,16 @@ def configure_logging(level: str, *, json: bool) -> None:
     if json:
         final += [structlog.processors.format_exc_info, structlog.processors.JSONRenderer()]
     else:
-        final += [structlog.dev.ConsoleRenderer(colors=sys.stdout.isatty())]
+        colors = sys.stdout.isatty()
+        final += [
+            structlog.dev.ConsoleRenderer(
+                colors=colors,
+                # Locals would print secrets such as the SMTP password.
+                exception_formatter=structlog.dev.RichTracebackFormatter(
+                    show_locals=False, color_system="truecolor" if colors else None
+                ),
+            )
+        ]
 
     structlog.configure(
         processors=[*shared, structlog.stdlib.ProcessorFormatter.wrap_for_formatter],
