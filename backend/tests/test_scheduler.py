@@ -1,20 +1,31 @@
 """Scheduler run: plan, clean up and send (F-13, QZ-05)."""
 
+import logging
 import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
 
 import pytest
+from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from giftmanager import scheduler
+from giftmanager.core import db
 from giftmanager.core.mail import MailFailure
+from giftmanager.models.notification import NotificationStatus
 from giftmanager.models.user import User
 from giftmanager.scheduler import Planner, run_once
 from giftmanager.services.notification import PlannedMail
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
-from tests.notifications import make_committed_user, planned_mail
+from tests.notifications import (
+    add_committed_notification,
+    make_committed_user,
+    planned_mail,
+    reload,
+)
 
 pytestmark = pytest.mark.requirement("F-13", "QZ-05")
 
@@ -93,6 +104,91 @@ async def test_failing_planner_does_not_block_others(
         planners=[broken, due_once(user)],
     )
     assert len(mailer.sent) == 1
+
+
+async def test_failing_planner_is_logged_with_qualified_name(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    async def broken(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        raise RuntimeError("boom")
+
+    await run_once(
+        clock=clock,
+        sessionmaker=committed_sessionmaker,
+        mailer=RecordingMailer(),
+        planners=[broken],
+    )
+    messages = [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
+    assert any(broken.__qualname__ in m and __name__ in m for m in messages)
+
+
+async def test_run_logs_sent_count_without_recipients(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    with caplog.at_level(logging.INFO):
+        await run_once(
+            clock=clock,
+            sessionmaker=committed_sessionmaker,
+            mailer=RecordingMailer(),
+            planners=[due_once(user)],
+        )
+    messages = [r.getMessage() for r in caplog.records if r.name == "giftmanager.scheduler"]
+    assert messages == ["Sent 1 mails"]
+
+
+async def test_run_once_fails_expired_and_stuck_rows(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    now = clock.now()
+    stuck = await add_committed_notification(
+        committed_sessionmaker, status=NotificationStatus.SENDING
+    )
+    async with committed_sessionmaker() as s, s.begin():
+        (await s.get_one(type(stuck), stuck.id)).claimed_at = now - timedelta(minutes=15)
+    expired = await add_committed_notification(
+        committed_sessionmaker, scheduled_for=now - timedelta(days=2), expires_at=now
+    )
+    await run_once(
+        clock=clock, sessionmaker=committed_sessionmaker, mailer=RecordingMailer(), planners=[]
+    )
+    assert (await reload(committed_sessionmaker, stuck.id)).status is NotificationStatus.FAILED
+    assert (await reload(committed_sessionmaker, expired.id)).status is NotificationStatus.FAILED
+
+
+async def test_hung_run_times_out(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    monkeypatch.setattr(scheduler, "RUN_TIMEOUT", timedelta(seconds=0.2))
+    with pytest.raises(TimeoutError):
+        await run_once(
+            clock=clock,
+            sessionmaker=committed_sessionmaker,
+            mailer=RecordingMailer(delay=30),
+            planners=[due_once(user)],
+        )
+
+
+@pytest.mark.requirement("QZ-05")
+async def test_engine_errors_do_not_contain_bound_parameters(
+    database_url: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(db.get_settings(), "database_url", database_url)
+    engine = db.get_engine.__wrapped__()
+    try:
+        async with engine.connect() as conn:
+            with pytest.raises(DBAPIError) as raised:
+                await conn.execute(text("SELECT :v FROM missing_table"), {"v": "secret-recipient"})
+    finally:
+        await engine.dispose()
+    assert "secret-recipient" not in str(raised.value)
 
 
 @pytest.mark.requirement("QZ-05")

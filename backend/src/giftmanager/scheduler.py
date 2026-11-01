@@ -26,6 +26,10 @@ from giftmanager.services.notification import (
 logger = logging.getLogger(__name__)
 
 INTERVAL = timedelta(minutes=5)
+# Below INTERVAL so a hung run cannot block every later tick. A run cancelled mid-send leaves that
+# one row in `sending`; fail_stuck marks it `failed` after 15 minutes and it is not resent (same
+# path as SIGTERM). The remaining `planned` rows go out on the next run.
+RUN_TIMEOUT = timedelta(minutes=4)
 
 Planner = Callable[[AsyncSession, datetime], Awaitable[list[PlannedMail]]]
 
@@ -42,19 +46,24 @@ async def run_once(
 ) -> int:
     """Expire and fail stale rows, plan every type, send what is due; returns mails sent.
 
-    A failing planner is logged and does not stop the others or the sending.
+    A failing planner is logged and does not stop the others or the sending. Raises
+    `TimeoutError` when the run exceeds `RUN_TIMEOUT`.
     """
-    now = clock.now()
-    async with sessionmaker() as session, session.begin():
-        await expire(session, now)
-        await fail_stuck(session, now)
-    for planner in planners:
-        try:
-            async with sessionmaker() as session, session.begin():
-                await plan(session, await planner(session, now))
-        except Exception:
-            logger.exception("Planner %s failed", getattr(planner, "__name__", planner))
-    return await dispatch_due(sessionmaker, mailer, clock)
+    async with asyncio.timeout(RUN_TIMEOUT.total_seconds()):
+        now = clock.now()
+        async with sessionmaker() as session, session.begin():
+            await expire(session, now)
+            await fail_stuck(session, now)
+        for planner in planners:
+            try:
+                async with sessionmaker() as session, session.begin():
+                    await plan(session, await planner(session, now))
+            except Exception:
+                logger.exception("Planner %s.%s failed", planner.__module__, planner.__qualname__)
+        sent = await dispatch_due(sessionmaker, mailer, clock)
+    if sent:
+        logger.info("Sent %d mails", sent)
+    return sent
 
 
 async def _serve() -> None:
@@ -69,6 +78,7 @@ async def _serve() -> None:
         next_run_time=datetime.now(UTC),
         max_instances=1,
         coalesce=True,
+        misfire_grace_time=None,
         kwargs={"clock": get_clock(), "sessionmaker": get_sessionmaker(), "mailer": get_mailer()},
     )
     scheduler.start()
