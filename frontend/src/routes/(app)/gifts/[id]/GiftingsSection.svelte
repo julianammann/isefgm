@@ -55,6 +55,15 @@
   const errors = $derived(failed?.errors ?? {});
   // The status select drives which fields are required; it starts from the loaded values.
   let status = $derived<GiftingStatus>(values.status ?? 'idea');
+  let occasionDate = $derived(values.occasion_date ?? '');
+
+  /** Picking Weihnachten or Ostern fills in its next date, so the overview mail counts the gifting. */
+  function onOccasionChange(id: string) {
+    const picked = occasions.find((occasion) => occasion.id === id);
+    if ((picked?.rule === 'christmas' || picked?.rule === 'easter') && picked.date) {
+      occasionDate = picked.date;
+    }
+  }
 
   let taskFormOpen = $state(false);
   let taskDeleteOpen = $state(false);
@@ -345,6 +354,7 @@
       name="occasion_id"
       required={status === 'given'}
       value={values.occasion_id ?? ''}
+      onchange={(event) => onOccasionChange(event.currentTarget.value)}
       class="rounded border px-3 py-2"
       aria-invalid={errors.occasion_id ? 'true' : undefined}
       aria-describedby={errors.occasion_id ? 'gifting-occasion-id-error' : undefined}
@@ -366,7 +376,7 @@
       name="occasion_date"
       type="date"
       required={status === 'given'}
-      value={values.occasion_date ?? ''}
+      bind:value={occasionDate}
       class="rounded border px-3 py-2"
       aria-invalid={errors.occasion_date ? 'true' : undefined}
       aria-describedby={errors.occasion_date ? 'gifting-occasion-date-error' : undefined}
