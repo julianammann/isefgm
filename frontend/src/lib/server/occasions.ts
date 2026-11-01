@@ -56,7 +56,7 @@ async function send<T>(request: Promise<{ data?: T; response: Response }>): Prom
   }
 }
 
-/** Returns all occasions of the current account, sorted by month and day; reads every page of the list. */
+/** Returns all occasions of the current account, rule occasions first, then by month and day; reads every page of the list. */
 export async function listOccasions(api: Api): Promise<Result<Occasion[]>> {
   const occasions: Occasion[] = [];
   for (;;) {

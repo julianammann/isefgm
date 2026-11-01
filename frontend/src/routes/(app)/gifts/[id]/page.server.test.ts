@@ -59,3 +59,63 @@ describe('delete', () => {
     });
   });
 });
+
+/** Gifting form posted to the detail page; the backend answers every write with `status`. */
+function giftingEvent(fields: Record<string, string | string[]>, status = 201) {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    for (const v of Array.isArray(value) ? value : [value]) form.append(key, v);
+  }
+  const body = { id: 'gf1' };
+  const reply = { data: body, response: new Response(JSON.stringify(body), { status }) };
+  const POST = vi.fn().mockResolvedValue(reply);
+  const PUT = vi.fn().mockResolvedValue(reply);
+  const event = {
+    request: new Request('http://localhost/gifts/g1', { method: 'POST', body: form }),
+    locals: { api: { POST, PUT } },
+    params: { id: 'g1' }
+  } as unknown as ActionEvent;
+  return { event, POST, PUT };
+}
+
+describe('gifting at the birthday', () => {
+  it('sends a valid non-birthday gifting to the API and redirects', async () => {
+    const { event, POST } = giftingEvent({
+      status: 'idea',
+      birthday_occasion_id: 'bday',
+      occasion_id: 'xmas',
+      person_ids: ['p1', 'p2']
+    });
+    await expect(actions.createGifting(event)).rejects.toMatchObject({
+      status: 303,
+      location: '/gifts/g1?success=giftingCreated'
+    });
+    expect(POST).toHaveBeenCalledOnce();
+  });
+
+  it('rejects a birthday gifting with two people without calling the API', async () => {
+    const { event, POST } = giftingEvent({
+      status: 'idea',
+      birthday_occasion_id: 'bday',
+      occasion_id: 'bday',
+      person_ids: ['p1', 'p2']
+    });
+    await expect(actions.createGifting(event)).resolves.toMatchObject({
+      status: 400,
+      data: {
+        scope: 'gifting',
+        errors: { person_ids: 'Für einen Geburtstag bitte genau eine Person auswählen.' }
+      }
+    });
+    expect(POST).not.toHaveBeenCalled();
+  });
+
+  it('updates a valid gifting and redirects', async () => {
+    const { event, PUT } = giftingEvent({ id: 'gf1', status: 'idea' });
+    await expect(actions.updateGifting(event)).rejects.toMatchObject({
+      status: 303,
+      location: '/gifts/g1?success=giftingUpdated'
+    });
+    expect(PUT).toHaveBeenCalledOnce();
+  });
+});

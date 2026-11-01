@@ -58,8 +58,9 @@ async def list_giftings(
     summary="Create gifting",
     description="Turns a gift idea into a gifting in one step: only `gift_id` is required, "
     "the status defaults to `idea`. The idea is referenced, not copied, and stays in the "
-    "idea list. A past gift is recorded directly with status `given`." + _GIVEN_NOTE + _LINKS_NOTE,
-    responses=problem_responses(401, 404),
+    "idea list. A past gift is recorded directly with status `given`. A gifting at the "
+    "occasion Geburtstag needs exactly one recipient, otherwise 422." + _GIVEN_NOTE + _LINKS_NOTE,
+    responses=problem_responses(401, 404, 422),
 )
 async def create_gifting(body: GiftingIn, user: CurrentUser, session: SessionDep) -> GiftingOut:
     """Create a gifting for the current account."""
@@ -85,11 +86,12 @@ async def get_gifting(gifting_id: uuid.UUID, user: CurrentUser, session: Session
     operation_id="updateGifting",
     summary="Update gifting",
     description="Replaces all fields of the gifting, including its recipients: a field left "
-    "out is reset to null, its default or an empty list. Any status may follow any other."
+    "out is reset to null, its default or an empty list. Any status may follow any other. "
+    "A gifting at the occasion Geburtstag needs exactly one recipient, otherwise 422."
     + _GIVEN_NOTE
     + _LINKS_NOTE
     + _NOT_FOUND_NOTE,
-    responses=problem_responses(401, 404),
+    responses=problem_responses(401, 404, 422),
 )
 async def update_gifting(
     gifting_id: uuid.UUID, body: GiftingIn, user: CurrentUser, session: SessionDep

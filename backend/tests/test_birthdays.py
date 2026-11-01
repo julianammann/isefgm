@@ -1,4 +1,5 @@
-"""A person's birthday occasion is derived from person.birthday (F-03, F-04)."""
+"""The old migration that derived one birthday occasion per person from person.birthday (F-03,
+F-04). The rule occasions replaced that derivation (#132)."""
 
 import asyncio
 import datetime as dt
@@ -8,156 +9,15 @@ from typing import Any
 import pytest
 from alembic import command
 from alembic.config import Config
-from httpx import AsyncClient
 from sqlalchemy import make_url, text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from giftmanager.models import BIRTHDAY_TYPE_ID, CHRISTMAS_TYPE_ID, User
-from tests.accounts import log_in_new_user
-
-PEOPLE = "/api/v1/people"
-OCCASIONS = "/api/v1/occasions"
-
-
-@pytest.fixture
-async def anna(client: AsyncClient, session: AsyncSession) -> User:
-    return await log_in_new_user(client, session, "anna@example.org")
-
-
-async def create_person(client: AsyncClient, body: dict[str, Any]) -> str:
-    return (await client.post(PEOPLE, json=body)).json()["id"]
-
-
-async def list_occasions(client: AsyncClient) -> list[dict[str, Any]]:
-    return (await client.get(OCCASIONS)).json()["items"]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_birthday_creates_the_birthday_occasion(client: AsyncClient, anna: User) -> None:
-    lena = await create_person(client, {"name": "Lena", "birthday": "1990-05-01"})
-
-    [birthday] = await list_occasions(client)
-    assert birthday["name"] == "Geburtstag Lena"
-    assert birthday["date"] == "1990-05-01"
-    assert birthday["recurrence"] == "yearly"
-    assert birthday["occasion_type_id"] == str(BIRTHDAY_TYPE_ID)
-    assert birthday["people"] == [{"id": lena, "name": "Lena"}]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_person_without_birthday_has_no_birthday_occasion(
-    client: AsyncClient, anna: User
-) -> None:
-    await create_person(client, {"name": "Lena"})
-
-    assert await list_occasions(client) == []
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_birthday_occasion_follows_the_person(client: AsyncClient, anna: User) -> None:
-    lena = await create_person(client, {"name": "Lena", "birthday": "1990-05-01"})
-    [before] = await list_occasions(client)
-
-    r = await client.put(f"{PEOPLE}/{lena}", json={"name": "Lena M.", "birthday": "1991-06-02"})
-    assert r.status_code == 200
-
-    [after] = await list_occasions(client)
-    assert after["id"] == before["id"]
-    assert after["name"] == "Geburtstag Lena M."
-    assert after["date"] == "1991-06-02"
-    assert after["people"] == [{"id": lena, "name": "Lena M."}]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_each_person_has_their_own_birthday_occasion(client: AsyncClient, anna: User) -> None:
-    lena = await create_person(client, {"name": "Lena", "birthday": "1990-05-01"})
-    anton = await create_person(client, {"name": "Anton", "birthday": "1985-12-24"})
-
-    await client.put(f"{PEOPLE}/{lena}", json={"name": "Lena", "birthday": "1990-05-02"})
-
-    by_name = {o["name"]: o for o in await list_occasions(client)}
-    assert by_name.keys() == {"Geburtstag Lena", "Geburtstag Anton"}
-    assert by_name["Geburtstag Lena"]["date"] == "1990-05-02"
-    assert by_name["Geburtstag Anton"]["date"] == "1985-12-24"
-    assert by_name["Geburtstag Anton"]["people"] == [{"id": anton, "name": "Anton"}]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_adding_a_birthday_later_creates_the_occasion(
-    client: AsyncClient, anna: User
-) -> None:
-    lena = await create_person(client, {"name": "Lena"})
-
-    await client.put(f"{PEOPLE}/{lena}", json={"name": "Lena", "birthday": "1990-05-01"})
-
-    [birthday] = await list_occasions(client)
-    assert birthday["date"] == "1990-05-01"
-    assert birthday["people"] == [{"id": lena, "name": "Lena"}]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_removing_the_birthday_deletes_the_occasion(client: AsyncClient, anna: User) -> None:
-    lena = await create_person(client, {"name": "Lena", "birthday": "1990-05-01"})
-    other = (await client.post(OCCASIONS, json={"name": "Abifeier", "date": "2026-07-03"})).json()
-
-    await client.put(f"{PEOPLE}/{lena}", json={"name": "Lena"})
-
-    assert await list_occasions(client) == [other]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_deleting_the_person_deletes_the_birthday_occasion(
-    client: AsyncClient, anna: User
-) -> None:
-    lena = await create_person(client, {"name": "Lena", "birthday": "1990-05-01"})
-
-    assert (await client.delete(f"{PEOPLE}/{lena}")).status_code == 204
-
-    assert await list_occasions(client) == []
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_long_name_is_cut_to_fit_the_occasion_name(client: AsyncClient, anna: User) -> None:
-    name = "L" * 100
-    await create_person(client, {"name": name, "birthday": "1990-05-01"})
-
-    [birthday] = await list_occasions(client)
-    assert birthday["name"] == "Geburtstag " + "L" * 89
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_birthday_type_cannot_be_chosen_by_hand(client: AsyncClient, anna: User) -> None:
-    birthday_type = {"occasion_type_id": str(BIRTHDAY_TYPE_ID)}
-    party = {"name": "Party", "date": "2026-07-03"}
-
-    r = await client.post(OCCASIONS, json={**party, **birthday_type})
-    assert r.status_code == 422
-    assert r.json()["errors"][0]["loc"] == ["body", "occasion_type_id"]
-
-    created = (await client.post(OCCASIONS, json=party)).json()
-    r = await client.put(f"{OCCASIONS}/{created['id']}", json={**party, **birthday_type})
-    assert r.status_code == 422
-    assert await list_occasions(client) == [created]
-
-
-@pytest.mark.requirement("F-03", "F-04")
-async def test_birthday_occasion_cannot_be_changed_or_deleted_by_hand(
-    client: AsyncClient, anna: User
-) -> None:
-    await create_person(client, {"name": "Lena", "birthday": "1990-05-01"})
-    [birthday] = await list_occasions(client)
-    url = f"{OCCASIONS}/{birthday['id']}"
-
-    r = await client.put(url, json={"name": "Umbenannt", "date": "2000-01-01"})
-    assert r.status_code == 409
-    assert (await client.delete(url)).status_code == 409
-
-    assert await list_occasions(client) == [birthday]
-
+from giftmanager.models import BIRTHDAY_TYPE_ID, CHRISTMAS_TYPE_ID
 
 # --- Data migration for existing rows -------------------------------------------
 
 BEFORE_DERIVATION = "cbd3c5c4acbd"
+DERIVATION = "13c2f34b196e"
 
 
 async def _run_sql(url: str, statements: list[str], params: dict[str, Any]) -> list[Any]:
@@ -207,7 +67,7 @@ def test_migration_derives_birthday_occasions_of_existing_people(database_url: s
             )
         )
 
-        command.upgrade(cfg, "head")
+        command.upgrade(cfg, DERIVATION)
 
         [occasions, links] = asyncio.run(
             _run_sql(
