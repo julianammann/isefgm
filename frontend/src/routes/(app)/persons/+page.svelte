@@ -5,6 +5,7 @@
   import { page } from '$app/state';
   import Pagination from '$lib/components/Pagination.svelte';
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
+  import { formatDate } from '$lib/display';
   import { actionUrl, pageQuery } from '$lib/pagination';
   import type { PageProps } from './$types';
 
@@ -92,13 +93,13 @@
                     >{person.name}</a
                   >
                 </h3>
-                <p class="mt-1 text-sm text-gray-600">
-                  {#if person.birthday}
-                    <span class="text-sm text-gray-600">{person.birthday}</span>{/if}
-                  {#if person.relationship}
-                    <span class="ml-2 text-sm text-gray-600">{person.relationship}</span>
-                  {/if}
-                </p>
+                {#if person.birthday || person.relationship}
+                  <p class="mt-1 text-sm text-gray-600">
+                    {#if person.birthday}Geb. {formatDate(person.birthday)}{/if}
+                    {#if person.birthday && person.relationship}·{/if}
+                    {#if person.relationship}{person.relationship}{/if}
+                  </p>
+                {/if}
               </div>
               <div class="flex items-center gap-4">
                 <a
