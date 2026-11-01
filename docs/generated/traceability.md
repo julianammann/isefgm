@@ -476,6 +476,27 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-10 | `tests/test_config.py::test_origin_drops_trailing_slash[http://localhost:3000///]` | passed |
 | F-10 | `tests/test_config.py::test_origin_drops_trailing_slash[http://localhost:3000]` | passed |
 | F-10 | `tests/test_notifications.py::test_format_day_is_day_and_month_with_dot` | passed |
+| F-11 | `tests/test_season_overview.py::test_send_dates_christmas_2026` | passed |
+| F-11 | `tests/test_season_overview.py::test_send_dates_easter_2027` | passed |
+| F-11 | `tests/test_season_overview.py::test_send_dates_start_on_a_monday_is_not_doubled` | passed |
+| F-11 | `tests/test_season_overview.py::test_open_send_christmas[now0-None]` | passed |
+| F-11 | `tests/test_season_overview.py::test_open_send_christmas[now1-expected1]` | passed |
+| F-11 | `tests/test_season_overview.py::test_open_send_christmas[now2-expected2]` | passed |
+| F-11 | `tests/test_season_overview.py::test_open_send_christmas[now3-expected3]` | passed |
+| F-11 | `tests/test_season_overview.py::test_open_send_christmas[now4-None]` | passed |
+| F-11 | `tests/test_season_overview.py::test_open_send_easter_starts_on_sunday` | passed |
+| F-11 | `tests/test_season_overview.py::test_lists_recipients_with_status_and_idea_people` | passed |
+| F-11 | `tests/test_season_overview.py::test_idea_given_to_someone_else_still_adds_person` | passed |
+| F-11 | `tests/test_season_overview.py::test_given_idea_does_not_add_person` | passed |
+| F-11 | `tests/test_season_overview.py::test_last_years_gifting_does_not_count` | passed |
+| F-11 | `tests/test_season_overview.py::test_gifting_without_date_counts_and_without_recipient_is_listed` | passed |
+| F-11 | `tests/test_season_overview.py::test_easter_overview` | passed |
+| F-11 | `tests/test_season_overview.py::test_weekly_mails_have_their_own_keys` | passed |
+| F-11 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
+| F-11 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
+| F-11 | `tests/test_season_overview.py::test_gifting_with_several_recipients_is_listed_under_each` | passed |
+| F-11 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
+| F-11 | `tests/test_season_overview.py::test_rule_occasions_next_to_a_user_defined_type` | passed |
 | F-13 | `tests/test_config.py::test_smtp_defaults_point_at_local_mailpit` | passed |
 | F-13 | `tests/test_config.py::test_smtp_password_is_not_shown` | passed |
 | F-13 | `tests/test_mail.py::test_classify[exc0-transient]` | passed |
@@ -717,6 +738,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_people.py::test_people_require_login` | passed |
 | Q-01 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
 | Q-01 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
+| Q-01 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_require_login` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[GET]` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[PUT]` | passed |
@@ -867,6 +889,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_uploads.py::test_storage_path_is_random_per_account` | passed |
 | Q-04 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people` | passed |
 | Q-04 | `tests/test_notifications.py::test_active_recipients_skip_reserved_and_deleted` | passed |
+| Q-04 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
 | Q-04 | `tests/test_seed.py::test_seeds_every_account_and_can_run_again` | passed |
 | Q-04 | `tests/test_suggestions.py::test_features_of_fewer_than_three_accounts_are_not_suggested` | passed |
 | Q-04 | `tests/test_suggestions.py::test_own_ideas_do_not_count_towards_the_accounts` | passed |
@@ -984,6 +1007,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_scheduler.py::test_serve_registers_the_interval_job` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_engine_errors_do_not_contain_bound_parameters` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_api_process_loads_no_scheduler_or_mail` | passed |
+| QZ-05 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_lists_exactly_next_month` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_december_lists_january` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_lists_known_ideas_but_not_given_ones` | passed |
@@ -1002,6 +1026,27 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day3-utc3]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_date_switches_at_berlin_midnight` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_send_dates_christmas_2026` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_send_dates_easter_2027` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_send_dates_start_on_a_monday_is_not_doubled` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_open_send_christmas[now0-None]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_open_send_christmas[now1-expected1]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_open_send_christmas[now2-expected2]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_open_send_christmas[now3-expected3]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_open_send_christmas[now4-None]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_open_send_easter_starts_on_sunday` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_lists_recipients_with_status_and_idea_people` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_idea_given_to_someone_else_still_adds_person` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_given_idea_does_not_add_person` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_last_years_gifting_does_not_count` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_gifting_without_date_counts_and_without_recipient_is_listed` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_easter_overview` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_weekly_mails_have_their_own_keys` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_gifting_with_several_recipients_is_listed_under_each` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_rule_occasions_next_to_a_user_defined_type` | passed |
 
 ## Tests without a requirement
 
