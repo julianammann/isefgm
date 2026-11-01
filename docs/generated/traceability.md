@@ -682,6 +682,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
 | Q-03 | `tests/test_config.py::test_app_env_defaults_to_production` | passed |
 | Q-03 | `tests/test_config.py::test_registration_is_closed_by_default` | passed |
+| Q-03 | `tests/test_config.py::test_database_url_is_required` | passed |
 | Q-03 | `tests/test_create_user.py::test_validates_like_the_registration_endpoint` | passed |
 | Q-03 | `tests/test_images.py::test_misleading_name_and_type_are_ignored` | passed |
 | Q-03 | `tests/test_images.py::test_invalid_files_are_rejected[gif]` | passed |

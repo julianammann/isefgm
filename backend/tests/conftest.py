@@ -5,6 +5,9 @@ import os
 # https, hence the https base URL below. Set before giftmanager is imported, because
 # get_settings() is cached on first use.
 os.environ["APP_ENV"] = "test"
+# DATABASE_URL is required, but the tests connect to their own container (database_url
+# fixture); this placeholder only lets the app import without a .env.
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://unused@localhost/unused")
 
 from collections.abc import AsyncIterator, Iterator
 from datetime import UTC, datetime, timedelta
