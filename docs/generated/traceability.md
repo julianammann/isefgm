@@ -491,6 +491,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_scheduler.py::test_run_once_twice_sends_once` | passed |
 | F-13 | `tests/test_scheduler.py::test_mail_outage_keeps_rows_and_does_not_raise` | passed |
 | F-13 | `tests/test_scheduler.py::test_failing_planner_does_not_block_others` | passed |
+| F-13 | `tests/test_scheduler.py::test_api_process_loads_no_scheduler_or_mail` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -900,6 +901,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_scheduler.py::test_run_once_twice_sends_once` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_mail_outage_keeps_rows_and_does_not_raise` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_failing_planner_does_not_block_others` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_api_process_loads_no_scheduler_or_mail` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |

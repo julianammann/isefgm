@@ -1,5 +1,8 @@
 """Scheduler run: plan, clean up and send (F-13, QZ-05)."""
 
+import os
+import subprocess
+import sys
 from datetime import datetime, timedelta
 
 import pytest
@@ -90,3 +93,20 @@ async def test_failing_planner_does_not_block_others(
         planners=[broken, due_once(user)],
     )
     assert len(mailer.sent) == 1
+
+
+@pytest.mark.requirement("QZ-05")
+def test_api_process_loads_no_scheduler_or_mail() -> None:
+    code = (
+        "import sys, giftmanager.main; "
+        "print(sorted(m for m in ('apscheduler', 'aiosmtplib', 'giftmanager.scheduler') "
+        "if m in sys.modules))"
+    )
+    out = subprocess.run(  # noqa: S603  # fixed argv, no untrusted input
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=True,
+        env={**os.environ, "APP_ENV": "test"},
+    )
+    assert out.stdout.strip() == "[]"

@@ -1,13 +1,20 @@
 """Scheduler run: plan, clean up and send notifications (F-13, QZ-05)."""
 
+import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Sequence
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
+from apscheduler.schedulers.asyncio import (  # pyright: ignore[reportMissingTypeStubs]
+    AsyncIOScheduler,
+)
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from giftmanager.core.clock import Clock
-from giftmanager.core.mail import Mailer
+from giftmanager.core.clock import Clock, get_clock
+from giftmanager.core.config import get_settings
+from giftmanager.core.db import get_sessionmaker
+from giftmanager.core.logging import configure_logging
+from giftmanager.core.mail import Mailer, get_mailer
 from giftmanager.services.notification import (
     PlannedMail,
     dispatch_due,
@@ -17,6 +24,8 @@ from giftmanager.services.notification import (
 )
 
 logger = logging.getLogger(__name__)
+
+INTERVAL = timedelta(minutes=5)
 
 Planner = Callable[[AsyncSession, datetime], Awaitable[list[PlannedMail]]]
 
@@ -46,3 +55,33 @@ async def run_once(
         except Exception:
             logger.exception("Planner %s failed", getattr(planner, "__name__", planner))
     return await dispatch_due(sessionmaker, mailer, clock)
+
+
+async def _serve() -> None:
+    # shortcut: a deploy during a send ends the process on SIGTERM and leaves the row in
+    # `sending`; fail_stuck marks it `failed` after 15 minutes and it is not resent. Upgrade if
+    # that loss becomes unacceptable.
+    scheduler = AsyncIOScheduler(timezone=UTC)
+    scheduler.add_job(  # pyright: ignore[reportUnknownMemberType]
+        run_once,
+        "interval",
+        seconds=INTERVAL.total_seconds(),
+        next_run_time=datetime.now(UTC),
+        max_instances=1,
+        coalesce=True,
+        kwargs={"clock": get_clock(), "sessionmaker": get_sessionmaker(), "mailer": get_mailer()},
+    )
+    scheduler.start()
+    await asyncio.Event().wait()
+
+
+def main() -> int:
+    """Run the scheduler process until it is killed."""
+    settings = get_settings()
+    configure_logging(settings.log_level, json=not settings.is_dev)
+    asyncio.run(_serve())
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
