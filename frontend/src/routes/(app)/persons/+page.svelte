@@ -1,7 +1,10 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import Pagination from '$lib/components/Pagination.svelte';
+  import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
   import { actionUrl, pageQuery } from '$lib/pagination';
   import type { PageProps } from './$types';
 
@@ -14,18 +17,26 @@
   const errors = $derived(form?.errors ?? {});
 
   let showForm = $state(false);
-  let formDialog: HTMLDialogElement | undefined = $state();
   let previousEditId = $state<string | null>(null);
   let dialog: HTMLDialogElement | null = null;
   let toDelete = $state<{ id: string; name: string } | null>(null);
+
+  /** Drops `?edit` when the edit dialog is closed with Escape or Abbrechen. */
+  function leaveEdit() {
+    if (page.url.searchParams.has('edit')) {
+      goto(resolve(`/persons${pageQuery(data.page)}`), {
+        replaceState: true,
+        noScroll: true,
+        keepFocus: true
+      });
+    }
+  }
 
   $effect(() => {
     const editId = data.editing?.id ?? null;
     if (previousEditId && !editId) showForm = false;
     if (editId && editId !== previousEditId) showForm = true;
     previousEditId = editId;
-    if (showForm && formDialog && !formDialog.open) formDialog.showModal();
-    if (!isEdit && !showForm && formDialog?.open) formDialog.close();
   });
 
   function openForm() {
@@ -71,30 +82,40 @@
     {#if data.persons.length === 0}
       <p class="mt-2 text-sm">Noch keine Personen angelegt.</p>
     {:else}
-      <ul class="mt-4 divide-y rounded border">
+      <ul class="mt-4 flex flex-col gap-3">
         {#each data.persons as person (person.id)}
-          <li class="flex items-center gap-4 p-3">
-            <span class="flex-1">
-              <span class="font-bold">{person.name}</span>
-              {#if person.birthday}<span class="ml-2 text-sm text-gray-600">{person.birthday}</span
-                >{/if}
-              {#if person.relationship}
-                <span class="ml-2 text-sm text-gray-600">{person.relationship}</span>
-              {/if}
-            </span>
-            <a
-              href={resolve(`/persons${pageQuery(data.page, { edit: person.id })}`)}
-              class="text-sm underline"
-            >
-              Bearbeiten<span class="sr-only">: {person.name}</span>
-            </a>
-            <button
-              type="button"
-              class="text-sm text-red-800 underline"
-              onclick={() => askDelete(person)}
-            >
-              Löschen<span class="sr-only">: {person.name}</span>
-            </button>
+          <li class="rounded border p-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold">
+                  <a href={resolve(`/persons/${person.id}`)} class="font-bold underline"
+                    >{person.name}</a
+                  >
+                </h3>
+                <p class="mt-1 text-sm text-gray-600">
+                  {#if person.birthday}
+                    <span class="text-sm text-gray-600">{person.birthday}</span>{/if}
+                  {#if person.relationship}
+                    <span class="ml-2 text-sm text-gray-600">{person.relationship}</span>
+                  {/if}
+                </p>
+              </div>
+              <div class="flex items-center gap-4">
+                <a
+                  href={resolve(`/persons${pageQuery(data.page, { edit: person.id })}`)}
+                  class="text-sm underline"
+                  >Bearbeiten
+                  <span class="sr-only">: {person.name}</span>
+                </a>
+                <button
+                  type="button"
+                  class="text-sm text-red-800 underline"
+                  onclick={() => askDelete(person)}
+                >
+                  Löschen<span class="sr-only">: {person.name}</span>
+                </button>
+              </div>
+            </div>
           </li>
         {/each}
       </ul>
@@ -133,104 +154,18 @@
     </form>
   </dialog>
 
-  <dialog
-    id="person-form-dialog"
-    bind:this={formDialog}
-    aria-labelledby="form-heading"
-    class="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg rounded border bg-white p-6 shadow-xl backdrop:bg-black/40"
-    onclose={() => (showForm = false)}
-  >
-    <h2 id="form-heading" class="font-semibold">
-      {isEdit ? 'Person bearbeiten' : 'Person anlegen'}
-    </h2>
-    {#key data}
-      <form
-        method="POST"
-        action={isEdit ? actionUrl('update', data.page) : actionUrl('create', data.page)}
-        use:enhance={() =>
-          async ({ result, update }) => {
-            if (result.type === 'redirect') {
-              showForm = false;
-              formDialog?.close();
-            }
-            await update();
-          }}
-        novalidate
-        class="mt-4 flex flex-col gap-3"
-      >
-        {#if form?.message}<p role="alert" class="text-sm text-red-800">{form.message}</p>{/if}
-        {#if isEdit}<input type="hidden" name="id" value={data.editing?.id} />{/if}
-
-        <label for="name" class="text-sm font-medium">Name</label>
-        <input
-          id="name"
-          name="name"
-          required
-          value={values.name}
-          class="rounded border px-3 py-2"
-          aria-invalid={errors.name ? 'true' : undefined}
-          aria-describedby={errors.name ? 'name-error' : undefined}
-        />
-        {#if errors.name}<p id="name-error" class="text-sm text-red-800">{errors.name}</p>{/if}
-
-        <label for="birthday" class="text-sm font-medium">Geburtstag (optional)</label>
-        <input
-          id="birthday"
-          name="birthday"
-          type="date"
-          value={values.birthday ?? ''}
-          class="rounded border px-3 py-2"
-          aria-invalid={errors.birthday ? 'true' : undefined}
-          aria-describedby={errors.birthday ? 'birthday-error' : undefined}
-        />
-        {#if errors.birthday}
-          <p id="birthday-error" class="text-sm text-red-800">{errors.birthday}</p>
-        {/if}
-
-        <label for="relationship" class="text-sm font-medium">Beziehung (optional)</label>
-        <input
-          id="relationship"
-          name="relationship"
-          maxlength="100"
-          value={values.relationship ?? ''}
-          class="rounded border px-3 py-2"
-          aria-invalid={errors.relationship ? 'true' : undefined}
-          aria-describedby={errors.relationship ? 'relationship-error' : undefined}
-        />
-        {#if errors.relationship}
-          <p id="relationship-error" class="text-sm text-red-800">{errors.relationship}</p>
-        {/if}
-
-        <label for="notes" class="text-sm font-medium">Notizen (optional)</label>
-        <textarea
-          id="notes"
-          name="notes"
-          maxlength="2000"
-          class="rounded border px-3 py-2"
-          aria-invalid={errors.notes ? 'true' : undefined}
-          aria-describedby={errors.notes ? 'notes-error' : undefined}>{values.notes ?? ''}</textarea
-        >
-        {#if errors.notes}<p id="notes-error" class="text-sm text-red-800">{errors.notes}</p>{/if}
-
-        <div class="flex items-center gap-4">
-          <button type="submit" class="rounded bg-black px-4 py-2 text-white">
-            {isEdit ? 'Speichern' : 'Anlegen'}
-          </button>
-          {#if isEdit}
-            <a href={resolve(`/persons${pageQuery(data.page)}`)} class="rounded border px-4 py-2"
-              >Abbrechen</a
-            >
-          {:else}
-            <button
-              type="button"
-              class="rounded border px-4 py-2"
-              onclick={() => formDialog?.close()}
-            >
-              Abbrechen
-            </button>
-          {/if}
-        </div>
-      </form>
-    {/key}
-  </dialog>
+  <!-- data.persons is a new array whenever the page data reloads: re-create the dialog then, so
+       a saved person's input is gone; a failed submit keeps the dialog and its focus. -->
+  {#key data.persons}
+    <PersonFormDialog
+      bind:open={showForm}
+      action={actionUrl(isEdit ? 'update' : 'create', data.page)}
+      editId={data.editing?.id ?? null}
+      {values}
+      {errors}
+      message={form?.message ?? null}
+      keepPosition={false}
+      onclose={leaveEdit}
+    />
+  {/key}
 </main>
