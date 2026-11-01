@@ -3,20 +3,24 @@
 from datetime import UTC, date, datetime
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.models.notification import NotificationType
 from giftmanager.models.occasion import Occasion, OccasionRule
 from giftmanager.models.user import User
+from giftmanager.scheduler import run_once
 from giftmanager.services.notification import dedup_key
 from giftmanager.services.season_overview import due, open_send, send_dates
+from tests.conftest import FixedClock
+from tests.mail import RecordingMailer
 from tests.notifications import (
     add_gift,
     add_gifting,
     add_person,
     add_rule_occasions,
+    make_committed_user,
     make_user,
     only,
 )
@@ -206,3 +210,25 @@ async def test_weekly_mails_have_their_own_keys(session: AsyncSession) -> None:
     [first] = only(user, await due(session, START))
     [second] = only(user, await due(session, datetime(2026, 11, 16, 7, 0, tzinfo=UTC)))
     assert dedup_key(first) != dedup_key(second)
+
+
+@pytest.mark.requirement("F-11", "QZ-05")
+async def test_scheduler_sends_one_overview_per_week(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    async with committed_sessionmaker() as s, s.begin():
+        xmas = (await add_rule_occasions(s, user))[OccasionRule.CHRISTMAS]
+        await add_gifting(s, await add_gift(s, user, "Kerze"), [], GiftingStatus.IDEA, xmas, XMAS)
+    mailer = RecordingMailer()
+    for moment in (
+        START,
+        START,
+        datetime(2026, 11, 16, 7, 0, tzinfo=UTC),
+        datetime(2026, 11, 16, 7, 5, tzinfo=UTC),
+    ):
+        clock.current = moment
+        await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
+    assert [m.subject for m in mailer.sent if m.to == user.email] == [
+        "Weihnachten 2026: Stand der Geschenke"
+    ] * 2
