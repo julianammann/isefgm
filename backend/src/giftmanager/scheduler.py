@@ -26,10 +26,13 @@ from giftmanager.services.notification import (
 logger = logging.getLogger(__name__)
 
 INTERVAL = timedelta(minutes=5)
-# Below INTERVAL so a hung run cannot block every later tick. A run cancelled mid-send leaves that
-# one row in `sending`; fail_stuck marks it `failed` after 15 minutes and it is not resent (same
-# path as SIGTERM). The remaining `planned` rows go out on the next run.
+# Below INTERVAL so a hung run cannot block every later tick. It only guards against hangs: a cut
+# mid-send (a hang, or one send slower than the headroom over SEND_BUDGET) leaves that one row in
+# `sending`; fail_stuck marks it `failed` after 15 minutes and it is not resent (same path as
+# SIGTERM). The remaining `planned` rows go out on the next run.
 RUN_TIMEOUT = timedelta(minutes=4)
+# Soft deadline: no new mail is claimed after this, leaving headroom for the last send.
+SEND_BUDGET = timedelta(minutes=3)
 
 Planner = Callable[[AsyncSession, datetime], Awaitable[list[PlannedMail]]]
 
@@ -59,11 +62,12 @@ async def run_once(
                 async with sessionmaker() as session, session.begin():
                     await plan(session, await planner(session, now))
             except Exception:
-                logger.exception("Planner %s.%s failed", planner.__module__, planner.__qualname__)
-        sent = await dispatch_due(sessionmaker, mailer, clock)
-    if sent:
-        logger.info("Sent %d mails", sent)
-    return sent
+                logger.exception(
+                    "Planner %s.%s failed",
+                    getattr(planner, "__module__", "?"),
+                    getattr(planner, "__qualname__", repr(planner)),
+                )
+        return await dispatch_due(sessionmaker, mailer, clock, until=now + SEND_BUDGET)
 
 
 async def _serve() -> None:

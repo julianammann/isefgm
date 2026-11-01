@@ -155,50 +155,62 @@ async def claim_next(session: AsyncSession, now: datetime) -> Notification | Non
 
 
 async def dispatch_due(
-    sessionmaker: async_sessionmaker[AsyncSession], mailer: Mailer, clock: Clock
+    sessionmaker: async_sessionmaker[AsyncSession],
+    mailer: Mailer,
+    clock: Clock,
+    *,
+    until: datetime | None = None,
 ) -> int:
     """Send every due mail once and record the outcome; returns the number sent.
 
     Claim and outcome are separate transactions so no row lock is held while sending.
-    A transient failure puts the row back to `planned` and ends the run.
+    A transient failure puts the row back to `planned` and ends the run, as does reaching `until`.
     """
     sent = 0
-    while True:
-        async with sessionmaker() as session, session.begin():
-            claimed = await claim_next(session, clock.now())
-            if claimed is None:
+    try:
+        while True:
+            if until is not None and clock.now() >= until:
                 return sent
-            notification_id = claimed.id
-            mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
+            async with sessionmaker() as session, session.begin():
+                claimed = await claim_next(session, clock.now())
+                if claimed is None:
+                    return sent
+                notification_id = claimed.id
+                mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
 
-        failure: MailError | None = None
-        try:
-            await mailer.send(mail)
-        except MailError as exc:
-            failure = exc
+            failure: MailError | None = None
+            try:
+                await mailer.send(mail)
+            except MailError as exc:
+                failure = exc
 
-        async with sessionmaker() as session, session.begin():
-            notification = await session.get_one(Notification, notification_id)
-            # No `status == sending` guard: a late TRANSIENT means nothing was delivered, so a retry
-            # is a first delivery; a late success correctly overwrites `failed`.
-            if failure is None:
-                notification.status = NotificationStatus.SENT
-                notification.sent_at = clock.now()
-                notification.error = None
-                sent += 1
-            elif failure.failure is MailFailure.TRANSIENT:
-                notification.status = NotificationStatus.PLANNED
-                notification.error = failure.detail
-                logger.warning("Notification %s not sent (transient), will retry", notification_id)
-                return sent
-            elif failure.failure is MailFailure.PERMANENT:
-                notification.status = NotificationStatus.FAILED
-                notification.error = failure.detail
-                logger.warning("Notification %s not sent (permanent)", notification_id)
-            else:
-                notification.status = NotificationStatus.FAILED
-                notification.error = "Versandergebnis unklar: " + failure.detail
-                logger.warning("Delivery result of notification %s is unclear", notification_id)
+            async with sessionmaker() as session, session.begin():
+                notification = await session.get_one(Notification, notification_id)
+                # No `status == sending` guard: a late TRANSIENT means nothing was delivered, so a retry
+                # is a first delivery; a late success correctly overwrites `failed`.
+                if failure is None:
+                    notification.status = NotificationStatus.SENT
+                    notification.sent_at = clock.now()
+                    notification.error = None
+                    sent += 1
+                elif failure.failure is MailFailure.TRANSIENT:
+                    notification.status = NotificationStatus.PLANNED
+                    notification.error = failure.detail
+                    logger.warning(
+                        "Notification %s not sent (transient), will retry", notification_id
+                    )
+                    return sent
+                elif failure.failure is MailFailure.PERMANENT:
+                    notification.status = NotificationStatus.FAILED
+                    notification.error = failure.detail
+                    logger.warning("Notification %s not sent (permanent)", notification_id)
+                else:
+                    notification.status = NotificationStatus.FAILED
+                    notification.error = "Versandergebnis unklar: " + failure.detail
+                    logger.warning("Delivery result of notification %s is unclear", notification_id)
+    finally:
+        if sent:
+            logger.info("Sent %d mails", sent)
 
 
 async def expire(session: AsyncSession, now: datetime) -> int:

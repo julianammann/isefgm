@@ -1,5 +1,7 @@
 """Scheduler run: plan, clean up and send (F-13, QZ-05)."""
 
+import asyncio
+import functools
 import logging
 import os
 import subprocess
@@ -13,11 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager import scheduler
 from giftmanager.core import db
-from giftmanager.core.mail import MailFailure
+from giftmanager.core.mail import Mail, MailFailure
 from giftmanager.models.notification import NotificationStatus
 from giftmanager.models.user import User
 from giftmanager.scheduler import Planner, run_once
-from giftmanager.services.notification import PlannedMail
+from giftmanager.services.notification import PlannedMail, dispatch_due
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
 from tests.notifications import (
@@ -124,6 +126,24 @@ async def test_failing_planner_is_logged_with_qualified_name(
     assert any(broken.__qualname__ in m and __name__ in m for m in messages)
 
 
+async def test_planner_without_qualname_does_not_stop_the_run(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+
+    async def broken(session: AsyncSession, now: datetime, *, flag: bool) -> list[PlannedMail]:
+        raise RuntimeError("boom")
+
+    mailer = RecordingMailer()
+    await run_once(
+        clock=clock,
+        sessionmaker=committed_sessionmaker,
+        mailer=mailer,
+        planners=[functools.partial(broken, flag=True), due_once(user)],
+    )
+    assert len(mailer.sent) == 1
+
+
 async def test_run_logs_sent_count_without_recipients(
     committed_sessionmaker: async_sessionmaker[AsyncSession],
     clock: FixedClock,
@@ -137,7 +157,7 @@ async def test_run_logs_sent_count_without_recipients(
             mailer=RecordingMailer(),
             planners=[due_once(user)],
         )
-    messages = [r.getMessage() for r in caplog.records if r.name == "giftmanager.scheduler"]
+    messages = [r.getMessage() for r in caplog.records if r.name.startswith("giftmanager")]
     assert messages == ["Sent 1 mails"]
 
 
@@ -174,6 +194,70 @@ async def test_hung_run_times_out(
             mailer=RecordingMailer(delay=30),
             planners=[due_once(user)],
         )
+
+
+class ClockAdvancingMailer(RecordingMailer):
+    def __init__(self, clock: FixedClock, step: timedelta) -> None:
+        super().__init__()
+        self.clock = clock
+        self.step = step
+
+    async def send(self, mail: Mail) -> None:
+        await super().send(mail)
+        self.clock.advance(self.step)
+
+
+async def test_dispatch_stops_claiming_after_deadline(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    now = clock.now()
+    rows = [
+        await add_committed_notification(
+            committed_sessionmaker,
+            scheduled_for=now - timedelta(hours=1),
+            expires_at=now + timedelta(days=1),
+        )
+        for _ in range(3)
+    ]
+    mailer = ClockAdvancingMailer(clock, timedelta(minutes=2))
+    sent = await dispatch_due(
+        committed_sessionmaker, mailer, clock, until=now + timedelta(minutes=3)
+    )
+    assert sent == 2
+    statuses = [(await reload(committed_sessionmaker, r.id)).status for r in rows]
+    assert sorted(statuses) == [
+        NotificationStatus.PLANNED,
+        NotificationStatus.SENT,
+        NotificationStatus.SENT,
+    ]
+
+
+async def test_hard_timeout_still_logs_sent_count(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    now = clock.now()
+    for _ in range(2):
+        await add_committed_notification(
+            committed_sessionmaker,
+            scheduled_for=now - timedelta(hours=1),
+            expires_at=now + timedelta(days=1),
+        )
+
+    class HangOnSecond(RecordingMailer):
+        async def send(self, mail: Mail) -> None:
+            if self.sent:
+                await asyncio.sleep(30)
+            await super().send(mail)
+
+    monkeypatch.setattr(scheduler, "RUN_TIMEOUT", timedelta(seconds=0.5))
+    with caplog.at_level(logging.INFO), pytest.raises(TimeoutError):
+        await run_once(
+            clock=clock, sessionmaker=committed_sessionmaker, mailer=HangOnSecond(), planners=[]
+        )
+    assert "Sent 1 mails" in [r.getMessage() for r in caplog.records]
 
 
 @pytest.mark.requirement("QZ-05")
