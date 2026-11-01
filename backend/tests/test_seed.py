@@ -162,11 +162,12 @@ def test_seeds_every_account_and_can_run_again(
             assert due_on is None
         else:
             assert due_on is not None and 1 <= (occasion_date - due_on).days <= 14
-    # The summary counts the rows, birthday occasions included, not the configured numbers.
+    # The summary counts the rows, the three rule occasions included, not the configured
+    # numbers.
     out = capsys.readouterr().out
     for email, _ in seed.ACCOUNTS:
-        assert f"Seeded {email}: 5 people, " in out
-    assert "birthdays), 10 gift ideas, 12 giftings, " in out
+        assert f"Seeded {email}: 5 people, 6 occasions, 10 gift ideas, 12 giftings, " in out
+    assert "birthdays" not in out
 
     # The second run replaces the accounts instead of failing or doubling the data.
     _passwords(monkeypatch, "correct-horse-battery", "correct-horse-battery")

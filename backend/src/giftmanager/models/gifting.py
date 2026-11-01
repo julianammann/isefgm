@@ -109,7 +109,7 @@ class Gifting(TimestampMixin, Base):
         ForeignKey("occasion.id", ondelete="CASCADE"),
         index=True,
         comment="Same reasoning as gift_id: the API answers 409 when an occasion in use is "
-        "deleted (directly or as a derived birthday), the cascade only runs for F-17.",
+        "deleted, the cascade only runs for F-17.",
     )
     occasion_date: Mapped[dt.date | None] = mapped_column(
         comment="Date. Concrete date of the occasion, e.g. Christmas 2026 for a yearly "

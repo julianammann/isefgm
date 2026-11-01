@@ -1,15 +1,23 @@
-"""Occasion types and occasions of an account (F-03), and the birthday occasions derived from
-person.birthday (F-03, F-04). No HTTP in here."""
+"""Occasion types and occasions of an account (F-03), the rule occasions Geburtstag,
+Weihnachten and Ostern included. No HTTP in here."""
 
 import calendar
 import datetime as dt
 import uuid
 
-from sqlalchemy import ColumnElement, extract, func, or_, select
+from sqlalchemy import ColumnElement, case, extract, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.errors import ConflictError, NotFoundError
-from giftmanager.models import BIRTHDAY_TYPE_ID, Occasion, OccasionType, Person, Recurrence
+from giftmanager.models import (
+    RULE_NAMES,
+    RULE_TYPES,
+    Occasion,
+    OccasionRule,
+    OccasionType,
+    Person,
+    Recurrence,
+)
 from giftmanager.services import gifting as gifting_service
 from giftmanager.services.ownership import get_all_owned, get_owned, owned, paginate
 
@@ -45,13 +53,23 @@ async def get_occasion_type(
     return occasion_type
 
 
+# Geburtstag, Weihnachten, Ostern first, every other occasion after them.
+RULE_RANK = case(
+    {type_id: rank for rank, type_id in enumerate(RULE_TYPES)},
+    value=Occasion.occasion_type_id,
+    else_=len(RULE_TYPES),
+)
+
+
 async def list_occasions(
     session: AsyncSession, owner_id: uuid.UUID, *, limit: int, offset: int
 ) -> tuple[list[Occasion], int]:
-    """Return one page of the owner's occasions, sorted by month and day of the year (year ignored), and the total count."""
+    """Return one page of the owner's occasions and the total count: the rule occasions first
+    (Geburtstag, Weihnachten, Ostern), then the others by month and day (year ignored)."""
     return await paginate(
         session,
         owned(Occasion, owner_id).order_by(
+            RULE_RANK,
             extract("month", Occasion.date),
             extract("day", Occasion.date),
             func.lower(Occasion.name),
@@ -142,55 +160,25 @@ async def delete_occasion(
 async def _get_editable_occasion(
     session: AsyncSession, owner_id: uuid.UUID, occasion_id: uuid.UUID
 ) -> Occasion:
-    """Return the owner's occasion, unless it is a birthday, which follows its person."""
+    """Return the owner's occasion, unless it is a rule occasion, which nobody can change."""
     occasion = await get_occasion(session, owner_id, occasion_id)
-    if occasion.occasion_type_id == BIRTHDAY_TYPE_ID:
-        raise ConflictError("A birthday occasion follows the person's birthday; edit the person")
+    if occasion.occasion_type_id in RULE_TYPES:
+        raise ConflictError("A rule occasion cannot be changed or deleted")
     return occasion
 
 
-async def sync_birthday(session: AsyncSession, person: Person) -> None:
-    """Create, update or delete the person's birthday occasion to match person.birthday.
-
-    person.birthday is the only source. The occasion exists so that gift ideas and giftings
-    refer to a birthday like to any other occasion; it is linked to exactly this person.
-    """
-    if person.birthday is None:
-        await delete_birthday(session, person)
-        return
-    occasion = await _birthday_of(session, person)
-    if occasion is None:
-        occasion = Occasion(
-            owner_id=person.owner_id,
-            occasion_type_id=BIRTHDAY_TYPE_ID,
+async def create_rule_occasions(session: AsyncSession, owner_id: uuid.UUID) -> None:
+    """Add the account's rule occasions Geburtstag, Weihnachten and Ostern, without a date."""
+    session.add_all(
+        Occasion(
+            owner_id=owner_id,
+            occasion_type_id=type_id,
+            name=RULE_NAMES[rule],
             recurrence=Recurrence.YEARLY,
-            people=[person],
         )
-        session.add(occasion)
-    # The occasion name holds 100 characters, as many as the person's name alone.
-    occasion.name = f"Geburtstag {person.name}"[:100]
-    occasion.date = person.birthday
-    await session.flush()
-
-
-async def delete_birthday(session: AsyncSession, person: Person) -> None:
-    """Delete the person's birthday occasion, if there is one."""
-    occasion = await _birthday_of(session, person)
-    if occasion is not None:
-        if await gifting_service.is_occasion_in_use(session, occasion.id):
-            raise ConflictError("Occasion is used by a gifting")
-        await session.delete(occasion)
-        await session.flush()
-
-
-async def _birthday_of(session: AsyncSession, person: Person) -> Occasion | None:
-    """Return the birthday occasion linked to the person."""
-    return await session.scalar(
-        owned(Occasion, person.owner_id).where(
-            Occasion.occasion_type_id == BIRTHDAY_TYPE_ID,
-            Occasion.people.any(Person.id == person.id),
-        )
+        for type_id, rule in RULE_TYPES.items()
     )
+    await session.flush()
 
 
 def _in_year(day: dt.date, year: int) -> dt.date:
@@ -210,3 +198,27 @@ def next_occurrence(start: dt.date, recurrence: Recurrence, today: dt.date) -> d
     if candidate < today:
         candidate = _in_year(start, today.year + 1)
     return candidate
+
+
+def easter_sunday(year: int) -> dt.date:
+    """Gregorian Easter Sunday (anonymous Gregorian algorithm)."""
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    el = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 19 * el) // 433
+    month = (h + el - 7 * m + 90) // 25
+    day = (h + el - 7 * m + 33 * month + 19) % 32
+    return dt.date(year, month, day)
+
+
+def rule_date(rule: OccasionRule, today: dt.date) -> dt.date | None:
+    """Next date of a rule occasion from today on; None for the birthday, which has no date."""
+    if rule is OccasionRule.BIRTHDAY:
+        return None
+    if rule is OccasionRule.CHRISTMAS:
+        return next_occurrence(dt.date(today.year, 12, 24), Recurrence.YEARLY, today)
+    easter = easter_sunday(today.year)
+    return easter if easter >= today else easter_sunday(today.year + 1)

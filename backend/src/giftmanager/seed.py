@@ -21,8 +21,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.db import get_engine, get_sessionmaker
 from giftmanager.models import (
-    BIRTHDAY_TYPE_ID,
-    CHRISTMAS_TYPE_ID,
     Gift,
     GiftCategory,
     Gifting,
@@ -227,7 +225,7 @@ GIFT_IDEAS = {
         ),
     },
 }
-# Christmas is added on its own; the rest are drawn without repetition.
+# Drawn without repetition; Geburtstag, Weihnachten and Ostern come with every account.
 OCCASION_NAMES = (
     "Hochzeit",
     "Verlobung",
@@ -295,15 +293,14 @@ async def _seed_account(
         person_ids.append(person.id)
 
     occasion_ids: list[uuid.UUID] = []
-    for i in range(OCCASIONS):
-        christmas = i == 0
+    for _ in range(OCCASIONS):
         occasion = await occasion_service.create_occasion(
             session,
             user.id,
-            name="Weihnachten" if christmas else fake.unique.random_element(OCCASION_NAMES),
+            name=fake.unique.random_element(OCCASION_NAMES),
             date=fake.date_this_decade(after_today=True),
-            recurrence=Recurrence.YEARLY if christmas or fake.boolean() else Recurrence.NONE,
-            occasion_type_id=CHRISTMAS_TYPE_ID if christmas else None,
+            recurrence=Recurrence.YEARLY if fake.boolean() else Recurrence.NONE,
+            occasion_type_id=None,
             person_ids=list(fake.random_sample(person_ids, length=fake.random_int(1, 5))),
         )
         occasion_ids.append(occasion.id)
@@ -363,16 +360,12 @@ async def _seed_account(
                 else None,
             )
 
-    # Counted, not the constants: create_person adds a birthday occasion per known birthday.
-    is_birthday = Occasion.occasion_type_id == BIRTHDAY_TYPE_ID
-    people, occasions, birthdays, gifts, giftings, tasks = (
+    # Counted, not the constants: register adds the three rule occasions to the own ones.
+    people, occasions, gifts, giftings, tasks = (
         await session.execute(
             select(
                 select(func.count()).where(Person.owner_id == user.id).scalar_subquery(),
                 select(func.count()).where(Occasion.owner_id == user.id).scalar_subquery(),
-                select(func.count())
-                .where(Occasion.owner_id == user.id, is_birthday)
-                .scalar_subquery(),
                 select(func.count()).where(Gift.owner_id == user.id).scalar_subquery(),
                 select(func.count())
                 .select_from(Gifting)
@@ -389,8 +382,8 @@ async def _seed_account(
         )
     ).one()
     return (
-        f"Seeded {email}: {people} people, {occasions} occasions "
-        f"({birthdays} birthdays), {gifts} gift ideas, {giftings} giftings, {tasks} tasks."
+        f"Seeded {email}: {people} people, {occasions} occasions, "
+        f"{gifts} gift ideas, {giftings} giftings, {tasks} tasks."
     )
 
 

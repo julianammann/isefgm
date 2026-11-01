@@ -1,7 +1,4 @@
-"""People of an account (F-02). No HTTP in here.
-
-Every write keeps the person's birthday occasion in line with person.birthday (F-03, F-04).
-"""
+"""People of an account (F-02). No HTTP in here."""
 
 import uuid
 from datetime import date
@@ -10,7 +7,6 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.models import Person
-from giftmanager.services.occasion import delete_birthday, sync_birthday
 from giftmanager.services.ownership import get_owned, owned, paginate
 
 
@@ -40,7 +36,7 @@ async def create_person(
     relationship: str | None,
     notes: str | None,
 ) -> Person:
-    """Create a person for the owner, with a birthday occasion if the birthday is known."""
+    """Create a person for the owner."""
     person = Person(
         owner_id=owner_id,
         name=name,
@@ -50,7 +46,6 @@ async def create_person(
     )
     session.add(person)
     await session.flush()
-    await sync_birthday(session, person)
     return person
 
 
@@ -64,26 +59,18 @@ async def update_person(
     relationship: str | None,
     notes: str | None,
 ) -> Person:
-    """Replace all editable fields of the owner's person; the birthday occasion follows."""
+    """Replace all editable fields of the owner's person."""
     person = await get_person(session, owner_id, person_id)
-    if birthday is None:
-        await delete_birthday(session, person)
-
     person.name = name
     person.birthday = birthday
     person.relationship = relationship
     person.notes = notes
     await session.flush()
-
-    if birthday is not None:
-        await sync_birthday(session, person)
-
     return person
 
 
 async def delete_person(session: AsyncSession, owner_id: uuid.UUID, person_id: uuid.UUID) -> None:
-    """Delete the owner's person and their birthday occasion."""
+    """Delete the owner's person."""
     person = await get_person(session, owner_id, person_id)
-    await delete_birthday(session, person)
     await session.delete(person)
     await session.flush()

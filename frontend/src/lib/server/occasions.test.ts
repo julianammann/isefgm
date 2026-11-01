@@ -10,12 +10,13 @@ const occasion: Occasion = {
   date: '2026-06-21',
   occasion_type_id: null,
   people: [{ id: '0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71', name: 'Lena' }],
-  recurrence: 'yearly'
+  recurrence: 'yearly',
+  rule: null
 };
 
 const input: OccasionInput = {
   name: occasion.name,
-  date: occasion.date,
+  date: '2026-06-21',
   occasion_type_id: occasion.occasion_type_id,
   person_ids: occasion.people.map((person) => person.id),
   recurrence: occasion.recurrence
