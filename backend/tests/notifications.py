@@ -104,6 +104,23 @@ async def add_person(session: AsyncSession, user: User, name: str, birthday: dat
     return person
 
 
+async def add_occasion(
+    session: AsyncSession,
+    user: User,
+    name: str,
+    day: date,
+    recurrence: Recurrence = Recurrence.NONE,
+    *,
+    people: Iterable[Person] = (),
+) -> Occasion:
+    occasion = Occasion(
+        owner_id=user.id, name=name, date=day, recurrence=recurrence, people=list(people)
+    )
+    session.add(occasion)
+    await session.flush()
+    return occasion
+
+
 async def add_gift(
     session: AsyncSession,
     user: User,
