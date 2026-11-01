@@ -38,10 +38,18 @@ class NotFoundError(DomainError):
 
 class ConflictError(DomainError):
     """The request conflicts with the current state, e.g. an e-mail address is already
-    registered or a derived birthday occasion is edited directly."""
+    registered or a rule occasion is edited directly."""
 
     status_code = 409
     title = "Conflict"
+
+
+class UnprocessableError(DomainError):
+    """The request is well formed but breaks a business rule, e.g. a birthday gifting
+    without exactly one recipient."""
+
+    status_code = 422
+    title = "Unprocessable Content"
 
 
 class ContentTooLargeError(DomainError):

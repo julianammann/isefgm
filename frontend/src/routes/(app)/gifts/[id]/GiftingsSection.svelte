@@ -285,6 +285,11 @@
 >
   {#key session}
     {#if session.gifting}<input type="hidden" name="id" value={session.gifting.id} />{/if}
+    <input
+      type="hidden"
+      name="birthday_occasion_id"
+      value={occasions.find((occasion) => occasion.rule === 'birthday')?.id ?? ''}
+    />
 
     <label for="gifting-status" class="text-sm font-medium">Status</label>
     <select

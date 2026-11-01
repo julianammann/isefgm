@@ -51,6 +51,6 @@ class PersonOverviewOut(BaseModel):
         examples=[_EMPTY_PAGE],
     )
     occasions: Page[OccasionOut] = Field(
-        description="Occasions that concern the person, sorted by date.",
+        description="Occasions that concern the person: the account's Geburtstag first when the person has a birthday, then the linked occasions by date.",
         examples=[_EMPTY_PAGE],
     )

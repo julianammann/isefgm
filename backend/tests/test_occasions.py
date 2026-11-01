@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from giftmanager.models import (
     BIRTHDAY_TYPE_ID,
     CHRISTMAS_TYPE_ID,
+    EASTER_TYPE_ID,
     Occasion,
     OccasionType,
     Person,
@@ -46,11 +47,17 @@ async def test_fixed_types_are_available_to_every_account(
         r = await client.get(TYPES)
         assert r.status_code == 200
         body = r.json()
-        assert body["total"] == 2
+        assert body["total"] == 3
         assert body["items"] == [
             {
                 "id": str(BIRTHDAY_TYPE_ID),
                 "name": "Geburtstag",
+                "default_recurrence": "yearly",
+                "system": True,
+            },
+            {
+                "id": str(EASTER_TYPE_ID),
+                "name": "Ostern",
                 "default_recurrence": "yearly",
                 "system": True,
             },
@@ -130,20 +137,11 @@ async def test_occasion_date_survives_time_boundaries(
 
 
 @pytest.mark.requirement("F-03")
-async def test_one_off_is_the_default_and_fixed_types_can_be_used(
-    client: AsyncClient, anna: User
-) -> None:
-    r = await client.post(
-        OCCASIONS,
-        json={
-            "name": "Weihnachten 2026",
-            "date": "2026-12-24",
-            "occasion_type_id": str(CHRISTMAS_TYPE_ID),
-        },
-    )
+async def test_one_off_is_the_default(client: AsyncClient, anna: User) -> None:
+    r = await client.post(OCCASIONS, json={"name": "Jubiläum", "date": "2026-12-24"})
     assert r.status_code == 201
     assert r.json()["recurrence"] == "none"
-    assert r.json()["occasion_type_id"] == str(CHRISTMAS_TYPE_ID)
+    assert r.json()["occasion_type_id"] is None
 
 
 @pytest.mark.requirement("F-03", "Q-08")
@@ -292,7 +290,7 @@ async def test_type_of_another_account_cannot_be_used(
     await session.flush()
 
     assert (await client.get(f"{TYPES}/{bobs_type.id}")).status_code == 404
-    assert (await client.get(TYPES)).json()["total"] == 2
+    assert (await client.get(TYPES)).json()["total"] == 3
 
     r = await client.post(OCCASIONS, json={**WEDDING, "occasion_type_id": str(bobs_type.id)})
     assert r.status_code == 404

@@ -6,10 +6,19 @@ No HTTP in here. Every list is one page; relations are loaded per page, never pe
 import uuid
 from dataclasses import dataclass
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from giftmanager.models import Gift, Gifting, GiftingStatus, Occasion, Person, Task
+from giftmanager.models import (
+    BIRTHDAY_TYPE_ID,
+    Gift,
+    Gifting,
+    GiftingStatus,
+    Occasion,
+    Person,
+    Task,
+)
+from giftmanager.services.occasion import RULE_RANK
 from giftmanager.services.ownership import get_owned, owned, paginate
 
 
@@ -32,7 +41,7 @@ async def get_person_overview(
     Raises:
         NotFoundError: The person does not exist or belongs to another account.
     """
-    await get_owned(session, Person, owner_id, person_id)
+    person = await get_owned(session, Person, owner_id, person_id)
     received = (
         select(Gifting)
         .join(Gifting.gift)
@@ -64,11 +73,14 @@ async def get_person_overview(
         limit=limit,
         offset=offset,
     )
+    concerning = [Occasion.people.any(Person.id == person_id)]
+    if person.birthday is not None:  # the birthday rule occasion concerns them too
+        concerning.append(Occasion.occasion_type_id == BIRTHDAY_TYPE_ID)
     occasions = await paginate(
         session,
         owned(Occasion, owner_id)
-        .where(Occasion.people.any(Person.id == person_id))
-        .order_by(Occasion.date, func.lower(Occasion.name), Occasion.id),
+        .where(or_(*concerning))
+        .order_by(RULE_RANK, Occasion.date, func.lower(Occasion.name), Occasion.id),
         limit=limit,
         offset=offset,
     )

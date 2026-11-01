@@ -141,7 +141,7 @@ class GiftOut(BaseModel):
         examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a71", "name": "Lena"}]],
     )
     occasions: list[LinkedOccasion] = Field(
-        description="Occasions the idea is meant for, sorted by date.",
+        description="Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.",
         examples=[[{"id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72", "name": "Weihnachten"}]],
     )
     created_at: datetime = Field(
