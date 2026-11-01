@@ -39,7 +39,6 @@ class Settings(BaseSettings):
         default="INFO", description="Log threshold for the app, Uvicorn, SQLAlchemy and Alembic."
     )
     database_url: PostgresDsn = Field(
-        default=PostgresDsn("postgresql+asyncpg://app:app@localhost:5432/app"),
         description="PostgreSQL connection. The `asyncpg` driver is required.",
     )
     default_timezone: str = Field(
@@ -88,4 +87,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Return the process-wide settings, read once and cached."""
-    return Settings()
+    return Settings()  # pyright: ignore[reportCallIssue]  # DATABASE_URL comes from env or .env

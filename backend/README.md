@@ -140,7 +140,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 
 | Variable | Default | Bedeutung |
 |---|---|---|
-| `DATABASE_URL` | `postgresql+asyncpg://app:app@localhost:5432/app` | asyncpg-Treiber erforderlich |
+| `DATABASE_URL` | Pflicht, kein Default | asyncpg-Treiber erforderlich |
 | `APP_ENV` | `production` | `development` aktiviert `/docs`, `/openapi.json` und Console-Logs, Cookie `session` ohne `Secure` statt `__Host-session`; `production`/`test` → JSON-Logs. `mise run dev` und `compose.override.yaml` setzen `development` |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `DEFAULT_TIMEZONE` | `Europe/Berlin` | Zeitzone für die Auswertung von Kalenderdaten (Scheduler) |
