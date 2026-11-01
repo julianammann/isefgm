@@ -69,7 +69,10 @@ def classify(exc: Exception) -> MailFailure:
     # SMTPAuthenticationError is also an SMTPResponseException).
     if isinstance(
         exc,
-        aiosmtplib.SMTPConnectError | aiosmtplib.SMTPAuthenticationError | aiosmtplib.SMTPHeloError,
+        aiosmtplib.SMTPConnectError
+        | aiosmtplib.SMTPAuthenticationError
+        | aiosmtplib.SMTPHeloError
+        | aiosmtplib.SMTPSenderRefused,  # sender/config problem for every mail, before any data
     ):
         return MailFailure.TRANSIENT
     if isinstance(exc, aiosmtplib.SMTPRecipientsRefused):
