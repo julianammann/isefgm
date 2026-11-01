@@ -15,6 +15,7 @@ from giftmanager.core.config import get_settings
 from giftmanager.core.db import get_sessionmaker
 from giftmanager.core.logging import configure_logging
 from giftmanager.core.mail import Mailer, get_mailer
+from giftmanager.services import birthday_digest
 from giftmanager.services.notification import (
     PlannedMail,
     dispatch_due,
@@ -37,7 +38,7 @@ SEND_BUDGET = timedelta(minutes=3)
 Planner = Callable[[AsyncSession, datetime], Awaitable[list[PlannedMail]]]
 
 # Each notification type registers its `due` function here.
-PLANNERS: list[Planner] = []
+PLANNERS: list[Planner] = [birthday_digest.due]
 
 
 async def run_once(
