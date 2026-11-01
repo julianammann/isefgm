@@ -3,19 +3,23 @@
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.models.notification import ReferenceType
 from giftmanager.models.occasion import OccasionRule, Recurrence
+from giftmanager.scheduler import run_once
 from giftmanager.services.occasion_reminder import due
+from tests.conftest import FixedClock
+from tests.mail import RecordingMailer
 from tests.notifications import (
     add_gift,
     add_gifting,
     add_occasion,
     add_person,
     add_rule_occasions,
+    make_committed_user,
     make_user,
     only,
 )
@@ -192,3 +196,21 @@ async def test_christmas_and_easter_get_no_two_week_reminder(session: AsyncSessi
         session, gift, [], GiftingStatus.IDEA, rules[OccasionRule.CHRISTMAS], date(2026, 12, 24)
     )
     assert only(user, await due(session, datetime(2026, 12, 10, 7, 0, tzinfo=UTC))) == []
+
+
+@pytest.mark.requirement("F-12", "QZ-05")
+async def test_scheduler_sends_the_reminder_once(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    async with committed_sessionmaker() as s, s.begin():
+        await add_occasion(
+            s, user, "Hochzeitstag", EVENT, people=[await add_person(s, user, "Anna", None)]
+        )
+    clock.current = OPEN
+    mailer = RecordingMailer()
+    for _ in range(2):
+        await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
+    assert [m.subject for m in mailer.sent if m.to == user.email] == [
+        "Erinnerung: Hochzeitstag am 20.11."
+    ]
