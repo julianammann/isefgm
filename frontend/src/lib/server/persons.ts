@@ -15,6 +15,10 @@ import { PAGE_SIZE } from '$lib/pagination';
 export type Person = components['schemas']['PersonOut'];
 /** A person as returned by the API. */
 export type PersonInput = components['schemas']['PersonIn'];
+/** Field errors of the person form, keyed like `PersonInput`. */
+export type PersonErrors = Partial<Record<keyof PersonInput, string>>;
+/** What the person view shows (F-09): past gifts, open giftings with tasks, ideas and occasions. */
+export type PersonOverview = components['schemas']['PersonOverviewOut'];
 
 type Api = App.Locals['api'];
 
@@ -93,6 +97,18 @@ export async function getPerson(api: Api, id: string): Promise<Result<Person>> {
   return send(api.GET('/api/v1/people/{person_id}', { params: { path: { person_id: id } } }));
 }
 
+/**
+ * Returns the person view (F-09) with up to `PAGE_SIZE` entries per list, each with its own
+ * `total`; 404 if the id is unknown or belongs to another account.
+ */
+export async function getPersonOverview(api: Api, id: string): Promise<Result<PersonOverview>> {
+  return send(
+    api.GET('/api/v1/people/{person_id}/overview', {
+      params: { path: { person_id: id }, query: { limit: PAGE_SIZE } }
+    })
+  );
+}
+
 /** Creates a person and returns it with its new id. */
 export async function createPerson(api: Api, input: PersonInput): Promise<Result<Person>> {
   return send(api.POST('/api/v1/people', { body: input }));
@@ -123,4 +139,26 @@ export async function deletePerson(api: Api, id: string): Promise<Result<null>> 
     if (cause instanceof TypeError) return fail(502);
     throw cause;
   }
+}
+
+/** Reads and validates the person form. The backend remains the authority on validation. */
+export function parsePersonForm(form: FormData): { values: PersonInput; errors: PersonErrors } {
+  const name = String(form.get('name') ?? '').trim();
+  const birthday = String(form.get('birthday') ?? '').trim() || null;
+  const relationship = String(form.get('relationship') ?? '').trim() || null;
+  const notes = String(form.get('notes') ?? '').trim() || null;
+  const errors: PersonErrors = {};
+
+  if (!name) errors.name = 'Bitte gib einen Namen an.';
+  else if (name.length > 100) errors.name = 'Der Name darf höchstens 100 Zeichen lang sein.';
+  if (birthday && Number.isNaN(Date.parse(birthday))) {
+    errors.birthday = 'Bitte gib ein gültiges Datum an.';
+  }
+  if (relationship && relationship.length > 100) {
+    errors.relationship = 'Die Beziehung darf höchstens 100 Zeichen lang sein.';
+  }
+  if (notes && notes.length > 2000) {
+    errors.notes = 'Notizen dürfen höchstens 2000 Zeichen lang sein.';
+  }
+  return { values: { name, birthday, relationship, notes }, errors };
 }

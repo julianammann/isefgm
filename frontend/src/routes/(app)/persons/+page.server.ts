@@ -10,12 +10,10 @@ import {
   createPerson,
   deletePerson,
   listPersonsPage,
-  updatePerson,
-  type PersonInput
+  parsePersonForm,
+  updatePerson
 } from '$lib/server/persons';
 import { pageCount, pageQuery, parsePage } from '$lib/pagination';
-
-type FieldErrors = Partial<Record<keyof PersonInput, string>>;
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,
@@ -31,28 +29,6 @@ type SuccessKey = keyof typeof successMessages;
 
 function isSuccessKey(key: string | null): key is SuccessKey {
   return key !== null && Object.prototype.hasOwnProperty.call(successMessages, key);
-}
-
-/** Reads and validates the person form. The backend remains the authority on validation. */
-function parseForm(form: FormData): { values: PersonInput; errors: FieldErrors } {
-  const name = String(form.get('name') ?? '').trim();
-  const birthday = String(form.get('birthday') ?? '').trim() || null;
-  const relationship = String(form.get('relationship') ?? '').trim() || null;
-  const notes = String(form.get('notes') ?? '').trim() || null;
-  const errors: FieldErrors = {};
-
-  if (!name) errors.name = 'Bitte gib einen Namen an.';
-  else if (name.length > 100) errors.name = 'Der Name darf höchstens 100 Zeichen lang sein.';
-  if (birthday && Number.isNaN(Date.parse(birthday))) {
-    errors.birthday = 'Bitte gib ein gültiges Datum an.';
-  }
-  if (relationship && relationship.length > 100) {
-    errors.relationship = 'Die Beziehung darf höchstens 100 Zeichen lang sein.';
-  }
-  if (notes && notes.length > 2000) {
-    errors.notes = 'Notizen dürfen höchstens 2000 Zeichen lang sein.';
-  }
-  return { values: { name, birthday, relationship, notes }, errors };
 }
 
 /** Loads one page of persons; `?edit=<id>` returns one of them for the edit form. */
@@ -84,7 +60,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
  */
 export const actions: Actions = {
   create: async ({ request, locals }) => {
-    const { values, errors } = parseForm(await request.formData());
+    const { values, errors } = parsePersonForm(await request.formData());
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await createPerson(locals.api, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
@@ -93,7 +69,7 @@ export const actions: Actions = {
   update: async ({ request, locals, url }) => {
     const form = await request.formData();
     const id = String(form.get('id') ?? '');
-    const { values, errors } = parseForm(form);
+    const { values, errors } = parsePersonForm(form);
     if (Object.keys(errors).length) return fail(400, { values, errors });
     const result = await updatePerson(locals.api, id, values);
     if (!result.ok) return fail(result.status, { values, message: result.message });
