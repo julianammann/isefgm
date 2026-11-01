@@ -45,6 +45,14 @@ async def test_reminds_person_without_gifting(session: AsyncSession) -> None:
     )
 
 
+async def test_line_break_in_a_name_does_not_reach_the_subject(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", None)
+    await add_occasion(session, user, "Hoch\nzeitstag", EVENT, people=[anna])
+    [mail] = only(user, await due(session, OPEN))
+    assert mail.subject == "Erinnerung: Hoch zeitstag am 20.11."
+
+
 async def test_acquired_gift_does_not_suppress_the_rest(session: AsyncSession) -> None:
     user = await make_user(session, "konto@isefgm.localhost")
     anna = await add_person(session, user, "Anna", None)
@@ -114,7 +122,7 @@ async def test_occasion_without_people_needs_an_open_gifting(session: AsyncSessi
     candle = await add_gift(session, user, "Kerze")
     await add_gifting(session, candle, [], GiftingStatus.IDEA, occasion, EVENT)
     [mail] = only(user, await due(session, OPEN))
-    assert "- Kerze für ohne Empfänger (Idee)" in mail.body
+    assert "- Kerze ohne Empfänger (Idee)" in mail.body
 
 
 @pytest.mark.requirement("F-12", "Q-01", "Q-04")
@@ -149,6 +157,8 @@ async def test_birthday_without_gifting(session: AsyncSession) -> None:
         anna.id,
         EVENT,
     )
+    assert only(user, await due(session, OPEN - timedelta(minutes=1))) == []
+    assert only(user, await due(session, datetime(2026, 11, 19, 23, 0, tzinfo=UTC))) == []
 
 
 async def test_birthday_with_acquired_and_planned_gifting(session: AsyncSession) -> None:

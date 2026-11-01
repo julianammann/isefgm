@@ -43,7 +43,7 @@ async def _gaps(
     people: list[tuple[UUID, str]],
     only_person: UUID | None = None,
 ) -> tuple[list[str], list[str]]:
-    """(names of people without a gifting, "Title für Recipients (Status): link" lines).
+    """(names of people without a gifting, "Title für Recipients|ohne Empfänger (Status): link" lines).
 
     `only_person` restricts the counting giftings to those with this recipient; without an
     `occasion_id` nothing counts.
@@ -79,7 +79,7 @@ async def _gaps(
                 recipients.append(name)
     origin = get_settings().origin
     lines = [
-        f"- {title} für {', '.join(sorted(names, key=str.lower)) or NO_RECIPIENT} "
+        f"- {title} {'für ' + ', '.join(sorted(names, key=str.lower)) if names else NO_RECIPIENT} "
         f"({STATUS_LABELS[status]}): {origin}/gifts/{gift_id}"
         for gift_id, title, status, names in open_giftings.values()
     ]
@@ -116,14 +116,12 @@ def _mail(
         interval=f"{LEAD_DAYS}d",
         scheduled_for=opens,
         expires_at=closes,
-        subject=f"Erinnerung: {subject} am {format_day(event)}",
+        subject=f"Erinnerung: {' '.join(subject.split())} am {format_day(event)}",
         body=_body(user, what, event, *gaps),
     )
 
 
-def _open(event: date | None, now: datetime) -> bool:
-    if event is None:
-        return False
+def _open(event: date, now: datetime) -> bool:
     opens, closes = reminder_window(event)
     return opens <= now < closes
 
