@@ -11,8 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from giftmanager.models import Gift, Gifting, Occasion, Person, User
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.models.notification import Notification, NotificationStatus, NotificationType
-from giftmanager.models.occasion import Recurrence
+from giftmanager.models.occasion import RULE_TYPES, OccasionRule, Recurrence
 from giftmanager.services.notification import PlannedMail
+from giftmanager.services.occasion import create_rule_occasions
 
 
 async def make_user(session: AsyncSession, email: str) -> User:
@@ -148,3 +149,11 @@ async def add_given_gifting(
     session.add(occasion)
     await session.flush()
     return await add_gifting(session, gift, [person], GiftingStatus.GIVEN, occasion, day)
+
+
+async def add_rule_occasions(session: AsyncSession, user: User) -> dict[OccasionRule, Occasion]:
+    """The account's three rule occasions, created the way registration does."""
+    await create_rule_occasions(session, user.id)
+    await session.flush()
+    rows = await session.scalars(select(Occasion).where(Occasion.owner_id == user.id))
+    return {RULE_TYPES[o.occasion_type_id]: o for o in rows if o.occasion_type_id}
