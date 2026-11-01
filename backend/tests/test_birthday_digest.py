@@ -3,11 +3,21 @@
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
+from giftmanager.scheduler import run_once
 from giftmanager.services.birthday_digest import due
-from tests.notifications import add_gift, add_given_gifting, add_person, make_user, only
+from tests.conftest import FixedClock
+from tests.mail import RecordingMailer
+from tests.notifications import (
+    add_gift,
+    add_given_gifting,
+    add_person,
+    make_committed_user,
+    make_user,
+    only,
+)
 
 pytestmark = pytest.mark.requirement("F-10", "QZ-01", "QZ-09")
 NOV_1 = datetime(2026, 11, 1, 7, 0, tzinfo=UTC)  # 08:00 Berlin
@@ -98,3 +108,17 @@ async def test_each_account_sees_only_its_own_people(session: AsyncSession) -> N
     assert {"a@isefgm.localhost", "b@isefgm.localhost"} <= set(mails)
     assert "test1@example.org" not in mails
     assert "Anna" in mails["a@isefgm.localhost"] and "Bernd" not in mails["a@isefgm.localhost"]
+
+
+@pytest.mark.requirement("F-10", "QZ-05")
+async def test_scheduler_sends_the_digest_once(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    async with committed_sessionmaker() as s, s.begin():
+        await add_person(s, user, "Anna", date(1990, 12, 3))
+    clock.current = NOV_1
+    mailer = RecordingMailer()
+    for _ in range(2):
+        await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
+    assert [m.subject for m in mailer.sent if m.to == user.email] == ["Geburtstage im Dezember"]
