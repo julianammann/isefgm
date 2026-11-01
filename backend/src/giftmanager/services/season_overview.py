@@ -25,6 +25,7 @@ from giftmanager.services.occasion import rule_date
 from giftmanager.services.ownership import owned
 
 START_DAYS = 42
+Line = tuple[UUID, str, GiftingStatus]  # gift id, title, status of one gifting
 SEASONS = (
     (OccasionRule.CHRISTMAS, CHRISTMAS_TYPE_ID, NotificationType.CHRISTMAS, "Weihnachten"),
     (OccasionRule.EASTER, EASTER_TYPE_ID, NotificationType.EASTER, "Ostern"),
@@ -60,8 +61,8 @@ def open_send(event: date, now: datetime) -> tuple[date, datetime, datetime] | N
 async def _entries(
     session: AsyncSession, user_id: UUID, occasion_id: UUID, event: date
 ) -> tuple[
-    dict[UUID, tuple[str, list[tuple[UUID, str, GiftingStatus]]]],
-    list[tuple[UUID, str, GiftingStatus]],
+    dict[UUID, tuple[str, list[Line]]],
+    list[Line],
 ]:
     """(per person: name and giftings, giftings without recipient) of the occasion on `event`."""
     rows = await session.execute(
@@ -77,8 +78,8 @@ async def _entries(
         )
         .order_by(func.lower(Gift.title), Gift.id)
     )
-    people: dict[UUID, tuple[str, list[tuple[UUID, str, GiftingStatus]]]] = {}
-    nobody: list[tuple[UUID, str, GiftingStatus]] = []
+    people: dict[UUID, tuple[str, list[Line]]] = {}
+    nobody: list[Line] = []
     for person_id, name, gift_id, title, status in rows:
         if person_id is None:
             nobody.append((gift_id, title, status))
@@ -125,13 +126,13 @@ def _body(
     user: User,
     label: str,
     event: date,
-    people: dict[UUID, tuple[str, list[tuple[UUID, str, GiftingStatus]]]],
+    people: dict[UUID, tuple[str, list[Line]]],
     ideas: dict[UUID, tuple[str, list[str]]],
-    nobody: list[tuple[UUID, str, GiftingStatus]],
+    nobody: list[Line],
 ) -> str:
     origin = get_settings().origin
 
-    def lines(giftings: list[tuple[UUID, str, GiftingStatus]]) -> list[str]:
+    def lines(giftings: list[Line]) -> list[str]:
         return [
             f"- {title} ({STATUS_LABELS[status]}): {origin}/gifts/{gift_id}"
             for gift_id, title, status in giftings
@@ -167,7 +168,7 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
         for user in await active_recipients(session):
             occasion_id = await session.scalar(
                 owned(Occasion, user.id)
-                .where(Occasion.occasion_type_id == type_id)
+                .where(Occasion.occasion_type_id == type_id, Occasion.date.is_(None))
                 .with_only_columns(Occasion.id)
             )
             if occasion_id is None:

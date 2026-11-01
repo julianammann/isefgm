@@ -154,6 +154,9 @@ async def add_given_gifting(
 async def add_rule_occasions(session: AsyncSession, user: User) -> dict[OccasionRule, Occasion]:
     """The account's three rule occasions, created the way registration does."""
     await create_rule_occasions(session, user.id)
-    await session.flush()
-    rows = await session.scalars(select(Occasion).where(Occasion.owner_id == user.id))
+    rows = await session.scalars(
+        select(Occasion).where(
+            Occasion.owner_id == user.id, Occasion.occasion_type_id.in_(RULE_TYPES)
+        )
+    )
     return {RULE_TYPES[o.occasion_type_id]: o for o in rows if o.occasion_type_id}
