@@ -7,9 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gifting import GiftingStatus
-from giftmanager.models.occasion import Recurrence
+from giftmanager.models.notification import ReferenceType
+from giftmanager.models.occasion import OccasionRule, Recurrence
 from giftmanager.services.occasion_reminder import due
-from tests.notifications import add_gift, add_gifting, add_occasion, add_person, make_user, only
+from tests.notifications import (
+    add_gift,
+    add_gifting,
+    add_occasion,
+    add_person,
+    add_rule_occasions,
+    make_user,
+    only,
+)
 
 pytestmark = pytest.mark.requirement("F-12", "QZ-09")
 ORIGIN = get_settings().origin
@@ -123,3 +132,63 @@ async def test_each_account_sees_only_its_own_reminders(session: AsyncSession) -
         own = names[mine]
         assert f"{own}-Buch für {own}" in mails[mine]
         assert other not in mails[mine] and "Sven" not in mails[mine]
+
+
+async def test_birthday_without_gifting(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    await add_rule_occasions(session, user)
+    anna = await add_person(session, user, "Anna", date(1990, 11, 20))
+    [mail] = only(user, await due(session, OPEN))
+    assert mail.subject == "Erinnerung: Geburtstag von Anna am 20.11."
+    assert (mail.reference_type, mail.reference_id, mail.event_date) == (
+        ReferenceType.PERSON,
+        anna.id,
+        EVENT,
+    )
+
+
+async def test_birthday_with_acquired_and_planned_gifting(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    rules = await add_rule_occasions(session, user)
+    anna = await add_person(session, user, "Anna", date(1990, 11, 20))
+    birthday = rules[OccasionRule.BIRTHDAY]
+    vase = await add_gift(session, user, "Vase")
+    await add_gifting(session, vase, [anna], GiftingStatus.ACQUIRED, birthday, EVENT)
+    assert only(user, await due(session, OPEN)) == []
+    book = await add_gift(session, user, "Buch")
+    await add_gifting(session, book, [anna], GiftingStatus.PLANNED, birthday, EVENT)
+    [mail] = only(user, await due(session, OPEN))
+    assert "- Buch für Anna (Geplant)" in mail.body
+    assert "Noch ohne Beschenkung" not in mail.body
+
+
+async def test_birthday_gifting_for_another_person_does_not_count(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    rules = await add_rule_occasions(session, user)
+    await add_person(session, user, "Anna", date(1990, 11, 20))
+    bernd = await add_person(session, user, "Bernd", None)
+    vase = await add_gift(session, user, "Vase")
+    await add_gifting(
+        session, vase, [bernd], GiftingStatus.ACQUIRED, rules[OccasionRule.BIRTHDAY], EVENT
+    )
+    [mail] = only(user, await due(session, OPEN))
+    assert "Noch ohne Beschenkung:\n- Anna" in mail.body
+
+
+async def test_birthday_reminder_without_rule_occasion(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", date(1990, 11, 20))
+    [mail] = only(user, await due(session, OPEN))
+    assert mail.subject == "Erinnerung: Geburtstag von Anna am 20.11."
+    assert "Noch ohne Beschenkung:\n- Anna" in mail.body
+    assert (mail.reference_type, mail.reference_id) == (ReferenceType.PERSON, anna.id)
+
+
+async def test_christmas_and_easter_get_no_two_week_reminder(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    rules = await add_rule_occasions(session, user)
+    gift = await add_gift(session, user, "Plätzchen")
+    await add_gifting(
+        session, gift, [], GiftingStatus.IDEA, rules[OccasionRule.CHRISTMAS], date(2026, 12, 24)
+    )
+    assert only(user, await due(session, datetime(2026, 12, 10, 7, 0, tzinfo=UTC))) == []
