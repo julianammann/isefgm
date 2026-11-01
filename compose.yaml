@@ -72,14 +72,16 @@ services:
       migrate:
         condition: service_completed_successfully
 
-  # Separate process, exactly one replica. Opt-in via profile until
-  # `python -m giftmanager.scheduler` exists. Profiles survive the deploy gate:
-  # inactive services are dropped from `docker compose config`.
+  # Separate process, exactly one replica.
   scheduler:
     <<: *backend
     command: ["python", "-m", "giftmanager.scheduler"]
-    profiles: [scheduler]
+    # Python as PID 1 ignores SIGTERM; an init process makes `docker stop` immediate.
+    init: true
     restart: unless-stopped
+    environment:
+      <<: *backend-env
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
     volumes:
       - uploads:/data/uploads
     depends_on:

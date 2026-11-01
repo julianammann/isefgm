@@ -129,6 +129,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `migrate:check` | `uv run alembic check` | fehlende Migration erkennen |
 | `create-user` | `uv run python -m giftmanager.create_user` | Konto anlegen, auch bei geschlossener Registrierung; fragt das Passwort ab. `mise run create-user -- --email anna@example.org --display-name Anna`, auf dem Server `docker compose exec api python -m giftmanager.create_user …` |
 | `seed` | `uv run python -m giftmanager.seed` | Testkonten `test1@example.org` und `test2@example.org` mit je 100 Personen, 20 Anlässen, 1.000 Geschenkideen und 1.000 Beschenkungen samt Aufgaben (QZ-02, synthetisch per Faker) neu anlegen; fragt ein Passwort für alle Konten ab. Wiederholbar: vorhandene Testkonten werden samt Daten gelöscht. Auf dem Server `docker compose exec api python -m giftmanager.seed` |
+| `scheduler` | `uv run python -m giftmanager.scheduler` | Scheduler lokal starten (plant, räumt auf, versendet); Mails gehen an Mailpit (localhost:1025) |
 | `openapi` | `uv run python -m giftmanager.export_openapi > ../frontend/openapi.json` | |
 | `measure` | `uv run python scripts/qz02_measure.py` | QZ-02: je Listen-Endpoint ein Aufwärmlauf und 30 Messungen gegen den laufenden, geseedeten Stack (`docker compose up --build`, dann `seed`); gibt Median, p95 und Max als Markdown-Tabelle aus und endet mit 1, wenn ein p95 über 2 s liegt. Fragt das Passwort von `test1@example.org` ab |
 | `docs` | `uv run python -m giftmanager.export_docs ../docs/generated` | API-, Datenbank- und Konfigurationsdoku aus dem Code (MS 4) |
@@ -147,6 +148,7 @@ Alle aus `backend/`, alternativ als mise-Task (`mise run <name>`):
 | `UPLOADS_DIR` | `data/uploads` | Ablage für Bild-Uploads, in Produktion ein Volume |
 | `SESSION_TTL_DAYS` | `14` | Lebensdauer einer Session, verlängert bei jeder Nutzung |
 | `SESSION_MAX_LIFETIME_DAYS` | `30` | Höchstalter einer Session ab der Anmeldung, unabhängig von der Nutzung |
+| `ORIGIN` | `http://localhost:3000` | Öffentliche Adresse der App für Links in Mails, derselbe Wert wie `ORIGIN` des Frontends; ein abschließendes `/` wird entfernt |
 | `REGISTRATION_ENABLED` | `false` | `true` öffnet `POST /api/v1/auth/register` und die Seite `/register`; sonst 403 und kein Link im Frontend, das dieselbe Variable liest. Konten dann per `create-user` |
 
 ## Datenbank und Migrationen

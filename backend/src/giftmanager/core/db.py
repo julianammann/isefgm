@@ -18,7 +18,10 @@ from giftmanager.core.config import get_settings
 @lru_cache
 def get_engine() -> AsyncEngine:
     """Engine is created lazily so importing the app never touches the database."""
-    return create_async_engine(str(get_settings().database_url), pool_pre_ping=True)
+    # hide_parameters: failed statements must not log bound values (recipients, mail bodies).
+    return create_async_engine(
+        str(get_settings().database_url), pool_pre_ping=True, hide_parameters=True
+    )
 
 
 @lru_cache
