@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """Typed runtime configuration.
 
     Read from the process environment, `.env` in the working directory or `../.env`
-    (repo root). The field descriptions are rendered into docs/generated/konfiguration.md.
+    (repo root). The field descriptions are rendered into docs/generated/configuration.md.
     """
 
     model_config = SettingsConfigDict(

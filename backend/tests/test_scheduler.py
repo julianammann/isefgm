@@ -6,9 +6,13 @@ import logging
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import pytest
+from apscheduler.schedulers.asyncio import (  # pyright: ignore[reportMissingTypeStubs]
+    AsyncIOScheduler,
+)
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -16,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from giftmanager import scheduler
 from giftmanager.core import db
 from giftmanager.core.mail import Mail, MailFailure
-from giftmanager.models.notification import NotificationStatus
+from giftmanager.models.notification import Notification, NotificationStatus
 from giftmanager.models.user import User
 from giftmanager.scheduler import Planner, run_once
 from giftmanager.services.notification import PlannedMail, dispatch_due
@@ -126,6 +130,35 @@ async def test_failing_planner_is_logged_with_qualified_name(
     assert any(broken.__qualname__ in m and __name__ in m for m in messages)
 
 
+async def test_failing_planner_log_omits_exception_message(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+
+    async def broken(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        raise ValueError("Failing row contains (leak@example.test, secret body text)")
+
+    mailer = RecordingMailer()
+    await run_once(
+        clock=clock,
+        sessionmaker=committed_sessionmaker,
+        mailer=mailer,
+        planners=[broken, due_once(user)],
+    )
+    assert len(mailer.sent) == 1
+    errors = [r for r in caplog.records if r.levelname == "ERROR"]
+    assert any(
+        broken.__qualname__ in r.getMessage() and "ValueError" in r.getMessage() for r in errors
+    )
+    for r in errors:
+        assert r.exc_info is None
+        assert r.exc_text is None
+    assert "leak@example.test" not in caplog.text
+    assert "secret body text" not in caplog.text
+
+
 async def test_planner_without_qualname_does_not_stop_the_run(
     committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
 ) -> None:
@@ -207,29 +240,51 @@ class ClockAdvancingMailer(RecordingMailer):
         self.clock.advance(self.step)
 
 
+async def add_three_due(
+    sessionmaker: async_sessionmaker[AsyncSession], now: datetime
+) -> list[Notification]:
+    return [
+        await add_committed_notification(
+            sessionmaker, scheduled_for=now - timedelta(hours=1), expires_at=now + timedelta(days=1)
+        )
+        for _ in range(3)
+    ]
+
+
 async def test_dispatch_stops_claiming_after_deadline(
     committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
 ) -> None:
     now = clock.now()
-    rows = [
-        await add_committed_notification(
-            committed_sessionmaker,
-            scheduled_for=now - timedelta(hours=1),
-            expires_at=now + timedelta(days=1),
-        )
-        for _ in range(3)
-    ]
+    rows = await add_three_due(committed_sessionmaker, now)
     mailer = ClockAdvancingMailer(clock, timedelta(minutes=2))
     sent = await dispatch_due(
         committed_sessionmaker, mailer, clock, until=now + timedelta(minutes=3)
     )
     assert sent == 2
-    statuses = [(await reload(committed_sessionmaker, r.id)).status for r in rows]
+    await assert_one_planned_two_sent(committed_sessionmaker, rows)
+
+
+async def assert_one_planned_two_sent(
+    sessionmaker: async_sessionmaker[AsyncSession], rows: list[Notification]
+) -> None:
+    statuses = [(await reload(sessionmaker, r.id)).status for r in rows]
     assert sorted(statuses) == [
         NotificationStatus.PLANNED,
         NotificationStatus.SENT,
         NotificationStatus.SENT,
     ]
+
+
+async def test_run_once_stops_sending_after_send_budget(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    rows = await add_three_due(committed_sessionmaker, clock.now())
+    mailer = ClockAdvancingMailer(clock, timedelta(minutes=2))
+    sent = await run_once(
+        clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer, planners=[]
+    )
+    assert sent == 2
+    await assert_one_planned_two_sent(committed_sessionmaker, rows)
 
 
 async def test_hard_timeout_still_logs_sent_count(
@@ -252,12 +307,39 @@ async def test_hard_timeout_still_logs_sent_count(
                 await asyncio.sleep(30)
             await super().send(mail)
 
-    monkeypatch.setattr(scheduler, "RUN_TIMEOUT", timedelta(seconds=0.5))
+    monkeypatch.setattr(scheduler, "RUN_TIMEOUT", timedelta(seconds=2))
     with caplog.at_level(logging.INFO), pytest.raises(TimeoutError):
         await run_once(
             clock=clock, sessionmaker=committed_sessionmaker, mailer=HangOnSecond(), planners=[]
         )
     assert "Sent 1 mails" in [r.getMessage() for r in caplog.records]
+
+
+async def test_serve_registers_the_interval_job(monkeypatch: pytest.MonkeyPatch) -> None:
+    started: list[AsyncIOScheduler] = []
+    ready = asyncio.Event()
+
+    class RecordingScheduler(AsyncIOScheduler):
+        def start(self, paused: bool = False) -> None:
+            started.append(self)
+            ready.set()
+
+    monkeypatch.setattr(scheduler, "AsyncIOScheduler", RecordingScheduler)
+    monkeypatch.setattr(scheduler, "get_clock", lambda: "clock")
+    monkeypatch.setattr(scheduler, "get_sessionmaker", lambda: "sessionmaker")
+    monkeypatch.setattr(scheduler, "get_mailer", lambda: "mailer")
+    task = asyncio.create_task(scheduler._serve())  # pyright: ignore[reportPrivateUsage]
+    await ready.wait()
+    task.cancel()
+    jobs: list[Any] = started[0].get_jobs()  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+    (job,) = jobs
+    assert job.func is run_once
+    assert job.trigger.interval == scheduler.INTERVAL
+    assert job.max_instances == 1
+    assert job.coalesce is True
+    assert job.misfire_grace_time is None
+    assert job.kwargs == {"clock": "clock", "sessionmaker": "sessionmaker", "mailer": "mailer"}
+    assert job.next_run_time <= datetime.now(UTC)
 
 
 @pytest.mark.requirement("QZ-05")

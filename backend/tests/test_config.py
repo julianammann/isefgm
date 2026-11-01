@@ -45,6 +45,9 @@ def test_smtp_password_is_not_shown(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.requirement("F-10")
-def test_origin_drops_trailing_slash() -> None:
-    s = Settings(_env_file=None, origin="http://localhost:3000/")  # pyright: ignore[reportCallIssue]
+@pytest.mark.parametrize(
+    "raw", ["http://localhost:3000/", "http://localhost:3000///", "http://localhost:3000"]
+)
+def test_origin_drops_trailing_slash(raw: str) -> None:
+    s = Settings(_env_file=None, origin=raw)  # pyright: ignore[reportCallIssue]
     assert s.origin == "http://localhost:3000"

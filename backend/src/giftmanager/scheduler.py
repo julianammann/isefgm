@@ -61,11 +61,13 @@ async def run_once(
             try:
                 async with sessionmaker() as session, session.begin():
                     await plan(session, await planner(session, now))
-            except Exception:
-                logger.exception(
-                    "Planner %s.%s failed",
+            except Exception as exc:  # noqa: BLE001  # logged by type only, see below
+                # Type only: the message can carry mail contents (e.g. Postgres row DETAIL).
+                logger.error(
+                    "Planner %s.%s failed: %s",
                     getattr(planner, "__module__", "?"),
                     getattr(planner, "__qualname__", repr(planner)),
+                    type(exc).__name__,
                 )
         return await dispatch_due(sessionmaker, mailer, clock, until=now + SEND_BUDGET)
 
