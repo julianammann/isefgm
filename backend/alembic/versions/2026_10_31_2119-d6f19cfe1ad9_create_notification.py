@@ -1,7 +1,7 @@
 """create notification
 
 Revision ID: d6f19cfe1ad9
-Revises: da408c6d1db0
+Revises: d999b752cf74
 Create Date: 2026-10-31 21:19:20.359589
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "d6f19cfe1ad9"
-down_revision: str | Sequence[str] | None = "da408c6d1db0"
+down_revision: str | Sequence[str] | None = "d999b752cf74"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
