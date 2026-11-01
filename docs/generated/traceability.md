@@ -431,6 +431,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-09 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
 | F-09 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
 | F-09 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |
+| F-10 | `tests/test_config.py::test_origin_drops_trailing_slash` | passed |
 | F-10 | `tests/test_notifications.py::test_format_day_is_day_and_month_with_dot` | passed |
 | F-13 | `tests/test_config.py::test_smtp_defaults_point_at_local_mailpit` | passed |
 | F-13 | `tests/test_config.py::test_smtp_password_is_not_shown` | passed |
@@ -486,6 +487,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[transient]` | passed |
 | F-13 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[permanent]` | passed |
 | F-13 | `tests/test_notifications.py::test_row_expiring_now_is_not_sent` | passed |
+| F-13 | `tests/test_scheduler.py::test_run_once_plans_and_sends` | passed |
+| F-13 | `tests/test_scheduler.py::test_run_once_twice_sends_once` | passed |
+| F-13 | `tests/test_scheduler.py::test_mail_outage_keeps_rows_and_does_not_raise` | passed |
+| F-13 | `tests/test_scheduler.py::test_failing_planner_does_not_block_others` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -891,6 +896,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[transient]` | passed |
 | QZ-05 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[permanent]` | passed |
 | QZ-05 | `tests/test_notifications.py::test_row_expiring_now_is_not_sent` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_run_once_plans_and_sends` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_run_once_twice_sends_once` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_mail_outage_keeps_rows_and_does_not_raise` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_failing_planner_does_not_block_others` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |

@@ -42,3 +42,9 @@ def test_smtp_password_is_not_shown(monkeypatch: pytest.MonkeyPatch) -> None:
     s = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     assert "re_secret" not in repr(s)
     assert s.smtp_password is not None and s.smtp_password.get_secret_value() == "re_secret"
+
+
+@pytest.mark.requirement("F-10")
+def test_origin_drops_trailing_slash() -> None:
+    s = Settings(_env_file=None, origin="http://localhost:3000/")  # pyright: ignore[reportCallIssue]
+    assert s.origin == "http://localhost:3000"

@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, SecretStr
+from pydantic import Field, PostgresDsn, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -99,6 +99,17 @@ class Settings(BaseSettings):
         "otherwise the endpoint returns 403 and the frontend hides the link (it reads the "
         "same variable). Accounts can always be created with `mise run create-user`.",
     )
+
+    origin: str = Field(
+        default="http://localhost:3000",
+        description="Public address of the app, used for links in mails. "
+        "Same value as the frontend's `ORIGIN`.",
+    )
+
+    @field_validator("origin")
+    @classmethod
+    def _strip_trailing_slash(cls, value: str) -> str:
+        return value.rstrip("/")
 
     @property
     def session_ttl(self) -> timedelta:
