@@ -2,15 +2,13 @@
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
   import Pagination from '$lib/components/Pagination.svelte';
+  import { occasionDateLabel } from '$lib/occasion-date';
   import { actionUrl, pageQuery } from '$lib/pagination';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
 
   const isEdit = $derived(data.editOccasion !== null);
-  const birthdayTypeId = $derived(
-    data.occasionTypes.find((occasionType) => occasionType.name === 'Geburtstag')?.id ?? null
-  );
   const values = $derived(
     form?.values ??
       data.editOccasion ?? {
@@ -22,11 +20,6 @@
       }
   );
   const errors = $derived(form?.errors ?? {});
-
-  function formatDate(date: string): string {
-    const [year, month, day] = date.split('-');
-    return `${day}.${month}.${year}`;
-  }
 
   let showForm = $state(false);
   let formDialog: HTMLDialogElement | undefined = $state();
@@ -91,18 +84,18 @@
             <div>
               <p class="font-medium">{occasion.name}</p>
               <p class="text-sm text-gray-600">
-                {formatDate(occasion.date)} · {occasion.recurrence === 'yearly'
+                {occasionDateLabel(occasion)} · {occasion.recurrence === 'yearly'
                   ? 'Jährlich'
                   : 'Einmalig'}
               </p>
-              {#if occasion.people.length}
+              {#if !occasion.rule && occasion.people.length}
                 <p class="text-sm text-gray-600">
                   Für: {occasion.people.map((person) => person.name).join(', ')}
                 </p>
               {/if}
             </div>
-            {#if birthdayTypeId && occasion.occasion_type_id === birthdayTypeId}
-              <span class="text-sm text-gray-600">(Geburtstag wird über die Person gepflegt)</span>
+            {#if occasion.rule}
+              <span class="text-sm text-gray-600">(fester Anlass)</span>
             {:else}
               <div class="flex items-center gap-2">
                 <a
@@ -223,10 +216,8 @@
         >
           <option value="">Kein Typ</option>
           {#each data.occasionTypes as occasionType (occasionType.id)}
-            <option value={occasionType.id} disabled={occasionType.name === 'Geburtstag'}>
-              {occasionType.name}{occasionType.name === 'Geburtstag'
-                ? ' (über Person gepflegt)'
-                : ''}
+            <option value={occasionType.id} disabled={occasionType.system}>
+              {occasionType.name}{occasionType.system ? ' (fester Anlass)' : ''}
             </option>
           {/each}
         </select>

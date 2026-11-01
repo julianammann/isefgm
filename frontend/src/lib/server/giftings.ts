@@ -188,5 +188,21 @@ export function parseGiftingForm(form: FormData): {
     }
     if (!values.given_on) errors.given_on ??= 'Für „Verschenkt“ bitte das Verschenkdatum angeben.';
   }
+  const birthdayError = birthdayRecipientError(
+    values,
+    String(form.get('birthday_occasion_id') ?? '') || null
+  );
+  if (birthdayError) errors.person_ids ??= birthdayError;
   return { values, errors };
+}
+
+/** A gifting at the birthday occasion needs exactly one distinct recipient, like the backend checks. */
+export function birthdayRecipientError(
+  values: Pick<GiftingIn, 'occasion_id' | 'person_ids'>,
+  birthdayOccasionId: string | null
+): string | undefined {
+  if (!birthdayOccasionId || values.occasion_id !== birthdayOccasionId) return undefined;
+  return new Set(values.person_ids).size === 1
+    ? undefined
+    : 'Für einen Geburtstag bitte genau eine Person auswählen.';
 }

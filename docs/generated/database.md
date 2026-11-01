@@ -59,7 +59,7 @@ Planned and sent e-mail notifications (F-13). One row per planned message; dedup
 
 ## occasion_type
 
-Kind of occasion (F-03). owner_id NULL marks the system-wide types Geburtstag and Weihnachten, created by a migration and read-only for users.
+Kind of occasion (F-03). owner_id NULL marks the system-wide types Geburtstag, Weihnachten and Ostern, created by migrations and read-only for users.
 
 | Column | Type | Nullable | Description |
 | --- | --- | --- | --- |
@@ -145,7 +145,7 @@ Labelled note on a gift idea (F-07). Visible only to the owner of the idea (Q-01
 
 ## occasion
 
-Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete year is stored where the occasion is used. Visible only to its owner (Q-01).
+Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete year is stored where the occasion is used. Every account has the rule occasions Geburtstag, Weihnachten and Ostern exactly once, without a date. Visible only to its owner (Q-01).
 
 | Column | Type | Nullable | Description |
 | --- | --- | --- | --- |
@@ -153,7 +153,7 @@ Occasion of an account (F-03). Stores the rule (date and recurrence); a concrete
 | `owner_id` | UUID | no | Account the occasion belongs to. Deleted together with the account. (FK → user_account.id) (Index) |
 | `occasion_type_id` | UUID | yes | Type of the occasion. NULL for an own occasion without a type. (FK → occasion_type.id) (Index) |
 | `name` | VARCHAR(100) | no | Title, e.g. Hochzeitstag. |
-| `date` | DATE | no | Date as a plain calendar date (Q-08). First occurrence for yearly ones. |
+| `date` | DATE | yes | Date as a plain calendar date (Q-08). First occurrence for yearly ones. NULL only for a rule occasion, whose date follows its rule. |
 | `recurrence` | VARCHAR(16) | no | `none` (once) or `yearly` (every year on the same day). |
 
 ## share_link_person
@@ -198,7 +198,7 @@ Concrete use of a gift idea (F-06), with its own status, actual recipients, occa
 | `id` | UUID | no | Primary key, UUIDv7. (PK) |
 | `gift_id` | UUID | no | CASCADE only for deleting the account (F-17), which deletes the gift in the same statement. Through the API an idea with giftings is not deletable: delete_gift answers 409 (test_idea_with_giftings_cannot_be_deleted). RESTRICT here would make test_deleting_the_account_deletes_its_giftings fail. (FK → gift.id) (Index) |
 | `status` | VARCHAR(16) | no | Progress of the gifting. Defaults to 'idea'. |
-| `occasion_id` | UUID | yes | Same reasoning as gift_id: the API answers 409 when an occasion in use is deleted (directly or as a derived birthday), the cascade only runs for F-17. (FK → occasion.id) (Index) |
+| `occasion_id` | UUID | yes | Same reasoning as gift_id: the API answers 409 when an occasion in use is deleted, the cascade only runs for F-17. (FK → occasion.id) (Index) |
 | `occasion_date` | DATE | yes | Date. Concrete date of the occasion, e.g. Christmas 2026 for a yearly occasion (Q-08: plain calendar date, no time zone). |
 | `given_on` | DATE | yes | Date. Day the gift was given; set exactly when status is `given`. |
 | `created_at` | TIMESTAMP WITH TIME ZONE | no | Creation time (UTC), set by the database (Q-08). |

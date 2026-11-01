@@ -6,14 +6,14 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
-from giftmanager.models import BIRTHDAY_TYPE_ID, Recurrence
+from giftmanager.models import RULE_TYPES, OccasionRule, Recurrence
 from giftmanager.schemas.person import LinkedPerson
 
 
-def _not_birthday(value: uuid.UUID | None) -> uuid.UUID | None:
-    """Birthday occasions are derived from person.birthday, never chosen by hand."""
-    if value == BIRTHDAY_TYPE_ID:
-        raise ValueError("birthday occasions come from a person's birthday")
+def _not_rule_type(value: uuid.UUID | None) -> uuid.UUID | None:
+    """Rule occasions exist once per account, so their types cannot be chosen."""
+    if value in RULE_TYPES:
+        raise ValueError("rule occasions exist once per account and cannot be created")
     return value
 
 
@@ -51,11 +51,11 @@ class OccasionIn(BaseModel):
         description="`none` for a one-off occasion, `yearly` for every year on the same day.",
         examples=["yearly"],
     )
-    occasion_type_id: Annotated[uuid.UUID | None, AfterValidator(_not_birthday)] = Field(
+    occasion_type_id: Annotated[uuid.UUID | None, AfterValidator(_not_rule_type)] = Field(
         default=None,
         description="Occasion type, a system-wide one or one of the account. Null for an own "
-        "occasion without a type. Not Geburtstag: birthday occasions come from a person's "
-        "birthday.",
+        "occasion without a type. Not Geburtstag, Weihnachten or Ostern: those rule occasions "
+        "exist once per account.",
         examples=[None],
     )
     person_ids: list[uuid.UUID] = Field(
@@ -76,8 +76,17 @@ class OccasionOut(BaseModel):
         description="Occasion ID (UUIDv7).", examples=["01a10a3c-7d2e-7c41-9b0e-3f5a8d2c1e94"]
     )
     name: str = Field(description="Title.", examples=["Hochzeitstag"])
-    date: dt.date = Field(description="Date as a plain date.", examples=["2019-06-21"])
+    date: dt.date | None = Field(
+        description="Date as a plain date. Null only for Geburtstag; Weihnachten and Ostern "
+        "carry their next date.",
+        examples=["2019-06-21"],
+    )
     recurrence: Recurrence = Field(description="`none` or `yearly`.", examples=["yearly"])
+    rule: OccasionRule | None = Field(
+        description="`birthday`, `christmas` or `easter` for the rule occasions of the account; "
+        "null for own occasions.",
+        examples=[None],
+    )
     occasion_type_id: uuid.UUID | None = Field(
         description="Occasion type, or null.", examples=[None]
     )

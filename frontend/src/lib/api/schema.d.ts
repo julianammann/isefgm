@@ -159,7 +159,7 @@ export interface paths {
         put?: never;
         /**
          * Create gifting
-         * @description Turns a gift idea into a gifting in one step: only `gift_id` is required, the status defaults to `idea`. The idea is referenced, not copied, and stays in the idea list. A past gift is recorded directly with status `given`. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         * @description Turns a gift idea into a gifting in one step: only `gift_id` is required, the status defaults to `idea`. The idea is referenced, not copied, and stays in the idea list. A past gift is recorded directly with status `given`. A gifting at the occasion Geburtstag needs exactly one recipient, otherwise 422. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createGifting"];
         delete?: never;
@@ -182,7 +182,7 @@ export interface paths {
         get: operations["getGifting"];
         /**
          * Update gifting
-         * @description Replaces all fields of the gifting, including its recipients: a field left out is reset to null, its default or an empty list. Any status may follow any other. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gifting of another account returns 404, like a missing one.
+         * @description Replaces all fields of the gifting, including its recipients: a field left out is reset to null, its default or an empty list. Any status may follow any other. A gifting at the occasion Geburtstag needs exactly one recipient, otherwise 422. Status `given` needs at least one recipient, `occasion_id`, `occasion_date` and `given_on` (422 otherwise); `given_on` is not stored with any other status. `gift_id`, `person_ids` and `occasion_id` must belong to the account; an ID of another account returns 404, like a missing one, and nothing is saved. A gifting of another account returns 404, like a missing one.
          */
         put: operations["updateGifting"];
         post?: never;
@@ -473,7 +473,7 @@ export interface paths {
         };
         /**
          * List occasion types
-         * @description Returns the system-wide types Geburtstag and Weihnachten followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
+         * @description Returns the system-wide types (Geburtstag, Ostern, Weihnachten, by name) followed by the account's own types. System-wide types are read-only: there is no endpoint to change or delete them.
          */
         get: operations["listOccasionTypes"];
         put?: never;
@@ -513,13 +513,13 @@ export interface paths {
         };
         /**
          * List occasions
-         * @description Returns the occasions of the current account, sorted by month and day (the year is ignored), one page at a time. `total` counts all occasions of the account.
+         * @description Returns the occasions of the current account, one page at a time: the rule occasions Geburtstag, Weihnachten and Ostern first, then the others sorted by month and day (the year is ignored). `total` counts all occasions of the account.
          */
         get: operations["listOccasions"];
         put?: never;
         /**
          * Create occasion
-         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
+         * @description Creates a one-off or yearly occasion for the current account. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved.
          */
         post: operations["createOccasion"];
         delete?: never;
@@ -542,13 +542,13 @@ export interface paths {
         get: operations["getOccasion"];
         /**
          * Update occasion
-         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag returns 422: birthday occasions come from a person's birthday. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A birthday occasion follows its person and returns 409; edit the person.
+         * @description Replaces all fields of the occasion, including its links: a field left out is reset to its default or an empty list. The frontend sends the whole form. An occasion of another account returns 404, like a missing one. `occasion_type_id` must be a system-wide type or one of the account; otherwise 404. Geburtstag, Weihnachten and Ostern return 422: rule occasions exist once per account. `person_ids` links the occasion to people of the account; an ID of another account returns 404, like a missing one, and nothing is saved. A rule occasion (Geburtstag, Weihnachten, Ostern) cannot be changed or deleted; this returns 409.
          */
         put: operations["updateOccasion"];
         post?: never;
         /**
          * Delete occasion
-         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A birthday occasion follows its person and returns 409; edit the person. An occasion used by a gifting cannot be deleted; this returns 409.
+         * @description Deletes the occasion. Cannot be undone. An occasion of another account returns 404, like a missing one. A rule occasion (Geburtstag, Weihnachten, Ostern) cannot be changed or deleted; this returns 409. An occasion used by a gifting cannot be deleted; this returns 409.
          */
         delete: operations["deleteOccasion"];
         options?: never;
@@ -571,7 +571,7 @@ export interface paths {
         put?: never;
         /**
          * Create person
-         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it.
+         * @description Creates a person for the current account. Only the name is required; empty optional fields are stored as null. Through `birthday` the person belongs to the account's rule occasion Geburtstag.
          */
         post: operations["createPerson"];
         delete?: never;
@@ -594,13 +594,13 @@ export interface paths {
         get: operations["getPerson"];
         /**
          * Update person
-         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. A person of another account returns 404, like a missing one. The birthday occasion of the person (type Geburtstag, yearly) follows `birthday`: it is created, updated or deleted with it. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
+         * @description Replaces all fields of the person: a field left out is reset to null. The frontend sends the whole form. Through `birthday` the person belongs to the account's rule occasion Geburtstag. A person of another account returns 404, like a missing one.
          */
         put: operations["updatePerson"];
         post?: never;
         /**
          * Delete person
-         * @description Deletes the person and their birthday occasion. Cannot be undone. A person of another account returns 404, like a missing one. Clearing the birthday or deleting the person returns 409 if their birthday occasion is used by a gifting.
+         * @description Deletes the person. Cannot be undone. A person of another account returns 404, like a missing one.
          */
         delete: operations["deletePerson"];
         options?: never;
@@ -945,7 +945,7 @@ export interface components {
             notes: components["schemas"]["NoteOut"][];
             /**
              * Occasions
-             * @description Occasions the idea is meant for, sorted by date.
+             * @description Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.
              * @example [
              *       {
              *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
@@ -1118,7 +1118,7 @@ export interface components {
             id: string;
             /**
              * Occasions
-             * @description Occasions the idea is meant for, sorted by date.
+             * @description Occasions the idea is meant for: Geburtstag, Weihnachten and Ostern first, then the others by date.
              * @example [
              *       {
              *         "id": "0199a8c2-5e3b-7f10-8a4d-2c6e9b1f3a72",
@@ -1550,7 +1550,7 @@ export interface components {
             name: string;
             /**
              * Occasion Type Id
-             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag: birthday occasions come from a person's birthday.
+             * @description Occasion type, a system-wide one or one of the account. Null for an own occasion without a type. Not Geburtstag, Weihnachten or Ostern: those rule occasions exist once per account.
              * @example null
              */
             occasion_type_id?: string | null;
@@ -1576,11 +1576,10 @@ export interface components {
         OccasionOut: {
             /**
              * Date
-             * Format: date
-             * @description Date as a plain date.
+             * @description Date as a plain date. Null only for Geburtstag; Weihnachten and Ostern carry their next date.
              * @example 2019-06-21
              */
-            date: string;
+            date: string | null;
             /**
              * Id
              * Format: uuid
@@ -1616,7 +1615,18 @@ export interface components {
              * @example yearly
              */
             recurrence: components["schemas"]["Recurrence"];
+            /**
+             * @description `birthday`, `christmas` or `easter` for the rule occasions of the account; null for own occasions.
+             * @example null
+             */
+            rule: components["schemas"]["OccasionRule"] | null;
         };
+        /**
+         * OccasionRule
+         * @description How the date of a rule occasion is derived.
+         * @enum {string}
+         */
+        OccasionRule: "birthday" | "christmas" | "easter";
         /**
          * OccasionTypeOut
          * @description An occasion type. System-wide types are read-only.
@@ -1968,7 +1978,7 @@ export interface components {
              */
             ideas: components["schemas"]["Page_GiftOut_"];
             /**
-             * @description Occasions that concern the person, sorted by date.
+             * @description Occasions that concern the person: the account's Geburtstag first when the person has a birthday, then the linked occasions by date.
              * @example {
              *       "items": [],
              *       "limit": 50,
@@ -2844,13 +2854,13 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -2946,13 +2956,13 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Problem"];
                 };
             };
         };

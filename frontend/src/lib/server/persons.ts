@@ -112,7 +112,7 @@ export async function updatePerson(
   );
 }
 
-/** Deletes a person and their birthday occasion; 404 if the id is unknown. */
+/** Deletes a person; 404 if the id is unknown. */
 export async function deletePerson(api: Api, id: string): Promise<Result<null>> {
   try {
     const { response } = await api.DELETE('/api/v1/people/{person_id}', {

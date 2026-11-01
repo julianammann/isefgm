@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createApiClient } from '$lib/api/client';
 import {
+  birthdayRecipientError,
   createGifting,
   deleteGifting,
   giftingFromForm,
@@ -166,5 +167,26 @@ describe('listGiftings page size', () => {
 
     await listGiftings(api);
     expect(new URL(requests[0].url).searchParams.get('limit')).toBe('200');
+  });
+});
+
+describe('birthdayRecipientError', () => {
+  const message = 'Für einen Geburtstag bitte genau eine Person auswählen.';
+  const check = (occasion_id: string | null, person_ids: string[], birthday: string | null) =>
+    birthdayRecipientError({ occasion_id, person_ids }, birthday);
+
+  it('rejects a birthday without a recipient', () => {
+    expect(check('b', [], 'b')).toBe(message);
+  });
+  it('rejects a birthday with several recipients', () => {
+    expect(check('b', ['a', 'b'], 'b')).toBe(message);
+  });
+  it('accepts one recipient, also when repeated', () => {
+    expect(check('b', ['a'], 'b')).toBeUndefined();
+    expect(check('b', ['a', 'a'], 'b')).toBeUndefined();
+  });
+  it('ignores other occasions and a missing birthday occasion', () => {
+    expect(check('x', ['a', 'b'], 'b')).toBeUndefined();
+    expect(check('b', ['a', 'b'], null)).toBeUndefined();
   });
 });
