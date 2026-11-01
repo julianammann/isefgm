@@ -514,6 +514,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[transient]` | passed |
 | F-13 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[permanent]` | passed |
 | F-13 | `tests/test_notifications.py::test_row_expiring_now_is_not_sent` | passed |
+| F-13 | `tests/test_notifications.py::test_account_deleted_while_sending_does_not_stop_the_run` | passed |
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
@@ -613,6 +614,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-17 | `tests/test_images.py::test_deleting_the_account_removes_all_its_files` | passed |
 | F-17 | `tests/test_links.py::test_deleting_the_account_deletes_its_links` | passed |
 | F-17 | `tests/test_notes.py::test_deleting_the_account_deletes_its_notes` | passed |
+| F-17 | `tests/test_notifications.py::test_account_deleted_while_sending_does_not_stop_the_run` | passed |
 | F-17 | `tests/test_occasions.py::test_deleting_the_account_deletes_its_occasions` | passed |
 | F-17 | `tests/test_occasions.py::test_deleting_the_account_deletes_its_person_links` | passed |
 | F-17 | `tests/test_people.py::test_deleting_the_account_deletes_its_people` | passed |
@@ -920,6 +922,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[transient]` | passed |
 | QZ-05 | `tests/test_notifications.py::test_transient_and_permanent_failures_are_logged_without_recipient[permanent]` | passed |
 | QZ-05 | `tests/test_notifications.py::test_row_expiring_now_is_not_sent` | passed |
+| QZ-05 | `tests/test_notifications.py::test_account_deleted_while_sending_does_not_stop_the_run` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |

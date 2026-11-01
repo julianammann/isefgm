@@ -169,6 +169,8 @@ async def dispatch_due(
             if claimed is None:
                 return sent
             notification_id = claimed.id
+            # shortcut: subject and body are fixed when planned, so a retry after a transient
+            # failure can still name a person deleted since; render at send time if that matters.
             mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
 
         failure: MailError | None = None
@@ -178,7 +180,12 @@ async def dispatch_due(
             failure = exc
 
         async with sessionmaker() as session, session.begin():
-            notification = await session.get_one(Notification, notification_id)
+            notification = await session.get(Notification, notification_id)
+            # None: the account was deleted while sending and ON DELETE CASCADE took the row.
+            if notification is None:
+                if failure is None:
+                    sent += 1
+                continue
             # No `status == sending` guard: a late TRANSIENT means nothing was delivered, so a retry
             # is a first delivery; a late success correctly overwrites `failed`.
             if failure is None:

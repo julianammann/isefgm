@@ -7,14 +7,14 @@ from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.clock import Clock
 from giftmanager.core.mail import Mail, MailFailure
 from giftmanager.models.notification import Notification, NotificationStatus, NotificationType
-from giftmanager.models.user import UserStatus
+from giftmanager.models.user import User, UserStatus
 from giftmanager.services.notification import (
     active_recipients,
     dedup_key,
@@ -305,3 +305,24 @@ async def test_row_expiring_now_is_not_sent(
     assert await dispatch_due(committed_sessionmaker, mailer, clock) == 0
     assert mailer.sent == []
     assert (await reload(committed_sessionmaker, row.id)).status is NotificationStatus.PLANNED
+
+
+@pytest.mark.requirement("F-13", "F-17", "QZ-05")
+async def test_account_deleted_while_sending_does_not_stop_the_run(
+    committed_sessionmaker: Maker, clock: FixedClock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clock.current = SEND_TIME
+    deleted = await add_committed_notification(committed_sessionmaker)
+    kept = await add_committed_notification(committed_sessionmaker)
+    mailer = RecordingMailer()
+    record = mailer.send
+
+    async def send_and_delete_account(mail: Mail) -> None:
+        if mail.to == deleted.recipient:
+            async with committed_sessionmaker() as s, s.begin():
+                await s.execute(delete(User).where(User.id == deleted.owner_id))
+        await record(mail)
+
+    monkeypatch.setattr(mailer, "send", send_and_delete_account)
+    assert await dispatch_due(committed_sessionmaker, mailer, clock) == 2
+    assert (await reload(committed_sessionmaker, kept.id)).status is NotificationStatus.SENT
