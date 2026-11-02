@@ -7,15 +7,22 @@
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
   import { formatDate } from '$lib/display';
   import { actionUrl, pageQuery } from '$lib/pagination';
-  import type { PageProps } from './$types';
+  import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
 
   const isEdit = $derived(data.editing !== null);
+  /**
+   * One opening of the form dialog, holding the action result present at that moment, which
+   * belongs to an earlier opening. A new object per opening re-creates the dialog.
+   */
+  let session = $state.raw<{ seen: ActionData }>({ seen: null });
+  const personForm = $derived(form !== session.seen && form?.values ? form : null);
   const values = $derived(
-    form?.values ?? data.editing ?? { name: '', birthday: null, relationship: null, notes: null }
+    personForm?.values ??
+      data.editing ?? { name: '', birthday: null, relationship: null, notes: null }
   );
-  const errors = $derived(form?.errors ?? {});
+  const errors = $derived(personForm?.errors ?? {});
 
   let showForm = $state(false);
   let previousEditId = $state<string | null>(null);
@@ -36,11 +43,12 @@
   $effect(() => {
     const editId = data.editing?.id ?? null;
     if (previousEditId && !editId) showForm = false;
-    if (editId && editId !== previousEditId) showForm = true;
+    if (editId && editId !== previousEditId) openForm();
     previousEditId = editId;
   });
 
   function openForm() {
+    session = { seen: form };
     showForm = true;
   }
 
@@ -168,15 +176,15 @@
     {/if}
   </div>
 
-  <!-- data.persons is a new array whenever the page data reloads: re-create the dialog then, so a saved person's input is gone; a failed submit keeps the dialog and its focus. -->
-  {#key data.persons}
+  <!-- Re-created per opening, so cancelled input is gone; a failed submit keeps the session. -->
+  {#key session}
     <PersonFormDialog
       bind:open={showForm}
       action={actionUrl(isEdit ? 'update' : 'create', data.page)}
       editId={data.editing?.id ?? null}
       {values}
       {errors}
-      message={form?.message ?? null}
+      message={personForm?.message ?? null}
       keepPosition={false}
       onclose={leaveEdit}
     />
