@@ -19,7 +19,8 @@ autodoc_inherit_docstrings = False
 
 markdown_anchor_signatures = True
 # Inherited SQLAlchemy docs reference labels that only exist in SQLAlchemy's own docs.
-suppress_warnings = ["ref.ref"]
+# ref.python: attributes named `type` on several classes make that cross-reference ambiguous.
+suppress_warnings = ["ref.ref", "ref.python"]
 
 
 class _KeywordOnlyStarFilter(logging.Filter):
@@ -37,4 +38,5 @@ class _KeywordOnlyStarFilter(logging.Filter):
 def setup(app: Any) -> None:
     """Install the filter on Sphinx's log handlers."""
     for handler in logging.getLogger("sphinx").handlers:
-        handler.addFilter(_KeywordOnlyStarFilter())
+        # First in line: Sphinx's own filter counts the warning for -W before later ones run.
+        handler.filters.insert(0, _KeywordOnlyStarFilter())
