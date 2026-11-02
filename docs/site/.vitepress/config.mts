@@ -38,6 +38,8 @@ export default defineConfig({
   // GitHub Pages serves the site under /isefgm/; locally it lives at the root.
   base: process.env.DOCS_BASE ?? '/',
   outDir: '../../apidocs',
+  // Settings defaults such as ORIGIN's http://localhost:3000 render as links in the backend reference.
+  ignoreDeadLinks: 'localhostLinks',
   themeConfig: {
     nav: [
       { text: 'Backend', link: '/backend/' },

@@ -22,3 +22,4 @@ Environment variables, read from `.env` in the repo root (template `.env.example
 | `SESSION_TTL_DAYS` | `14` | Session lifetime in days; extended on every use, up to `SESSION_MAX_LIFETIME_DAYS`. |
 | `SESSION_MAX_LIFETIME_DAYS` | `30` | Hard upper bound on a session's age in days, counted from login, however often the session is used. After that the user must log in again. |
 | `REGISTRATION_ENABLED` | `False` | `true` opens `POST /api/v1/auth/register` and the sign-up page; otherwise the endpoint returns 403 and the frontend hides the link (it reads the same variable). Accounts can always be created with `mise run create-user`. |
+| `ORIGIN` | `http://localhost:3000` | Public address of the app, used for links in mails. Same value as the frontend's `ORIGIN`. |

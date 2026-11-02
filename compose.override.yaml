@@ -26,6 +26,7 @@ services:
   scheduler:
     build: *backend-build
     environment:
+      <<: *dev-backend-env
       SMTP_HOST: isefgm-mailpit
 
   # Local test inbox: SMTP on 1025, web UI on http://localhost:8025.
