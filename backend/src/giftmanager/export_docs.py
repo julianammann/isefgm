@@ -6,6 +6,7 @@ Runs without a database. Usage: ``python -m giftmanager.export_docs [out_dir]``,
 normally via ``mise run docs``. Conventions: docs/dokumentation.md.
 """
 
+import os
 import sys
 from pathlib import Path, PurePath
 from typing import Any
@@ -14,6 +15,10 @@ from pydantic_core import PydanticUndefined
 from sqlalchemy.dialects import postgresql
 
 from giftmanager.core.config import Settings
+
+# main reads settings at import, which require DATABASE_URL; the export never connects.
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://unused@localhost/unused")
+
 from giftmanager.main import app
 from giftmanager.models import Base
 
