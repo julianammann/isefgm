@@ -70,6 +70,17 @@ describe('parseGiftingForm', () => {
       given_on: 'Für „Verschenkt“ bitte das Verschenkdatum angeben.'
     });
   });
+
+  it.each(['2026-02-30', '12/24/2026', '1'])('rejects the dates %s at their fields', (date) => {
+    const f = new FormData();
+    f.set('gift_id', 'gift1');
+    f.set('status', 'planned');
+    f.set('occasion_date', date);
+    f.set('given_on', date);
+    const { errors } = parseGiftingForm(f);
+    expect(errors.occasion_date).toBe('Bitte gib ein gültiges Datum an.');
+    expect(errors.given_on).toBe('Bitte gib ein gültiges Datum an.');
+  });
 });
 
 describe('groupByGift', () => {

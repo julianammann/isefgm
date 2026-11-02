@@ -10,6 +10,7 @@
 
 import type { components } from '$lib/api/schema';
 import { PAGE_SIZE } from '$lib/pagination';
+import { isValidDate } from './dates';
 import { listAll, send, sendEmpty, type Messages, type Result } from './result';
 
 /** Payload for creating or updating a person. */
@@ -111,7 +112,7 @@ export function parsePersonForm(form: FormData): { values: PersonInput; errors: 
 
   if (!name) errors.name = 'Bitte gib einen Namen an.';
   else if (name.length > 100) errors.name = 'Der Name darf höchstens 100 Zeichen lang sein.';
-  if (birthday && Number.isNaN(Date.parse(birthday))) {
+  if (birthday && !isValidDate(birthday)) {
     errors.birthday = 'Bitte gib ein gültiges Datum an.';
   }
   if (relationship && relationship.length > 100) {

@@ -243,4 +243,20 @@ describe('parsePersonForm', () => {
       'Der Name darf höchstens 100 Zeichen lang sein.'
     );
   });
+
+  it.each(['2026-02-30', '12/24/2026', '1'])('rejects the birthday %s at the field', (birthday) => {
+    const form = new FormData();
+    form.set('name', 'Lena');
+    form.set('birthday', birthday);
+    expect(parsePersonForm(form).errors.birthday).toBe('Bitte gib ein gültiges Datum an.');
+  });
+
+  it('keeps a real birthday', () => {
+    const form = new FormData();
+    form.set('name', 'Lena');
+    form.set('birthday', '1990-05-14');
+    const { values, errors } = parsePersonForm(form);
+    expect(errors).toEqual({});
+    expect(values.birthday).toBe('1990-05-14');
+  });
 });
