@@ -244,6 +244,23 @@ describe('parsePersonForm', () => {
     );
   });
 
+  it('counts characters like the backend, so an emoji counts once', () => {
+    const form = new FormData();
+    form.set('name', '😀'.repeat(100));
+    form.set('relationship', '😀'.repeat(100));
+    form.set('notes', '😀'.repeat(2000));
+    expect(parsePersonForm(form).errors).toEqual({});
+
+    form.set('name', '😀'.repeat(101));
+    form.set('relationship', '😀'.repeat(101));
+    form.set('notes', '😀'.repeat(2001));
+    expect(parsePersonForm(form).errors).toEqual({
+      name: 'Der Name darf höchstens 100 Zeichen lang sein.',
+      relationship: 'Die Beziehung darf höchstens 100 Zeichen lang sein.',
+      notes: 'Notizen dürfen höchstens 2000 Zeichen lang sein.'
+    });
+  });
+
   it.each(['2026-02-30', '12/24/2026', '1'])('rejects the birthday %s at the field', (birthday) => {
     const form = new FormData();
     form.set('name', 'Lena');

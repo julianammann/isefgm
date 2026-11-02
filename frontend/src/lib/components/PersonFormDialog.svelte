@@ -41,12 +41,14 @@
 >
   {#if editId}<input type="hidden" name="id" value={editId} />{/if}
 
+  <!-- No maxlength: it counts an emoji twice and silently cuts what the backend would accept;
+       parsePersonForm checks the lengths. -->
+
   <label for="person-name" class="text-sm font-medium">Name</label>
   <input
     id="person-name"
     name="name"
     required
-    maxlength="100"
     value={values.name}
     class="rounded border px-3 py-2"
     aria-invalid={errors.name ? 'true' : undefined}
@@ -72,7 +74,6 @@
   <input
     id="person-relationship"
     name="relationship"
-    maxlength="100"
     value={values.relationship ?? ''}
     class="rounded border px-3 py-2"
     aria-invalid={errors.relationship ? 'true' : undefined}
@@ -86,7 +87,6 @@
   <textarea
     id="person-notes"
     name="notes"
-    maxlength="2000"
     class="rounded border px-3 py-2"
     aria-invalid={errors.notes ? 'true' : undefined}
     aria-describedby={errors.notes ? 'person-notes-error' : undefined}

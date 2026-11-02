@@ -102,7 +102,10 @@ export function deletePerson(api: Api, id: string): Promise<Result<null>> {
   );
 }
 
-/** Reads and validates the person form. The backend remains the authority on validation. */
+/**
+ * Reads and validates the person form. The backend remains the authority on validation.
+ * Lengths count characters like the backend (`[...text]`); `.length` would count an emoji twice.
+ */
 export function parsePersonForm(form: FormData): { values: PersonInput; errors: PersonErrors } {
   const name = String(form.get('name') ?? '').trim();
   const birthday = String(form.get('birthday') ?? '').trim() || null;
@@ -111,14 +114,14 @@ export function parsePersonForm(form: FormData): { values: PersonInput; errors: 
   const errors: PersonErrors = {};
 
   if (!name) errors.name = 'Bitte gib einen Namen an.';
-  else if (name.length > 100) errors.name = 'Der Name darf höchstens 100 Zeichen lang sein.';
+  else if ([...name].length > 100) errors.name = 'Der Name darf höchstens 100 Zeichen lang sein.';
   if (birthday && !isValidDate(birthday)) {
     errors.birthday = 'Bitte gib ein gültiges Datum an.';
   }
-  if (relationship && relationship.length > 100) {
+  if (relationship && [...relationship].length > 100) {
     errors.relationship = 'Die Beziehung darf höchstens 100 Zeichen lang sein.';
   }
-  if (notes && notes.length > 2000) {
+  if (notes && [...notes].length > 2000) {
     errors.notes = 'Notizen dürfen höchstens 2000 Zeichen lang sein.';
   }
   return { values: { name, birthday, relationship, notes }, errors };
