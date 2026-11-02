@@ -229,6 +229,31 @@ async def test_hung_run_times_out(
         )
 
 
+async def test_hung_planner_does_not_block_others_or_sending(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    monkeypatch.setattr(scheduler, "PLANNER_TIMEOUT", timedelta(seconds=0.2))
+
+    async def hung(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        await asyncio.sleep(30)
+        return []
+
+    mailer = RecordingMailer()
+    await run_once(
+        clock=clock,
+        sessionmaker=committed_sessionmaker,
+        mailer=mailer,
+        planners=[hung, due_once(user)],
+    )
+    assert len(mailer.sent) == 1
+    errors = [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
+    assert any(hung.__qualname__ in m and "TimeoutError" in m for m in errors)
+
+
 class ClockAdvancingMailer(RecordingMailer):
     def __init__(self, clock: FixedClock, step: timedelta) -> None:
         super().__init__()

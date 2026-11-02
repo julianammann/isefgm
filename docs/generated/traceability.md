@@ -528,6 +528,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_scheduler.py::test_run_logs_sent_count_without_recipients` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_once_fails_expired_and_stuck_rows` | passed |
 | F-13 | `tests/test_scheduler.py::test_hung_run_times_out` | passed |
+| F-13 | `tests/test_scheduler.py::test_hung_planner_does_not_block_others_or_sending` | passed |
 | F-13 | `tests/test_scheduler.py::test_dispatch_stops_claiming_after_deadline` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_once_stops_sending_after_send_budget` | passed |
 | F-13 | `tests/test_scheduler.py::test_hard_timeout_still_logs_sent_count` | passed |
@@ -952,6 +953,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_scheduler.py::test_run_logs_sent_count_without_recipients` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_once_fails_expired_and_stuck_rows` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_hung_run_times_out` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_hung_planner_does_not_block_others_or_sending` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_dispatch_stops_claiming_after_deadline` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_once_stops_sending_after_send_budget` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_hard_timeout_still_logs_sent_count` | passed |
