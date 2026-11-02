@@ -40,6 +40,10 @@ run = "uv run python -m giftmanager.create_user"
 description = "recreate the test accounts with the synthetic test dataset (QZ-02)"
 run = "uv run python -m giftmanager.seed"
 
+[tasks.scheduler]
+description = "Scheduler lokal, sendet an Mailpit (localhost:1025)"
+run = "uv run python -m giftmanager.scheduler"
+
 [tasks.openapi]
 run = "uv run python -m giftmanager.export_openapi > ../frontend/openapi.json"
 

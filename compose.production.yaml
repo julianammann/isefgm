@@ -23,6 +23,14 @@ services:
   scheduler:
     mem_limit: 256m
     cpus: 0.5
+    environment:
+      SMTP_HOST: smtp.resend.com
+      SMTP_PORT: "465"
+      SMTP_SECURITY: tls
+      SMTP_USERNAME: resend
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?set ISEFGM__SMTP_PASSWORD in infra-vps}
+      SMTP_FROM: ${SMTP_FROM:?set ISEFGM__SMTP_FROM in infra-vps}
+      ORIGIN: https://${APP_FQDN}
 
   frontend:
     mem_limit: 256m

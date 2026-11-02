@@ -162,16 +162,20 @@ erDiagram
     notification {
         uuid id PK
         uuid owner_id FK
-        text type "birthday | christmas | occasion"
-        text reference_type "person | occasion"
-        uuid reference_id
+        text type "birthday | christmas | easter | occasion"
+        text reference_type "nullable, person | occasion"
+        uuid reference_id "nullable"
         date event_date
         timestamptz scheduled_for
+        timestamptz expires_at
         text status "planned | sending | sent | failed"
         timestamptz claimed_at "nullable"
         timestamptz sent_at "nullable"
         text error "nullable"
         text dedup_key UK
+        text recipient
+        text subject
+        text body
     }
 ```
 
@@ -186,7 +190,7 @@ erDiagram
 | Unabhängige Beschenkungen derselben Idee | mehrere `gifting`-Zeilen je `gift` |
 | Bei `given` sind Empfänger, Anlass, Termin, Verschenkdatum Pflicht (F-06) | Check-Constraint `ck_gifting_given_complete` auf `status <> 'given' OR (occasion_id IS NOT NULL AND occasion_date IS NOT NULL AND given_on IS NOT NULL)`; mindestens ein Empfänger wird im Service geprüft |
 | Weihnachten 2026 ≠ Weihnachten 2027 | `gifting.occasion_date` trägt den konkreten Termin, `occasion` nur die Regel |
-| Kein Doppelversand (F-13, Q-02) | `UNIQUE(dedup_key)` auf `notification` |
+| Kein Doppelversand (F-13, Q-02) | `UNIQUE(dedup_key)` auf `notification`; `type` `birthday` ist die Sammelmail, Erinnerungen 14 Tage vor einem Geburtstag sind `occasion` mit Bezug `person`; der Bezug (`reference_type`, `reference_id`) ist optional und kein Fremdschlüssel |
 | Freigabelink nicht erratbar, widerrufbar, ablaufend (F-14) | 256-Bit-Token, nur `token_hash` gespeichert, `active`, `expires_at` |
 | Kontolöschung löscht alles (F-17) | `ON DELETE CASCADE` auf allen `owner_id` und auf `user_session.user_id`; Dateien aus `attachment.storage_path` werden nach dem Commit gelöscht |
 | Regel-Anlässe: Geburtstag, Weihnachten, Ostern je Konto genau einmal (F-03, F-04) | Je Konto drei `occasion`-Zeilen mit `date NULL` und dem Systemtyp als `occasion_type_id`; angelegt bei der Registrierung, für bestehende Konten per Migration. Check-Constraint `ck_occasion_date_only_null_for_rules` erlaubt `date NULL` nur mit einem der drei Systemtypen, der partielle Unique-Index `uq_occasion_owner_rule_type` auf `(owner_id, occasion_type_id) WHERE date IS NULL` hält sie einmalig. Das Datum wird berechnet: Weihnachten am nächsten 24.12., Ostern am nächsten Ostersonntag, Geburtstag hat keins. Es gibt keine Geburtstags-Anlässe je Person mehr; die Person gehört über `person.birthday` zum Geburtstag des Kontos. Eine Beschenkung zu Geburtstag braucht genau einen Empfänger (422). Die Typen sind über die API nicht wählbar (422), Regel-Anlässe nicht änderbar oder löschbar (409) |
