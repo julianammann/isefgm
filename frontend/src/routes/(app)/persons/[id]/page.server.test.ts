@@ -13,13 +13,13 @@ const empty = { items: [], total: 0, limit: 200, offset: 0 };
 const overview = { given: empty, giftings: empty, ideas: empty, occasions: empty };
 
 /** Load event whose backend answers GET by path. */
-function loadEvent(responses: Record<string, unknown>) {
+function loadEvent(responses: Record<string, unknown>, search = '') {
   const GET = vi.fn(async (path: string) => responses[path] ?? status(500));
   return {
     event: {
       locals: { api: { GET } },
       params: { id: 'p1' },
-      url: new URL('http://localhost/persons/p1')
+      url: new URL(`http://localhost/persons/p1${search}`)
     } as unknown as LoadEvent,
     GET
   };
@@ -33,6 +33,25 @@ describe('load', () => {
     });
     await expect(load(event)).resolves.toEqual({ person, overview, success: null });
     expect(GET).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the saved message after an update', async () => {
+    const { event } = loadEvent(
+      {
+        '/api/v1/people/{person_id}': ok(person),
+        '/api/v1/people/{person_id}/overview': ok(overview)
+      },
+      '?success=updated'
+    );
+    await expect(load(event)).resolves.toMatchObject({ success: 'Änderungen gespeichert!' });
+  });
+
+  it('shows the error page when the person loads but their view does not', async () => {
+    const { event } = loadEvent({
+      '/api/v1/people/{person_id}': ok(person),
+      '/api/v1/people/{person_id}/overview': status(502)
+    });
+    await expect(load(event)).rejects.toMatchObject({ status: 502 });
   });
 
   it('answers 404 for an unknown person', async () => {

@@ -12,15 +12,9 @@ import {
   getPerson,
   getPersonOverview,
   parsePersonForm,
-  updatePerson,
-  type Result
+  updatePerson
 } from '$lib/server/persons';
-
-/** Returns the data of a successful result; a failure becomes SvelteKit's error page. */
-function unwrap<T>(result: Result<T>): T {
-  if (!result.ok) error(result.status, result.message);
-  return result.data;
-}
+import { unwrap } from '$lib/server/result';
 
 /**
  * Loads the person and their view in parallel: two requests, the view in a fixed number of

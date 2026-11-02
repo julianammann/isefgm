@@ -6,7 +6,7 @@
     GIFTING_STATUS_CLASS,
     TASK_STATUS,
     formatDate,
-    formatPrice
+    formatPriceRange
   } from '$lib/display';
   import FormDialog from '$lib/components/FormDialog.svelte';
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
@@ -51,23 +51,18 @@
     deleteSeen = form;
     deleteOpen = true;
   }
-
-  /** Price range of an idea, e.g. „20,00 – 30,00 EUR“ or „ab 20,00“; empty without a price. */
-  function price(idea: (typeof overview.ideas.items)[number]) {
-    const from = formatPrice(idea.price_from);
-    const to = formatPrice(idea.price_to);
-    const range = from && to ? `${from} – ${to}` : from ? `ab ${from}` : to ? `bis ${to}` : '';
-    return range && idea.currency ? `${range} ${idea.currency}` : range;
-  }
-
-  /** „3 weitere nicht angezeigt“ when a list has more entries than one page. */
-  const more = (list: { items: unknown[]; total: number }) =>
-    list.total > list.items.length
-      ? `${list.total - list.items.length} weitere nicht angezeigt`
-      : '';
 </script>
 
 <svelte:head><title>{person.name} – Geschenke-Manager</title></svelte:head>
+
+<!-- „3 weitere nicht angezeigt“ when a list has more entries than one page. -->
+{#snippet more(list: { items: unknown[]; total: number })}
+  {#if list.total > list.items.length}
+    <p class="mt-2 text-sm text-gray-600">
+      {list.total - list.items.length} weitere nicht angezeigt
+    </p>
+  {/if}
+{/snippet}
 
 {#snippet giftings(list: typeof overview.given, empty: string)}
   {#if list.items.length === 0}
@@ -112,7 +107,7 @@
       {/each}
     </ul>
   {/if}
-  {#if more(list)}<p class="mt-2 text-sm text-gray-600">{more(list)}</p>{/if}
+  {@render more(list)}
 {/snippet}
 
 <!-- Room at the bottom, so the toast never hides the end of the page. -->
@@ -178,9 +173,7 @@
             {/each}
           </ul>
         {/if}
-        {#if more(overview.occasions)}
-          <p class="mt-2 text-sm text-gray-600">{more(overview.occasions)}</p>
-        {/if}
+        {@render more(overview.occasions)}
       </div>
     </section>
     <section aria-labelledby="ideas-heading">
@@ -192,6 +185,7 @@
       {:else}
         <ul class="mt-3 flex flex-col gap-3">
           {#each overview.ideas.items as idea (idea.id)}
+            {@const price = formatPriceRange(idea)}
             <li class="rounded border p-3">
               <div class="flex flex-wrap items-center gap-2">
                 <a href={resolve(`/gifts/${idea.id}`)} class="font-semibold underline">
@@ -201,10 +195,10 @@
                   {CATEGORIES[idea.category]}
                 </span>
               </div>
-              {#if price(idea) || idea.occasions.length}
+              {#if price || idea.occasions.length}
                 <p class="mt-1 text-sm text-gray-600">
-                  {price(idea)}
-                  {#if price(idea) && idea.occasions.length}·{/if}
+                  {price}
+                  {#if price && idea.occasions.length}·{/if}
                   {#if idea.occasions.length}für {idea.occasions.map((o) => o.name).join(', ')}{/if}
                 </p>
               {/if}
@@ -212,9 +206,7 @@
           {/each}
         </ul>
       {/if}
-      {#if more(overview.ideas)}
-        <p class="mt-2 text-sm text-gray-600">{more(overview.ideas)}</p>
-      {/if}
+      {@render more(overview.ideas)}
     </section>
     <section aria-labelledby="planned-heading">
       <h2 id="planned-heading" class="text-lg font-semibold">

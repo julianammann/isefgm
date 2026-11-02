@@ -3,6 +3,7 @@
  *
  * @module
  */
+import { error } from '@sveltejs/kit';
 
 /** A failed data access call: HTTP status plus a German display message. */
 export type Failure = { ok: false; status: number; message: string };
@@ -51,6 +52,12 @@ export async function send<T>(
     if (cause instanceof TypeError) return failure(502, messages);
     throw cause;
   }
+}
+
+/** Returns the data of a successful result; a failure becomes SvelteKit's error page. */
+export function unwrap<T>(result: Result<T>): T {
+  if (!result.ok) error(result.status, result.message);
+  return result.data;
 }
 
 /** Like `send` for calls without a response body, e.g. DELETE. */

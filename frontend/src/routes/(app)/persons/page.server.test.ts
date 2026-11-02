@@ -46,6 +46,17 @@ describe('load', () => {
     await expect(load(event)).rejects.toMatchObject(redirectTo('/persons?page=3&success=deleted'));
   });
 
+  it('marks the message after a delete, so the page can colour it', async () => {
+    await expect(load(loadEvent('?success=deleted', 1).event)).resolves.toMatchObject({
+      success: 'Person gelöscht!',
+      deleted: true
+    });
+    await expect(load(loadEvent('?success=created', 1).event)).resolves.toMatchObject({
+      success: 'Person angelegt!',
+      deleted: false
+    });
+  });
+
   it('treats an invalid page as page 1', async () => {
     const { event, GET } = loadEvent('?page=abc', 10);
     await load(event);

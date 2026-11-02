@@ -16,8 +16,6 @@
     form?.values ?? data.editing ?? { name: '', birthday: null, relationship: null, notes: null }
   );
   const errors = $derived(form?.errors ?? {});
-  /** The toast turns red after a delete, so removing a person does not look like saving one. */
-  const deleted = $derived(page.url.searchParams.get('success') === 'deleted');
 
   let showForm = $state(false);
   let previousEditId = $state<string | null>(null);
@@ -161,7 +159,7 @@
   <div role="status" class="pointer-events-none fixed inset-x-0 bottom-4 flex justify-center px-4">
     {#if data.success}
       <p
-        class="max-w-md rounded px-4 py-2 text-sm text-white shadow-lg {deleted
+        class="max-w-md rounded px-4 py-2 text-sm text-white shadow-lg {data.deleted
           ? 'bg-red-800'
           : 'bg-green-800'}"
       >

@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import { giftingSummary, type GiftingStatus } from './display';
+import { formatPriceRange, giftingSummary, type GiftingStatus } from './display';
+
+describe('formatPriceRange', () => {
+  const gift = (price_from: string | null, price_to: string | null, currency: string | null) => ({
+    price_from,
+    price_to,
+    currency
+  });
+  it('shows both ends with the currency', () => {
+    expect(formatPriceRange(gift('20.00', '30.50', 'EUR'))).toBe('20,00 – 30,50 EUR');
+  });
+  it('shows an open range from below or above', () => {
+    expect(formatPriceRange(gift('20.00', null, 'EUR'))).toBe('ab 20,00 EUR');
+    expect(formatPriceRange(gift(null, '30.00', null))).toBe('bis 30,00');
+  });
+  it('is empty without a price, even with a currency', () => {
+    expect(formatPriceRange(gift(null, null, 'EUR'))).toBe('');
+  });
+});
 
 /** The line as the list shows it. */
 function text(statuses: GiftingStatus[]) {

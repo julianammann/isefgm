@@ -49,7 +49,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     page,
     total,
     editing: items.find((p) => p.id === editId) ?? null,
-    success: isSuccessKey(success) ? successMessages[success] : null
+    success: isSuccessKey(success) ? successMessages[success] : null,
+    // The toast turns red after a delete, so removing a person does not look like saving one.
+    deleted: success === 'deleted'
   };
 };
 
