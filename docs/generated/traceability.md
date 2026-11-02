@@ -525,6 +525,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_scheduler.py::test_failing_planner_is_logged_with_qualified_name` | passed |
 | F-13 | `tests/test_scheduler.py::test_failing_planner_log_omits_exception_message` | passed |
 | F-13 | `tests/test_scheduler.py::test_planner_without_qualname_does_not_stop_the_run` | passed |
+| F-13 | `tests/test_scheduler.py::test_failing_planner_rolls_back_its_writes` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_logs_sent_count_without_recipients` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_once_fails_expired_and_stuck_rows` | passed |
 | F-13 | `tests/test_scheduler.py::test_hung_run_times_out` | passed |
@@ -532,6 +533,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_scheduler.py::test_dispatch_stops_claiming_after_deadline` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_once_stops_sending_after_send_budget` | passed |
 | F-13 | `tests/test_scheduler.py::test_hard_timeout_still_logs_sent_count` | passed |
+| F-13 | `tests/test_scheduler.py::test_send_cut_by_timeout_fails_after_15_minutes_and_is_not_resent` | passed |
 | F-13 | `tests/test_scheduler.py::test_serve_registers_the_interval_job` | passed |
 | F-13 | `tests/test_scheduler.py::test_engine_errors_do_not_contain_bound_parameters` | passed |
 | F-13 | `tests/test_scheduler.py::test_api_process_loads_no_scheduler_or_mail` | passed |
@@ -950,6 +952,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_scheduler.py::test_failing_planner_is_logged_with_qualified_name` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_failing_planner_log_omits_exception_message` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_planner_without_qualname_does_not_stop_the_run` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_failing_planner_rolls_back_its_writes` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_logs_sent_count_without_recipients` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_once_fails_expired_and_stuck_rows` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_hung_run_times_out` | passed |
@@ -957,6 +960,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_scheduler.py::test_dispatch_stops_claiming_after_deadline` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_once_stops_sending_after_send_budget` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_hard_timeout_still_logs_sent_count` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_send_cut_by_timeout_fails_after_15_minutes_and_is_not_resent` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_serve_registers_the_interval_job` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_engine_errors_do_not_contain_bound_parameters` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_api_process_loads_no_scheduler_or_mail` | passed |
