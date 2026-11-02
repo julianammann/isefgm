@@ -10,6 +10,7 @@
   } from '$lib/display';
   import FormDialog from '$lib/components/FormDialog.svelte';
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
+  import { occasionDateLabel } from '$lib/occasion-date';
   import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -168,13 +169,11 @@
             {#each overview.occasions.items as occasion (occasion.id)}
               <li>
                 {occasion.name}
-                {#if occasion.date}
-                  <span class="text-sm text-gray-600">
-                    {formatDate(occasion.date)}{occasion.recurrence === 'yearly'
-                      ? ' · jährlich'
-                      : ''}
-                  </span>
-                {/if}
+                <span class="text-sm text-gray-600">
+                  {occasionDateLabel(occasion, person.birthday)} · {occasion.recurrence === 'yearly'
+                    ? 'Jährlich'
+                    : 'Einmalig'}
+                </span>
               </li>
             {/each}
           </ul>
