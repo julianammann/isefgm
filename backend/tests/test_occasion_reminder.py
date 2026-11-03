@@ -1,16 +1,21 @@
 """Reminder two weeks before an own occasion (F-12)."""
 
 from datetime import UTC, date, datetime, timedelta
+from uuid import UUID
 
 import pytest
+from sqlalchemy import Select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.models.notification import ReferenceType
 from giftmanager.models.occasion import OccasionRule, Recurrence
+from giftmanager.models.person import Person
 from giftmanager.scheduler import run_once
+from giftmanager.services import occasion_reminder
 from giftmanager.services.occasion_reminder import due
+from giftmanager.services.ownership import Owned, owned
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
 from tests.notifications import (
@@ -144,6 +149,34 @@ async def test_each_account_sees_only_its_own_reminders(session: AsyncSession) -
         own = names[mine]
         assert f"{own}-Buch für {own}" in mails[mine]
         assert other not in mails[mine] and "Sven" not in mails[mine]
+
+
+async def test_a_failing_account_does_not_stop_the_others(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    accounts = [
+        await make_user(session, "a@isefgm.localhost"),
+        await make_user(session, "b@isefgm.localhost"),
+    ]
+    first, second = sorted(accounts, key=lambda u: u.id)  # planners go through accounts by id
+    for user in (first, second):
+        anna = await add_person(session, user, "Anna", date(1990, 11, 20))
+        await add_occasion(session, user, "Hochzeitstag", EVENT, people=[anna])
+
+    def fails_for_first[T: Owned](model: type[T], owner_id: UUID) -> Select[tuple[T]]:
+        query = owned(model, owner_id)
+        # Fails in the birthday part, after the account's occasion reminder was built;
+        # 1/0 aborts the transaction like a real query error.
+        return query.where(text("1/0 = 1")) if model is Person and owner_id == first.id else query
+
+    monkeypatch.setattr(occasion_reminder, "owned", fails_for_first)
+    mails = await due(session, OPEN)
+    assert only(first, mails) == []
+    assert sorted(m.subject for m in only(second, mails)) == [
+        "Erinnerung: Geburtstag von Anna am 20.11.",
+        "Erinnerung: Hochzeitstag am 20.11.",
+    ]
+    assert f"Planning for account {first.id} failed" in caplog.text
 
 
 async def test_birthday_without_gifting(session: AsyncSession) -> None:

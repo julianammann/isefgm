@@ -21,6 +21,7 @@ from giftmanager.services.notification import (
     local_at,
     local_date,
     local_midnight,
+    skip_failed_account,
 )
 from giftmanager.services.occasion import next_occurrence
 from giftmanager.services.ownership import owned
@@ -126,64 +127,73 @@ def _open(event: date, now: datetime) -> bool:
     return opens <= now < closes
 
 
+async def _account(session: AsyncSession, user: User, now: datetime) -> list[PlannedMail]:
+    """Reminders of one account."""
+    mails: list[PlannedMail] = []
+    today = local_date(now)
+    occasions = await session.execute(
+        owned(Occasion, user.id)
+        .where(Occasion.date.is_not(None))
+        .with_only_columns(Occasion.id, Occasion.name, Occasion.date, Occasion.recurrence)
+    )
+    for occasion_id, name, start, recurrence in occasions:
+        event = next_occurrence(start, recurrence, today)
+        if event is None or not _open(event, now):
+            continue
+        people = await session.execute(
+            select(Person.id, Person.name)
+            .join(person_occasion, person_occasion.c.person_id == Person.id)
+            .where(person_occasion.c.occasion_id == occasion_id, Person.owner_id == user.id)
+        )
+        gaps = await _gaps(session, user.id, occasion_id, event, [(i, n) for i, n in people])
+        if gaps[0] or gaps[1]:
+            reference = (ReferenceType.OCCASION, occasion_id)
+            mails.append(_mail(user, event, reference, name, f"ist {name}", gaps))
+    birthday_occasion: UUID | None = None
+    birthday_occasion_loaded = False
+    persons = await session.execute(
+        owned(Person, user.id)
+        .where(Person.birthday.is_not(None))
+        .with_only_columns(Person.id, Person.name, Person.birthday)
+    )
+    for person_id, name, birthday in persons:
+        event = next_occurrence(birthday, Recurrence.YEARLY, today)
+        if event is None or not _open(event, now):
+            continue
+        if not birthday_occasion_loaded:
+            birthday_occasion = await session.scalar(
+                owned(Occasion, user.id)
+                .where(Occasion.occasion_type_id == BIRTHDAY_TYPE_ID, Occasion.date.is_(None))
+                .with_only_columns(Occasion.id)
+                .order_by(Occasion.id)
+                .limit(1)
+            )
+            birthday_occasion_loaded = True
+        gaps = await _gaps(
+            session, user.id, birthday_occasion, event, [(person_id, name)], person_id
+        )
+        if gaps[0] or gaps[1]:
+            reference = (ReferenceType.PERSON, person_id)
+            mails.append(
+                _mail(
+                    user,
+                    event,
+                    reference,
+                    f"Geburtstag von {name}",
+                    f"hat {name} Geburtstag",
+                    gaps,
+                )
+            )
+    return mails
+
+
 async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
     """Reminders of own occasions and birthdays whose window is open and that still have gaps."""
     mails: list[PlannedMail] = []
-    today = local_date(now)
     # shortcut: two queries per account (occasions, persons) plus up to two per due occasion (people, giftings),
     # and one for the birthday occasion plus up to one per due birthday; fine for the test accounts, revisit with many accounts.
     for user in await active_recipients(session):
-        occasions = await session.execute(
-            owned(Occasion, user.id)
-            .where(Occasion.date.is_not(None))
-            .with_only_columns(Occasion.id, Occasion.name, Occasion.date, Occasion.recurrence)
-        )
-        for occasion_id, name, start, recurrence in occasions:
-            event = next_occurrence(start, recurrence, today)
-            if event is None or not _open(event, now):
-                continue
-            people = await session.execute(
-                select(Person.id, Person.name)
-                .join(person_occasion, person_occasion.c.person_id == Person.id)
-                .where(person_occasion.c.occasion_id == occasion_id, Person.owner_id == user.id)
-            )
-            gaps = await _gaps(session, user.id, occasion_id, event, [(i, n) for i, n in people])
-            if gaps[0] or gaps[1]:
-                reference = (ReferenceType.OCCASION, occasion_id)
-                mails.append(_mail(user, event, reference, name, f"ist {name}", gaps))
-        birthday_occasion: UUID | None = None
-        birthday_occasion_loaded = False
-        persons = await session.execute(
-            owned(Person, user.id)
-            .where(Person.birthday.is_not(None))
-            .with_only_columns(Person.id, Person.name, Person.birthday)
-        )
-        for person_id, name, birthday in persons:
-            event = next_occurrence(birthday, Recurrence.YEARLY, today)
-            if event is None or not _open(event, now):
-                continue
-            if not birthday_occasion_loaded:
-                birthday_occasion = await session.scalar(
-                    owned(Occasion, user.id)
-                    .where(Occasion.occasion_type_id == BIRTHDAY_TYPE_ID, Occasion.date.is_(None))
-                    .with_only_columns(Occasion.id)
-                    .order_by(Occasion.id)
-                    .limit(1)
-                )
-                birthday_occasion_loaded = True
-            gaps = await _gaps(
-                session, user.id, birthday_occasion, event, [(person_id, name)], person_id
-            )
-            if gaps[0] or gaps[1]:
-                reference = (ReferenceType.PERSON, person_id)
-                mails.append(
-                    _mail(
-                        user,
-                        event,
-                        reference,
-                        f"Geburtstag von {name}",
-                        f"hat {name} Geburtstag",
-                        gaps,
-                    )
-                )
+        # Mails are kept only when the whole account succeeded.
+        async with skip_failed_account(session, user):
+            mails += await _account(session, user, now)
     return mails
