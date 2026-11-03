@@ -6,16 +6,16 @@
  */
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { deleteGift, getGift, parseGiftForm, updateGift } from '$lib/server/gifts';
+import { deleteGift, getGift, parseGiftForm, updateGift } from '#lib/server/gifts.js';
 import {
   createGifting,
   deleteGifting,
   listGiftings,
   parseGiftingForm,
   updateGifting
-} from '$lib/server/giftings';
-import { listPersons } from '$lib/server/persons';
-import { listOccasions } from '$lib/server/occasions';
+} from '#lib/server/giftings.js';
+import { listPersons } from '#lib/server/persons.js';
+import { listOccasions } from '#lib/server/occasions.js';
 import {
   createNote,
   deleteNote,
@@ -23,15 +23,15 @@ import {
   listNotes,
   parseNoteForm,
   updateNote
-} from '$lib/server/notes';
-import { createLink, deleteLink, listLinks, parseLinkForm, updateLink } from '$lib/server/links';
+} from '#lib/server/notes.js';
+import { createLink, deleteLink, listLinks, parseLinkForm, updateLink } from '#lib/server/links.js';
 import {
   createImage,
   deleteImage,
   listImages,
   parseImageForm,
   updateImageLabel
-} from '$lib/server/images';
+} from '#lib/server/images.js';
 import {
   createTask,
   createTaskForGift,
@@ -39,8 +39,8 @@ import {
   listTasks,
   parseTaskForm,
   updateTask
-} from '$lib/server/tasks';
-import type { Result } from '$lib/server/result';
+} from '#lib/server/tasks.js';
+import type { Result } from '#lib/server/result.js';
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import StatusDot from '$lib/components/StatusDot.svelte';
+  import StatusDot from '#lib/components/StatusDot.svelte';
   import type { LayoutProps } from './$types';
 
   let { data, children }: LayoutProps = $props();

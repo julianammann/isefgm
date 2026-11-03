@@ -6,8 +6,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
-import { problemMessage } from '$lib/api/client';
-import { forwardSessionCookie, safeNext } from '$lib/server/session';
+import { problemMessage } from '#lib/api/client.js';
+import { forwardSessionCookie, safeNext } from '#lib/server/session.js';
 
 /**
  * `default`: logs in with e-mail and password, forwards the session cookie and redirects

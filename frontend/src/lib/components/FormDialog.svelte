@@ -70,11 +70,11 @@
         if (
           keepPosition &&
           result.type === 'redirect' &&
-          new URL(result.location, page.url).pathname === page.url.pathname
+          new URL(result.location, page.url.href).pathname === page.url.pathname
         ) {
           // Same as update(), minus SvelteKit's scroll-to-top and focus reset.
           // eslint-disable-next-line svelte/no-navigation-without-resolve -- server redirect target
-          await goto(result.location, { invalidateAll: true, noScroll: true, keepFocus: true });
+          await goto(result.location, { refreshAll: true, reset: false });
         } else {
           await update();
         }

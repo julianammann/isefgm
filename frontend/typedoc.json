@@ -3,7 +3,7 @@
   "name": "Frontend",
   "entryPointStrategy": "expand",
   "entryPoints": ["src/lib", "src/routes", "src/hooks.server.ts"],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts", "src/lib/api/schema.d.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "src/lib/api/schema.d.ts", "src/lib/index.ts"],
   "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
   "out": "../docs/site/frontend",
   "docsRoot": "../docs/site",

@@ -4,8 +4,8 @@
  * @module
  */
 
-import type { components } from '$lib/api/schema';
-import { PAGE_SIZE } from '$lib/pagination';
+import type { components } from '#lib/api/schema.js';
+import { PAGE_SIZE } from '#lib/pagination.js';
 
 /** Payload for creating or updating an occasion. */
 export type Occasion = components['schemas']['OccasionOut'];

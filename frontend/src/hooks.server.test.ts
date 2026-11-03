@@ -1,8 +1,8 @@
 import type { Cookies, RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { User } from '$lib/api/client';
-import { SERVICE_UNAVAILABLE } from '$lib/server/guard';
+import type { User } from '#lib/api/client.js';
+import { SERVICE_UNAVAILABLE } from '#lib/server/guard.js';
 
 import { handle } from './hooks.server.ts';
 
@@ -59,7 +59,8 @@ function fakeEvent({
     getAll: () => Object.entries(jar).map(([name, value]) => ({ name, value })),
     set: vi.fn(),
     delete: vi.fn(),
-    serialize: vi.fn()
+    serialize: vi.fn(),
+    parse: vi.fn()
   };
   const event: HookEvent = {
     request: new Request(url, { method, headers: origin === null ? {} : { origin } }),

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ResolvedPathname } from '$app/types';
-  import { pageCount } from '$lib/pagination';
+  import { pageCount } from '#lib/pagination.js';
 
   type Props = {
     page: number;

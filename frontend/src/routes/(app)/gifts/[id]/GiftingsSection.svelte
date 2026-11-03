@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import FormDialog from '$lib/components/FormDialog.svelte';
+  import FormDialog from '#lib/components/FormDialog.svelte';
   import {
     GIFTING_STATUS,
     GIFTING_STATUS_CLASS,
@@ -9,7 +9,7 @@
     TASK_STATUS_ORDER,
     formatDate,
     type GiftingStatus
-  } from '$lib/display';
+  } from '#lib/display.js';
   import type { ActionData, PageData } from './$types';
 
   type Gifting = PageData['giftings'][number];

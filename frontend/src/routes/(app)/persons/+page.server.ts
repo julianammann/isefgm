@@ -12,8 +12,8 @@ import {
   listPersonsPage,
   updatePerson,
   type PersonInput
-} from '$lib/server/persons';
-import { pageCount, pageQuery, parsePage } from '$lib/pagination';
+} from '#lib/server/persons.js';
+import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
 
 type FieldErrors = Partial<Record<keyof PersonInput, string>>;
 

@@ -6,7 +6,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-import { clearSessionCookies } from '$lib/server/session';
+import { clearSessionCookies } from '#lib/server/session.js';
 
 /** There is no logout page; a plain GET goes back to `/`. */
 export const load: PageServerLoad = () => {

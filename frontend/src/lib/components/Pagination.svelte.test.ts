@@ -3,11 +3,11 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 import { resolve } from '$app/paths';
-import { pageQuery } from '$lib/pagination';
+import { pageQuery } from '#lib/pagination.js';
 
 import Pagination from './Pagination.svelte';
 
-const href = (p: number) => resolve(`/gifts${pageQuery(p)}`);
+const href = (p: number) => resolve(`gifts${pageQuery(p)}`);
 
 describe('Pagination', () => {
   it('renders nothing for a single page', async () => {

@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { Health } from '$lib/api/client';
+import type { Health } from '#lib/api/client.js';
 
 /** Traffic-light level of the status indicator. */
 export type StatusLevel = 'ok' | 'degraded' | 'down';

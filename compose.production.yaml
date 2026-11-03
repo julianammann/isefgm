@@ -36,7 +36,10 @@ services:
     mem_limit: 256m
     cpus: 0.5
     environment:
-      ORIGIN: https://${APP_FQDN}
+      # adapter-node 6 has no ORIGIN: the public origin (CSRF check) comes from the
+      # headers Traefik sets, which replace any X-Forwarded-* a client sends.
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
     networks:
       - app-net
       - traefik-net

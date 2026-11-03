@@ -8,8 +8,8 @@
  * @module
  */
 
-import type { components } from '$lib/api/schema';
-import { PAGE_SIZE } from '$lib/pagination';
+import type { components } from '#lib/api/schema.js';
+import { PAGE_SIZE } from '#lib/pagination.js';
 import { ids, text } from './gifts';
 
 /** Payload for creating or updating a gifting. */
