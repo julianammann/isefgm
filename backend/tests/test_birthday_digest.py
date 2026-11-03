@@ -100,10 +100,12 @@ async def test_no_mail_without_birthdays(session: AsyncSession) -> None:
 async def test_feb_29_is_in_the_february_mail(session: AsyncSession) -> None:
     user = await make_user(session, "konto@isefgm.localhost")
     await add_person(session, user, "Fritz", date(2000, 2, 29))
+    await add_person(session, user, "Gerd", date(1990, 2, 28))
     [mail] = only(user, await due(session, datetime(2027, 1, 1, 7, 0, tzinfo=UTC)))
-    assert "28.02. Fritz" in mail.body
+    # same day shown, so sorted by name
+    assert "28.02. Fritz\n- noch keine Ideen\n\n28.02. Gerd" in mail.body
     [leap] = only(user, await due(session, datetime(2028, 1, 1, 7, 0, tzinfo=UTC)))
-    assert "29.02. Fritz" in leap.body
+    assert "28.02. Gerd\n- noch keine Ideen\n\n29.02. Fritz" in leap.body
 
 
 async def test_ideas_given_to_someone_else_stay_listed(session: AsyncSession) -> None:

@@ -1,5 +1,6 @@
 """Monthly digest of next month's birthdays (F-10)."""
 
+from calendar import monthrange
 from datetime import date, datetime, timedelta
 from typing import cast
 from uuid import UUID
@@ -131,13 +132,15 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
     month, scheduled_for, expires_at = digest_window(now)
     mails: list[PlannedMail] = []
     # shortcut: two queries per account (people, ideas), fine for the test accounts, revisit with many accounts.
+    # 29.02. is shown as 28.02. outside leap years, so sort by the day shown
+    shown_day = func.least(extract("day", Person.birthday), monthrange(month.year, month.month)[1])
     for user in await active_recipients(session):
         async with skip_failed_account(session, user):
             people = list(
                 await session.scalars(
                     owned(Person, user.id)
                     .where(extract("month", Person.birthday) == month.month)
-                    .order_by(extract("day", Person.birthday), func.lower(Person.name), Person.id)
+                    .order_by(shown_day, func.lower(Person.name), Person.id)
                 )
             )
             if not people:
