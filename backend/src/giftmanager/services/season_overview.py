@@ -21,6 +21,7 @@ from giftmanager.services.notification import (
     local_at,
     local_date,
     local_midnight,
+    skip_failed_account,
 )
 from giftmanager.services.occasion import rule_date
 from giftmanager.services.ownership import owned
@@ -157,32 +158,33 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
         send_day, scheduled_for, expires_at = window
         # shortcut: three queries per account and open season, fine for the test accounts, revisit with many accounts.
         for user in await active_recipients(session):
-            occasion_id = (
-                await session.scalars(
-                    owned(Occasion, user.id)
-                    .where(Occasion.occasion_type_id == type_id, Occasion.date.is_(None))
-                    .with_only_columns(Occasion.id)
+            async with skip_failed_account(session, user):
+                occasion_id = (
+                    await session.scalars(
+                        owned(Occasion, user.id)
+                        .where(Occasion.occasion_type_id == type_id, Occasion.date.is_(None))
+                        .with_only_columns(Occasion.id)
+                    )
+                ).one_or_none()
+                if occasion_id is None:
+                    continue
+                people, nobody = await _entries(session, user.id, occasion_id, event)
+                ideas = await _idea_people(session, user.id, occasion_id)
+                if not (people or ideas or nobody):
+                    continue
+                mails.append(
+                    PlannedMail(
+                        owner_id=user.id,
+                        recipient=user.email,
+                        type=mail_type,
+                        reference_type=ReferenceType.OCCASION,
+                        reference_id=occasion_id,
+                        event_date=event,
+                        interval=send_day.isoformat(),
+                        scheduled_for=scheduled_for,
+                        expires_at=expires_at,
+                        subject=f"{label} {event.year}: Stand der Geschenke",
+                        body=_body(user, label, event, people, ideas, nobody),
+                    )
                 )
-            ).one_or_none()
-            if occasion_id is None:
-                continue
-            people, nobody = await _entries(session, user.id, occasion_id, event)
-            ideas = await _idea_people(session, user.id, occasion_id)
-            if not (people or ideas or nobody):
-                continue
-            mails.append(
-                PlannedMail(
-                    owner_id=user.id,
-                    recipient=user.email,
-                    type=mail_type,
-                    reference_type=ReferenceType.OCCASION,
-                    reference_id=occasion_id,
-                    event_date=event,
-                    interval=send_day.isoformat(),
-                    scheduled_for=scheduled_for,
-                    expires_at=expires_at,
-                    subject=f"{label} {event.year}: Stand der Geschenke",
-                    body=_body(user, label, event, people, ideas, nobody),
-                )
-            )
     return mails

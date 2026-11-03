@@ -1,8 +1,10 @@
 """Christmas and Easter status overview: send days and open window (F-11)."""
 
 from datetime import UTC, date, datetime
+from uuid import UUID
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
@@ -17,8 +19,9 @@ from giftmanager.models.occasion import (
 )
 from giftmanager.models.user import User
 from giftmanager.scheduler import run_once
+from giftmanager.services import season_overview
 from giftmanager.services.notification import dedup_key
-from giftmanager.services.season_overview import due, open_send, send_dates
+from giftmanager.services.season_overview import Line, due, open_send, send_dates
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
 from tests.notifications import (
@@ -414,3 +417,32 @@ async def test_rule_occasions_next_to_a_user_defined_type(session: AsyncSession)
     [mail] = only(user, await due(session, START))
     assert mail.reference_id == rules[OccasionRule.CHRISTMAS].id
     assert "Kerze" in mail.body and "Wichteln" not in mail.body
+
+
+async def test_a_failing_account_does_not_stop_the_others(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    accounts = [
+        await make_user(session, "a@isefgm.localhost"),
+        await make_user(session, "b@isefgm.localhost"),
+    ]
+    first, second = sorted(accounts, key=lambda u: u.id)  # planners go through accounts by id
+    for user in (first, second):
+        xmas = (await add_rule_occasions(session, user))[OccasionRule.CHRISTMAS]
+        await add_gifting(
+            session, await add_gift(session, user, "Kerze"), [], GiftingStatus.IDEA, xmas, XMAS
+        )
+    entries = season_overview._entries  # pyright: ignore[reportPrivateUsage]
+
+    async def fails_for_first(
+        s: AsyncSession, user_id: UUID, occasion_id: UUID, event: date
+    ) -> tuple[dict[UUID, tuple[str, list[Line]]], list[Line]]:
+        if user_id == first.id:
+            await s.execute(text("SELECT 1/0"))  # aborts the transaction like a real query error
+        return await entries(s, user_id, occasion_id, event)
+
+    monkeypatch.setattr(season_overview, "_entries", fails_for_first)
+    mails = await due(session, START)
+    assert only(first, mails) == []
+    assert [m.subject for m in only(second, mails)] == ["Weihnachten 2026: Stand der Geschenke"]
+    assert f"Planning for account {first.id} failed" in caplog.text

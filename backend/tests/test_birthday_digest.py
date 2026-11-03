@@ -1,13 +1,16 @@
 """Monthly birthday digest (F-10)."""
 
 from datetime import UTC, date, datetime, timedelta
+from uuid import UUID
 
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.scheduler import run_once
+from giftmanager.services import birthday_digest
 from giftmanager.services.birthday_digest import due
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
@@ -207,3 +210,29 @@ async def test_scheduler_sends_the_digest_once_per_month(
         mailer = RecordingMailer()
         await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
         assert [m.subject for m in mailer.sent if m.to == user.email] == subjects, now
+
+
+async def test_a_failing_account_does_not_stop_the_others(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    accounts = [
+        await make_user(session, "a@isefgm.localhost"),
+        await make_user(session, "b@isefgm.localhost"),
+    ]
+    first, second = sorted(accounts, key=lambda u: u.id)  # planners go through accounts by id
+    for user in (first, second):
+        await add_person(session, user, "Anna", date(1990, 12, 3))
+    ideas_by_person = birthday_digest._ideas_by_person  # pyright: ignore[reportPrivateUsage]
+
+    async def fails_for_first(
+        s: AsyncSession, user_id: UUID, person_ids: list[UUID]
+    ) -> dict[UUID, list[tuple[UUID, str]]]:
+        if user_id == first.id:
+            await s.execute(text("SELECT 1/0"))  # aborts the transaction like a real query error
+        return await ideas_by_person(s, user_id, person_ids)
+
+    monkeypatch.setattr(birthday_digest, "_ideas_by_person", fails_for_first)
+    mails = await due(session, NOV_1)
+    assert only(first, mails) == []
+    assert [m.subject for m in only(second, mails)] == ["Geburtstage im Dezember"]
+    assert f"Planning for account {first.id} failed" in caplog.text

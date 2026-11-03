@@ -475,6 +475,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-10 | `tests/test_birthday_digest.py::test_summer_time_send_hour` | passed |
 | F-10 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people_and_ideas` | passed |
 | F-10 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
+| F-10 | `tests/test_birthday_digest.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | F-10 | `tests/test_config.py::test_origin_drops_trailing_slash[http://localhost:3000/]` | passed |
 | F-10 | `tests/test_config.py::test_origin_drops_trailing_slash[http://localhost:3000///]` | passed |
 | F-10 | `tests/test_config.py::test_origin_drops_trailing_slash[http://localhost:3000]` | passed |
@@ -505,6 +506,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-11 | `tests/test_season_overview.py::test_gifting_with_several_recipients_is_listed_under_each` | passed |
 | F-11 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
 | F-11 | `tests/test_season_overview.py::test_rule_occasions_next_to_a_user_defined_type` | passed |
+| F-11 | `tests/test_season_overview.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | F-13 | `tests/test_config.py::test_smtp_defaults_point_at_local_mailpit` | passed |
 | F-13 | `tests/test_config.py::test_smtp_password_is_not_shown` | passed |
 | F-13 | `tests/test_mail.py::test_classify[exc0-transient]` | passed |
@@ -994,6 +996,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-01 | `tests/test_birthday_digest.py::test_summer_time_send_hour` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people_and_ideas` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
+| QZ-01 | `tests/test_birthday_digest.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | QZ-05 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
 | QZ-05 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
 | QZ-05 | `tests/test_notifications.py::test_parallel_planning_creates_one_row` | passed |
@@ -1046,6 +1049,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_birthday_digest.py::test_summer_time_send_hour` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people_and_ideas` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
+| QZ-09 | `tests/test_birthday_digest.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day0-utc0]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day1-utc1]` | passed |
 | QZ-09 | `tests/test_notifications.py::test_local_at_is_eight_in_berlin[day2-utc2]` | passed |
@@ -1077,6 +1081,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_season_overview.py::test_gifting_with_several_recipients_is_listed_under_each` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_rule_occasions_next_to_a_user_defined_type` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_a_failing_account_does_not_stop_the_others` | passed |
 
 ## Tests without a requirement
 

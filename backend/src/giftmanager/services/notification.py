@@ -1,7 +1,8 @@
 """Planning and dispatch of notification mails (F-13)."""
 
 import logging
-from collections.abc import Iterable
+from collections.abc import AsyncGenerator, Iterable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
@@ -96,6 +97,16 @@ async def active_recipients(session: AsyncSession) -> list[User]:
         else:
             recipients.append(user)
     return recipients
+
+
+@asynccontextmanager
+async def skip_failed_account(session: AsyncSession, user: User) -> AsyncGenerator[None]:
+    """Savepoint for one account's planning; an error is logged and only that account is skipped."""
+    try:
+        async with session.begin_nested():
+            yield
+    except Exception as exc:  # noqa: BLE001  # logged by type only, as in the scheduler
+        logger.error("Planning for account %s failed: %s", user.id, type(exc).__name__)
 
 
 def given_to_linked_person() -> Exists:

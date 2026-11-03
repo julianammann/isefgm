@@ -21,6 +21,7 @@ from giftmanager.services.notification import (
     given_to_linked_person,
     local_at,
     local_date,
+    skip_failed_account,
 )
 from giftmanager.services.occasion import next_occurrence
 from giftmanager.services.ownership import owned
@@ -131,29 +132,30 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
     mails: list[PlannedMail] = []
     # shortcut: two queries per account (people, ideas), fine for the test accounts, revisit with many accounts.
     for user in await active_recipients(session):
-        people = list(
-            await session.scalars(
-                owned(Person, user.id)
-                .where(extract("month", Person.birthday) == month.month)
-                .order_by(extract("day", Person.birthday), func.lower(Person.name), Person.id)
+        async with skip_failed_account(session, user):
+            people = list(
+                await session.scalars(
+                    owned(Person, user.id)
+                    .where(extract("month", Person.birthday) == month.month)
+                    .order_by(extract("day", Person.birthday), func.lower(Person.name), Person.id)
+                )
             )
-        )
-        if not people:
-            continue
-        ideas = await _ideas_by_person(session, user.id, [p.id for p in people])
-        mails.append(
-            PlannedMail(
-                owner_id=user.id,
-                recipient=user.email,
-                type=NotificationType.BIRTHDAY,
-                reference_type=None,
-                reference_id=None,
-                event_date=month,
-                interval="monthly",
-                scheduled_for=scheduled_for,
-                expires_at=expires_at,
-                subject=f"Geburtstage im {MONTH_NAMES[month.month - 1]}",
-                body=_body(user, month, people, ideas),
+            if not people:
+                continue
+            ideas = await _ideas_by_person(session, user.id, [p.id for p in people])
+            mails.append(
+                PlannedMail(
+                    owner_id=user.id,
+                    recipient=user.email,
+                    type=NotificationType.BIRTHDAY,
+                    reference_type=None,
+                    reference_id=None,
+                    event_date=month,
+                    interval="monthly",
+                    scheduled_for=scheduled_for,
+                    expires_at=expires_at,
+                    subject=f"Geburtstage im {MONTH_NAMES[month.month - 1]}",
+                    body=_body(user, month, people, ideas),
+                )
             )
-        )
     return mails
