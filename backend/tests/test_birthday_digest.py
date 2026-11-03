@@ -115,16 +115,36 @@ async def test_ideas_given_to_someone_else_stay_listed(session: AsyncSession) ->
     assert "Tasse" not in mail.body.split("31.12. Bernd")[1]
 
 
-async def test_open_giftings_are_listed_once(session: AsyncSession) -> None:
+@pytest.mark.parametrize(
+    "status", [GiftingStatus.IDEA, GiftingStatus.PLANNED, GiftingStatus.ACQUIRED]
+)
+async def test_open_giftings_are_listed_once_under_their_person(
+    session: AsyncSession, status: GiftingStatus
+) -> None:
     user = await make_user(session, "konto@isefgm.localhost")
     anna = await add_person(session, user, "Anna", date(1990, 12, 3))
+    bernd = await add_person(session, user, "Bernd", date(1985, 12, 31))
     unlinked = await add_gift(session, user, "Buch")
     linked = await add_gift(session, user, "Tasse", people=[anna])
-    await add_gifting(session, unlinked, [anna], GiftingStatus.PLANNED, None, None)
-    await add_gifting(session, linked, [anna], GiftingStatus.PLANNED, None, None)
+    for_bernd = await add_gift(session, user, "Puzzle")
+    await add_gifting(session, unlinked, [anna], status)
+    await add_gifting(session, linked, [anna], status)
+    await add_gifting(session, for_bernd, [bernd], status)
     [mail] = only(user, await due(session, NOV_1))
-    assert mail.body.count(f"/gifts/{unlinked.id}") == 1
-    assert mail.body.count(f"/gifts/{linked.id}") == 1
+    anna_block, bernd_block = mail.body.split("31.12. Bernd")
+    for gift, block in [(unlinked, anna_block), (linked, anna_block), (for_bernd, bernd_block)]:
+        assert mail.body.count(f"/gifts/{gift.id}") == 1
+        assert f"/gifts/{gift.id}" in block
+
+
+async def test_given_gift_with_a_new_open_gifting_is_listed_once(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", date(1990, 12, 3))
+    gift = await add_gift(session, user, "Buch", people=[anna])
+    await add_given_gifting(session, user, gift, anna)
+    await add_gifting(session, gift, [anna], GiftingStatus.PLANNED)
+    [mail] = only(user, await due(session, NOV_1))
+    assert mail.body.count(f"/gifts/{gift.id}") == 1
 
 
 async def test_gift_only_given_to_the_person_is_not_listed(session: AsyncSession) -> None:
@@ -147,28 +167,43 @@ async def test_summer_time_send_hour(session: AsyncSession) -> None:
 
 
 @pytest.mark.requirement("F-10", "Q-01", "Q-04")
-async def test_each_account_sees_only_its_own_people(session: AsyncSession) -> None:
+async def test_each_account_sees_only_its_own_people_and_ideas(session: AsyncSession) -> None:
     a = await make_user(session, "a@isefgm.localhost")
     b = await make_user(session, "b@isefgm.localhost")
     seed = await make_user(session, "test1@example.org")
-    await add_person(session, a, "Anna", date(1990, 12, 3))
-    await add_person(session, b, "Bernd", date(1990, 12, 4))
+    anna = await add_person(session, a, "Anna", date(1990, 12, 3))
+    bernd = await add_person(session, b, "Bernd", date(1990, 12, 4))
     await add_person(session, seed, "Sven", date(1990, 12, 5))
+    await add_gift(session, a, "Kochbuch", people=[anna])
+    await add_gifting(session, await add_gift(session, a, "Schal"), [anna], GiftingStatus.PLANNED)
+    await add_gift(session, b, "Tasse", people=[bernd])
+    await add_gifting(session, await add_gift(session, b, "Puzzle"), [bernd], GiftingStatus.PLANNED)
     mails = {m.recipient: m.body for m in await due(session, NOV_1)}
-    assert {"a@isefgm.localhost", "b@isefgm.localhost"} <= set(mails)
     assert "test1@example.org" not in mails
-    assert "Anna" in mails["a@isefgm.localhost"] and "Bernd" not in mails["a@isefgm.localhost"]
+    own = {
+        "a@isefgm.localhost": {"Anna", "Kochbuch", "Schal"},
+        "b@isefgm.localhost": {"Bernd", "Tasse", "Puzzle"},
+    }
+    every = {"Sven"}.union(*own.values())
+    for recipient, words in own.items():
+        assert {w for w in every if w in mails[recipient]} == words
 
 
 @pytest.mark.requirement("F-10", "QZ-05")
-async def test_scheduler_sends_the_digest_once(
+async def test_scheduler_sends_the_digest_once_per_month(
     committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
 ) -> None:
     user = await make_committed_user(committed_sessionmaker)
     async with committed_sessionmaker() as s, s.begin():
         await add_person(s, user, "Anna", date(1990, 12, 3))
-    clock.current = NOV_1
-    mailer = RecordingMailer()
-    for _ in range(2):
+        await add_person(s, user, "Jan", date(2000, 1, 15))
+    runs: list[tuple[datetime, list[str]]] = [
+        (NOV_1, ["Geburtstage im Dezember"]),
+        (NOV_1 + timedelta(days=14), []),
+        (datetime(2026, 12, 1, 7, 0, tzinfo=UTC), ["Geburtstage im Januar"]),
+    ]
+    for now, subjects in runs:
+        clock.current = now
+        mailer = RecordingMailer()
         await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
-    assert [m.subject for m in mailer.sent if m.to == user.email] == ["Geburtstage im Dezember"]
+        assert [m.subject for m in mailer.sent if m.to == user.email] == subjects, now
