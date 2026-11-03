@@ -10,6 +10,7 @@
 
 import type { components } from '#lib/api/schema.js';
 import { PAGE_SIZE } from '#lib/pagination.js';
+import { isValidDate } from './dates';
 import { ids, text } from './gifts';
 
 /** Payload for creating or updating a gifting. */
@@ -172,10 +173,10 @@ export function parseGiftingForm(form: FormData): {
   if (!(GIFTING_STATUSES as readonly string[]).includes(status)) {
     errors.status = 'Bitte wähle einen gültigen Status.';
   }
-  if (values.occasion_date && Number.isNaN(Date.parse(values.occasion_date))) {
+  if (values.occasion_date && !isValidDate(values.occasion_date)) {
     errors.occasion_date = 'Bitte gib ein gültiges Datum an.';
   }
-  if (values.given_on && Number.isNaN(Date.parse(values.given_on))) {
+  if (values.given_on && !isValidDate(values.given_on)) {
     errors.given_on = 'Bitte gib ein gültiges Datum an.';
   }
   if (values.status === 'given') {

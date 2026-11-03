@@ -40,7 +40,7 @@ import {
   parseTaskForm,
   updateTask
 } from '#lib/server/tasks.js';
-import type { Result } from '#lib/server/result.js';
+import { unwrap } from '#lib/server/result.js';
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,
@@ -87,12 +87,6 @@ function detailFail<
 /** Redirects back to the detail page of idea `id`, which then shows the message for `key`. */
 function detailRedirect(id: string, key: SuccessKey): never {
   redirect(303, `/gifts/${encodeURIComponent(id)}?success=${key}`);
-}
-
-/** Returns the data of a successful result; a failure becomes SvelteKit's error page. */
-function unwrap<T>(result: Result<T>): T {
-  if (!result.ok) error(result.status, result.message);
-  return result.data;
 }
 
 /**

@@ -6,8 +6,10 @@ import {
   createPerson,
   deletePerson,
   getPerson,
+  getPersonOverview,
   listPersons,
   listPersonsPage,
+  parsePersonForm,
   updatePerson
 } from './persons';
 
@@ -114,6 +116,42 @@ describe('getPerson', () => {
   });
 });
 
+describe('getPersonOverview', () => {
+  it('asks for one page of up to 200 entries per list', async () => {
+    const empty = { items: [], total: 0, limit: 200, offset: 0 };
+    const overview = { given: empty, giftings: empty, ideas: empty, occasions: empty };
+    const { api, requests } = createApi(async () => jsonResponse(overview));
+
+    await expect(getPersonOverview(api, firstPerson.id)).resolves.toEqual({
+      ok: true,
+      data: overview
+    });
+    const url = new URL(requests[0].url);
+    expect(url.pathname).toBe(`/api/v1/people/${firstPerson.id}/overview`);
+    expect(url.searchParams.get('limit')).toBe('200');
+    expect(url.searchParams.get('offset')).toBe('0');
+  });
+
+  it('turns the page into an offset', async () => {
+    const empty = { items: [], total: 0, limit: 200, offset: 400 };
+    const overview = { given: empty, giftings: empty, ideas: empty, occasions: empty };
+    const { api, requests } = createApi(async () => jsonResponse(overview));
+
+    await getPersonOverview(api, firstPerson.id, 3);
+    expect(new URL(requests[0].url).searchParams.get('offset')).toBe('400');
+  });
+
+  it('returns 404 for an unknown person', async () => {
+    const { api } = createApi(async () => jsonResponse({ detail: 'Not found' }, 404));
+
+    await expect(getPersonOverview(api, firstPerson.id)).resolves.toMatchObject({
+      ok: false,
+      status: 404,
+      message: 'Person nicht gefunden.'
+    });
+  });
+});
+
 describe('createPerson', () => {
   it('sends the person fields and returns the created person', async () => {
     const { api, requests } = createApi(async () => jsonResponse(firstPerson, 201));
@@ -193,5 +231,59 @@ describe('listPersonsPage', () => {
 
     await listPersons(api);
     expect(new URL(requests[0].url).searchParams.get('limit')).toBe('200');
+  });
+});
+
+describe('parsePersonForm', () => {
+  it('trims the fields and turns empty optional ones into null', () => {
+    const form = new FormData();
+    form.set('name', '  Lena ');
+    form.set('relationship', ' ');
+    expect(parsePersonForm(form)).toEqual({
+      values: { name: 'Lena', birthday: null, relationship: null, notes: null },
+      errors: {}
+    });
+  });
+
+  it('requires a name of at most 100 characters', () => {
+    const form = new FormData();
+    expect(parsePersonForm(form).errors.name).toBe('Bitte gib einen Namen an.');
+    form.set('name', 'x'.repeat(101));
+    expect(parsePersonForm(form).errors.name).toBe(
+      'Der Name darf höchstens 100 Zeichen lang sein.'
+    );
+  });
+
+  it('counts characters like the backend, so an emoji counts once', () => {
+    const form = new FormData();
+    form.set('name', '😀'.repeat(100));
+    form.set('relationship', '😀'.repeat(100));
+    form.set('notes', '😀'.repeat(2000));
+    expect(parsePersonForm(form).errors).toEqual({});
+
+    form.set('name', '😀'.repeat(101));
+    form.set('relationship', '😀'.repeat(101));
+    form.set('notes', '😀'.repeat(2001));
+    expect(parsePersonForm(form).errors).toEqual({
+      name: 'Der Name darf höchstens 100 Zeichen lang sein.',
+      relationship: 'Die Beziehung darf höchstens 100 Zeichen lang sein.',
+      notes: 'Notizen dürfen höchstens 2000 Zeichen lang sein.'
+    });
+  });
+
+  it.each(['2026-02-30', '12/24/2026', '1'])('rejects the birthday %s at the field', (birthday) => {
+    const form = new FormData();
+    form.set('name', 'Lena');
+    form.set('birthday', birthday);
+    expect(parsePersonForm(form).errors.birthday).toBe('Bitte gib ein gültiges Datum an.');
+  });
+
+  it('keeps a real birthday', () => {
+    const form = new FormData();
+    form.set('name', 'Lena');
+    form.set('birthday', '1990-05-14');
+    const { values, errors } = parsePersonForm(form);
+    expect(errors).toEqual({});
+    expect(values.birthday).toBe('1990-05-14');
   });
 });

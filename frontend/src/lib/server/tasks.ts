@@ -7,6 +7,7 @@
  */
 
 import type { components } from '#lib/api/schema.js';
+import { isValidDate } from './dates';
 import { text } from './gifts';
 import { createGifting, deleteGifting } from './giftings';
 import { listAll, send, sendEmpty, type Messages, type Result } from './result';
@@ -57,14 +58,6 @@ export function deleteTask(api: Api, id: string): Promise<Result<null>> {
     api.DELETE('/api/v1/tasks/{task_id}', { params: { path: { task_id: id } } }),
     messages
   );
-}
-
-function isValidDate(value: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return false;
-  const [year, month, day] = match.slice(1).map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 /** Maps the task form to `TaskFields` and validates it; a missing status is `open`. */

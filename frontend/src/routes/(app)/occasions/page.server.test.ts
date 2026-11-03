@@ -77,6 +77,15 @@ describe('actions', () => {
     });
   });
 
+  it.each(['2026-02-30', '12/24/2026', '1'])('rejects the date %s at its field', async (date) => {
+    const event = actionEvent('', { ...form, date });
+    await expect(actions.create(event)).resolves.toMatchObject({
+      status: 400,
+      data: { errors: { date: 'Bitte gib ein gültiges Datum an.' } }
+    });
+    expect(event.locals.api.POST).not.toHaveBeenCalled();
+  });
+
   it('update stays on the current page', async () => {
     await expect(actions.update(actionEvent('?page=3', form))).rejects.toMatchObject({
       status: 303,

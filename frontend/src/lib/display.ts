@@ -59,6 +59,18 @@ export const formatDate = (iso: string | null) => (iso ? iso.split('-').reverse(
 export const formatPrice = (price: string | number | null | undefined) =>
   price === null || price === undefined ? '' : String(price).replace('.', ',');
 
+/** Price range of a gift idea, e.g. „20,00 – 30,00 EUR“ or „ab 20,00“; empty without a price. */
+export function formatPriceRange(gift: {
+  price_from: string | null;
+  price_to: string | null;
+  currency: string | null;
+}): string {
+  const from = formatPrice(gift.price_from);
+  const to = formatPrice(gift.price_to);
+  const range = from && to ? `${from} – ${to}` : from ? `ab ${from}` : to ? `bis ${to}` : '';
+  return range && gift.currency ? `${range} ${gift.currency}` : range;
+}
+
 /**
  * One line per gift idea, e.g. „3 Beschenkungen: 2× ◔ Geplant · ✓ Verschenkt“: `lead`, then the
  * `parts` joined by „ · “. The icon stays separate, so the page can hide it from screen readers.

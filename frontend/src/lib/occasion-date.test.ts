@@ -5,6 +5,9 @@ describe('occasionDateLabel', () => {
   it('says the birthday date comes from each person', () => {
     expect(occasionDateLabel({ rule: 'birthday', date: null })).toBe('Datum je Person');
   });
+  it("shows a known person's birthday without a year", () => {
+    expect(occasionDateLabel({ rule: 'birthday', date: null }, '1990-03-12')).toBe('12.03.');
+  });
   it('shows Christmas without a year', () => {
     expect(occasionDateLabel({ rule: 'christmas', date: '2026-12-24' })).toBe('24.12.');
   });

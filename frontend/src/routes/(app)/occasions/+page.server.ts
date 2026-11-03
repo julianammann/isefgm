@@ -8,6 +8,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
+import { isValidDate } from '#lib/server/dates.js';
 import { listPersons } from '#lib/server/persons.js';
 import {
   createOccasion,
@@ -49,7 +50,7 @@ function parseForm(form: FormData): { values: OccasionInput; errors: FieldErrors
   if (!name) errors.name = 'Bitte gib einen Namen an.';
   else if (name.length > 100) errors.name = 'Der Name darf höchstens 100 Zeichen lang sein.';
   if (!date) errors.date = 'Bitte gib ein Datum an.';
-  else if (Number.isNaN(Date.parse(date))) {
+  else if (!isValidDate(date)) {
     errors.date = 'Bitte gib ein gültiges Datum an.';
   }
   if (recurrence !== 'none' && recurrence !== 'yearly') {

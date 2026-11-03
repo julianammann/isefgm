@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import FormDialog from '#lib/components/FormDialog.svelte';
   import GiftFormDialog from '#lib/components/GiftFormDialog.svelte';
-  import { CATEGORIES, formatPrice } from '#lib/display.js';
+  import { CATEGORIES, formatPriceRange } from '#lib/display.js';
   import NotesSection from './NotesSection.svelte';
   import LinksSection from './LinksSection.svelte';
   import GiftingsSection from './GiftingsSection.svelte';
@@ -31,12 +31,7 @@
       occasion_ids: gift.occasions.map((o) => o.id)
     }
   );
-  const price = $derived.by(() => {
-    const from = formatPrice(gift.price_from);
-    const to = formatPrice(gift.price_to);
-    const range = from && to ? `${from} – ${to}` : from ? `ab ${from}` : to ? `bis ${to}` : '';
-    return range && gift.currency ? `${range} ${gift.currency}` : range;
-  });
+  const price = $derived(formatPriceRange(gift));
 
   let editOpen = $state(false);
   let deleteOpen = $state(false);
