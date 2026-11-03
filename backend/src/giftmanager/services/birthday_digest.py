@@ -1,10 +1,11 @@
 """Monthly digest of next month's birthdays (F-10)."""
 
+from calendar import monthrange
 from datetime import date, datetime, timedelta
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import exists, extract, func, select
+from sqlalchemy import extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.config import get_settings
@@ -18,8 +19,10 @@ from giftmanager.services.notification import (
     PlannedMail,
     active_recipients,
     format_day,
+    given_to_linked_person,
     local_at,
     local_date,
+    skip_failed_account,
 )
 from giftmanager.services.occasion import next_occurrence
 from giftmanager.services.ownership import owned
@@ -61,16 +64,6 @@ async def _ideas_by_person(
     session: AsyncSession, user_id: UUID, person_ids: list[UUID]
 ) -> dict[UUID, list[tuple[UUID, str]]]:
     """Per person: linked gifts not yet given to them, plus gifts of their open giftings."""
-    given_to_person = (
-        exists()
-        .where(
-            Gifting.gift_id == Gift.id,
-            Gifting.status == GiftingStatus.GIVEN,
-            gifting_person.c.gifting_id == Gifting.id,
-            gifting_person.c.person_id == gift_person.c.person_id,
-        )
-        .correlate(Gift, gift_person)
-    )
     linked = (
         select(
             gift_person.c.person_id.label("person_id"),
@@ -78,7 +71,11 @@ async def _ideas_by_person(
             Gift.title.label("title"),
         )
         .join(Gift, Gift.id == gift_person.c.gift_id)
-        .where(gift_person.c.person_id.in_(person_ids), Gift.owner_id == user_id, ~given_to_person)
+        .where(
+            gift_person.c.person_id.in_(person_ids),
+            Gift.owner_id == user_id,
+            ~given_to_linked_person(),
+        )
     )
     planned = (
         select(
@@ -135,30 +132,33 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
     month, scheduled_for, expires_at = digest_window(now)
     mails: list[PlannedMail] = []
     # shortcut: two queries per account (people, ideas), fine for the test accounts, revisit with many accounts.
+    # 29.02. is shown as 28.02. outside leap years, so sort by the day shown
+    shown_day = func.least(extract("day", Person.birthday), monthrange(month.year, month.month)[1])
     for user in await active_recipients(session):
-        people = list(
-            await session.scalars(
-                owned(Person, user.id)
-                .where(extract("month", Person.birthday) == month.month)
-                .order_by(extract("day", Person.birthday), func.lower(Person.name), Person.id)
+        async with skip_failed_account(session, user):
+            people = list(
+                await session.scalars(
+                    owned(Person, user.id)
+                    .where(extract("month", Person.birthday) == month.month)
+                    .order_by(shown_day, func.lower(Person.name), Person.id)
+                )
             )
-        )
-        if not people:
-            continue
-        ideas = await _ideas_by_person(session, user.id, [p.id for p in people])
-        mails.append(
-            PlannedMail(
-                owner_id=user.id,
-                recipient=user.email,
-                type=NotificationType.BIRTHDAY,
-                reference_type=None,
-                reference_id=None,
-                event_date=month,
-                interval="monthly",
-                scheduled_for=scheduled_for,
-                expires_at=expires_at,
-                subject=f"Geburtstage im {MONTH_NAMES[month.month - 1]}",
-                body=_body(user, month, people, ideas),
+            if not people:
+                continue
+            ideas = await _ideas_by_person(session, user.id, [p.id for p in people])
+            mails.append(
+                PlannedMail(
+                    owner_id=user.id,
+                    recipient=user.email,
+                    type=NotificationType.BIRTHDAY,
+                    reference_type=None,
+                    reference_id=None,
+                    event_date=month,
+                    interval="monthly",
+                    scheduled_for=scheduled_for,
+                    expires_at=expires_at,
+                    subject=f"Geburtstage im {MONTH_NAMES[month.month - 1]}",
+                    body=_body(user, month, people, ideas),
+                )
             )
-        )
     return mails

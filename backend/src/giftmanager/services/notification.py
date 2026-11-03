@@ -1,20 +1,22 @@
 """Planning and dispatch of notification mails (F-13)."""
 
 import logging
-from collections.abc import Iterable
+from collections.abc import AsyncGenerator, Iterable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import case, select, update
+from sqlalchemy import Exists, case, exists, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.clock import Clock
 from giftmanager.core.config import get_settings
 from giftmanager.core.mail import Mail, Mailer, MailError, MailFailure, is_reserved_address
-from giftmanager.models.gifting import GiftingStatus
+from giftmanager.models.gift import Gift, gift_person
+from giftmanager.models.gifting import Gifting, GiftingStatus, gifting_person
 from giftmanager.models.notification import (
     Notification,
     NotificationStatus,
@@ -95,6 +97,30 @@ async def active_recipients(session: AsyncSession) -> list[User]:
         else:
             recipients.append(user)
     return recipients
+
+
+@asynccontextmanager
+async def skip_failed_account(session: AsyncSession, user: User) -> AsyncGenerator[None]:
+    """Savepoint for one account's planning; an error is logged and only that account is skipped."""
+    try:
+        async with session.begin_nested():
+            yield
+    except Exception as exc:  # noqa: BLE001  # logged by type only, as in the scheduler
+        logger.error("Planning for account %s failed: %s", user.id, type(exc).__name__)
+
+
+def given_to_linked_person() -> Exists:
+    """EXISTS: the gift was already given to the person it is linked to (`gift_person`)."""
+    return (
+        exists()
+        .where(
+            Gifting.gift_id == Gift.id,
+            Gifting.status == GiftingStatus.GIVEN,
+            gifting_person.c.gifting_id == Gifting.id,
+            gifting_person.c.person_id == gift_person.c.person_id,
+        )
+        .correlate(Gift, gift_person)
+    )
 
 
 async def plan(session: AsyncSession, mails: Iterable[PlannedMail]) -> int:
