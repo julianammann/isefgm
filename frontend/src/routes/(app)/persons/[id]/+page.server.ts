@@ -1,5 +1,5 @@
 /**
- * Person view (`/persons/<id>`): past gifts and planned giftings side by side, each with its
+ * Person view (`/persons/<id>`): past gifts and planned giftings, each with its
  * occasion, procurement state and tasks, plus the gift ideas and occasions of the person (F-09).
  * The person itself is edited and deleted here as well (F-02).
  *

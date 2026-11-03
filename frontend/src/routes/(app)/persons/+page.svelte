@@ -113,8 +113,7 @@
                 <a
                   href={resolve(`/persons${pageQuery(data.page, { edit: person.id })}`)}
                   class="text-sm underline"
-                  >Bearbeiten
-                  <span class="sr-only">: {person.name}</span>
+                  >Bearbeiten<span class="sr-only">: {person.name}</span>
                 </a>
                 <button
                   type="button"
