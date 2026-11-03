@@ -111,7 +111,7 @@ async def test_past_gifts_are_only_given_ones_latest_first(client: AsyncClient, 
 
 
 @pytest.mark.requirement("F-15", "Q-01")
-async def test_list_shows_nothing_of_another_account(
+async def test_list_excludes_foreign_data_and_preserves_own_data(
     client: AsyncClient, session: AsyncSession, anna: User
 ) -> None:
     lena = await post(client, PEOPLE, {"name": "Lena"})
@@ -139,6 +139,45 @@ async def test_list_shows_nothing_of_another_account(
     r = await client.get(FULL_LIST)
     assert r.status_code == 200
     assert r.json() == {"people": [], "gifts": [], "given": []}
+
+    own_person = await post(client, PEOPLE, {"name": "Tom"})
+    own_gift = await post(
+        client,
+        GIFTS,
+        {"title": "Spiel", "person_ids": [own_person["id"]]},
+    )
+    own_note = await post(
+        client,
+        NOTES,
+        {"gift_id": own_gift["id"], "label": "Hinweis", "text": "Für Tom"},
+    )
+    own_occasion = await post(
+        client,
+        OCCASIONS,
+        {"name": "Toms Feier", "date": "2026-01-07"},
+    )
+    own_given = await post(
+        client,
+        GIFTINGS,
+        {
+            "gift_id": own_gift["id"],
+            "status": "given",
+            "person_ids": [own_person["id"]],
+            "occasion_id": own_occasion["id"],
+            "occasion_date": "2026-01-07",
+            "given_on": "2026-01-07",
+        },
+    )
+
+    response = await client.get(FULL_LIST)
+    assert response.status_code == 200
+    assert response.json() == {
+        "people": [own_person],
+        "gifts": [
+            {**own_gift, "links": [], "notes": [own_note]},
+        ],
+        "given": [own_given],
+    }
 
 
 @pytest.mark.requirement("F-15", "Q-01")

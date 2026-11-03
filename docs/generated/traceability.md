@@ -35,6 +35,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-02 | `tests/test_people.py::test_update_replaces_all_fields` | passed |
 | F-02 | `tests/test_people.py::test_delete_person` | passed |
 | F-02 | `tests/test_people.py::test_list_is_sorted_by_name_and_paginated` | passed |
+| F-02 | `tests/test_people.py::test_people_pagination_excludes_other_accounts` | passed |
 | F-02 | `tests/test_people.py::test_list_rejects_oversized_page` | passed |
 | F-02 | `tests/test_people.py::test_people_of_another_account_are_invisible[GET]` | passed |
 | F-02 | `tests/test_people.py::test_people_of_another_account_are_invisible[PUT]` | passed |
@@ -121,6 +122,15 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-03 | `tests/test_rule_occasions.py::test_gift_idea_lists_rule_occasions_before_own_ones` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_block_counts_towards_the_first_page` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_occasion_cannot_be_changed_or_deleted` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[birthday-GET]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[birthday-PUT]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[birthday-DELETE]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[christmas-GET]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[christmas-PUT]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[christmas-DELETE]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[easter-GET]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[easter-PUT]` | passed |
+| F-03 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[easter-DELETE]` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_types_cannot_be_chosen[type_id0]` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_types_cannot_be_chosen[type_id1]` | passed |
 | F-03 | `tests/test_rule_occasions.py::test_rule_types_cannot_be_chosen[type_id2]` | passed |
@@ -608,6 +618,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-14 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_can_be_fetched_with_the_token` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_of_an_idea_for_two_shared_people` | passed |
+| F-14 | `tests/test_images.py::test_removing_a_person_from_share_revokes_their_image` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_is_refused[unknown-token]` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_is_refused[expired]` | passed |
 | F-14 | `tests/test_images.py::test_shared_image_is_refused[deactivated]` | passed |
@@ -649,7 +660,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-15 | `tests/test_full_list.py::test_empty_account_gets_empty_lists` | passed |
 | F-15 | `tests/test_full_list.py::test_list_holds_people_ideas_and_past_gifts` | passed |
 | F-15 | `tests/test_full_list.py::test_past_gifts_are_only_given_ones_latest_first` | passed |
-| F-15 | `tests/test_full_list.py::test_list_shows_nothing_of_another_account` | passed |
+| F-15 | `tests/test_full_list.py::test_list_excludes_foreign_data_and_preserves_own_data` | passed |
 | F-15 | `tests/test_full_list.py::test_list_requires_login` | passed |
 | F-16 | `tests/test_suggestions.py::test_features_shared_by_several_accounts_are_suggested_most_frequent_first` | passed |
 | F-16 | `tests/test_suggestions.py::test_price_band_follows_the_lower_end_of_the_price[0-under_20]` | passed |
@@ -698,6 +709,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-16 | `tests/test_suggestions.py::test_unknown_suggestion_returns_404[/0192f6a0-0000-7000-8000-000000000000]` | passed |
 | F-16 | `tests/test_suggestions.py::test_unknown_suggestion_returns_404[/0192f6a0-0000-7000-8000-000000000000/dismiss]` | passed |
 | F-17 | `tests/test_auth.py::test_delete_account_removes_user_and_sessions` | passed |
+| F-17 | `tests/test_auth.py::test_delete_account_without_session_is_unauthorized` | passed |
 | F-17 | `tests/test_giftings.py::test_deleting_the_account_deletes_its_giftings` | passed |
 | F-17 | `tests/test_gifts.py::test_deleting_the_account_deletes_its_gifts` | passed |
 | F-17 | `tests/test_gifts.py::test_deleting_the_account_deletes_its_links` | passed |
@@ -714,9 +726,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-17 | `tests/test_uploads.py::test_account_files_are_removed_after_commit` | passed |
 | Q-01 | `tests/test_auth.py::test_logout_all_leaves_other_users_logged_in` | passed |
 | Q-01 | `tests/test_auth.py::test_logout_all_without_session_is_unauthorized` | passed |
+| Q-01 | `tests/test_auth.py::test_delete_account_without_session_is_unauthorized` | passed |
 | Q-01 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
 | Q-01 | `tests/test_birthday_digest.py::test_each_account_sees_only_its_own_people_and_ideas` | passed |
-| Q-01 | `tests/test_full_list.py::test_list_shows_nothing_of_another_account` | passed |
+| Q-01 | `tests/test_full_list.py::test_list_excludes_foreign_data_and_preserves_own_data` | passed |
 | Q-01 | `tests/test_full_list.py::test_list_requires_login` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_require_login` | passed |
 | Q-01 | `tests/test_giftings.py::test_giftings_of_another_account_are_invisible[GET]` | passed |
@@ -744,6 +757,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_images.py::test_upload_to_a_foreign_gift_is_rejected` | passed |
 | Q-01 | `tests/test_images.py::test_list_filtered_to_a_foreign_gift_is_empty` | passed |
 | Q-01 | `tests/test_images.py::test_shared_view_lists_the_images_of_shared_ideas` | passed |
+| Q-01 | `tests/test_images.py::test_removing_a_person_from_share_revokes_their_image` | passed |
 | Q-01 | `tests/test_images.py::test_shared_image_is_refused[unknown-token]` | passed |
 | Q-01 | `tests/test_images.py::test_shared_image_is_refused[expired]` | passed |
 | Q-01 | `tests/test_images.py::test_shared_image_is_refused[deactivated]` | passed |
@@ -772,12 +786,22 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_occasions.py::test_occasions_require_login` | passed |
 | Q-01 | `tests/test_occasions.py::test_people_of_another_account_cannot_be_linked[POST]` | passed |
 | Q-01 | `tests/test_occasions.py::test_people_of_another_account_cannot_be_linked[PUT]` | passed |
+| Q-01 | `tests/test_people.py::test_people_pagination_excludes_other_accounts` | passed |
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[GET]` | passed |
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[PUT]` | passed |
 | Q-01 | `tests/test_people.py::test_people_of_another_account_are_invisible[DELETE]` | passed |
 | Q-01 | `tests/test_people.py::test_people_require_login` | passed |
 | Q-01 | `tests/test_person_overview.py::test_person_of_another_account_returns_404` | passed |
 | Q-01 | `tests/test_person_overview.py::test_overview_requires_login` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[birthday-GET]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[birthday-PUT]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[birthday-DELETE]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[christmas-GET]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[christmas-PUT]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[christmas-DELETE]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[easter-GET]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[easter-PUT]` | passed |
+| Q-01 | `tests/test_rule_occasions.py::test_rule_occasions_of_another_account_are_invisible[easter-DELETE]` | passed |
 | Q-01 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_require_login` | passed |
 | Q-01 | `tests/test_share_links.py::test_share_links_of_another_account_are_invisible[GET]` | passed |
@@ -880,6 +904,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-03 | `tests/test_auth.py::test_initial_expiry_respects_max_lifetime` | passed |
 | Q-03 | `tests/test_auth.py::test_session_older_than_max_lifetime_is_rejected` | passed |
 | Q-03 | `tests/test_auth.py::test_login_purges_the_users_dead_sessions` | passed |
+| Q-03 | `tests/test_auth.py::test_delete_account_without_session_is_unauthorized` | passed |
 | Q-03 | `tests/test_auth.py::test_me_without_cookie_is_unauthorized` | passed |
 | Q-03 | `tests/test_config.py::test_app_env_defaults_to_production` | passed |
 | Q-03 | `tests/test_config.py::test_registration_is_closed_by_default` | passed |
@@ -948,6 +973,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-05 | `tests/test_notes.py::test_list_rejects_oversized_page` | passed |
 | Q-05 | `tests/test_occasions.py::test_list_is_sorted_by_date_and_paginated` | passed |
 | Q-05 | `tests/test_people.py::test_list_is_sorted_by_name_and_paginated` | passed |
+| Q-05 | `tests/test_people.py::test_people_pagination_excludes_other_accounts` | passed |
 | Q-05 | `tests/test_people.py::test_list_rejects_oversized_page` | passed |
 | Q-05 | `tests/test_person_overview.py::test_every_list_is_paginated_with_the_same_limit_and_offset` | passed |
 | Q-05 | `tests/test_person_overview.py::test_number_of_queries_does_not_grow_with_the_rows` | passed |

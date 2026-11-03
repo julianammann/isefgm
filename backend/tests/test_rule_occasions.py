@@ -30,6 +30,7 @@ from giftmanager.services import occasion as occasion_service
 from giftmanager.services.occasion import easter_sunday, rule_date
 from tests.accounts import log_in_new_user
 from tests.conftest import FixedClock
+from tests.ownership import ITEM_METHODS, assert_invisible_to_other_account
 
 
 @pytest.mark.requirement("F-03")
@@ -408,6 +409,27 @@ async def test_rule_occasion_cannot_be_changed_or_deleted(
         assert (await client.put(url, json=OWN_BODY)).status_code == 409
         assert (await client.delete(url)).status_code == 409
         assert (await client.get(url)).status_code == 200
+
+
+@pytest.mark.requirement("F-03", "Q-01")
+@pytest.mark.parametrize("method", ITEM_METHODS)
+@pytest.mark.parametrize("rule", ["birthday", "christmas", "easter"])
+async def test_rule_occasions_of_another_account_are_invisible(
+    client: AsyncClient,
+    session: AsyncSession,
+    rule_account: list[dict[str, Any]],
+    method: str,
+    rule: str,
+) -> None:
+    occasion = next(item for item in rule_account if item["rule"] == rule)
+    await assert_invisible_to_other_account(
+        client,
+        session,
+        method=method,
+        collection=OCCASIONS,
+        item_id=occasion["id"],
+        replacement={**OWN_BODY},
+    )
 
 
 @pytest.mark.requirement("F-03", "F-04")

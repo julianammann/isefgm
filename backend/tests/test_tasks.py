@@ -264,6 +264,11 @@ async def test_tasks_require_login(client: AsyncClient) -> None:
     body = {"gifting_id": UNKNOWN_ID, "title": "Karte schreiben"}
     assert (await client.post(TASKS, json=body)).status_code == 401
 
+    item = f"{TASKS}/{UNKNOWN_ID}"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json=body)).status_code == 401
+    assert (await client.delete(item)).status_code == 401
+
 
 # --- Tenant separation (Q-01) --------------------------------------------------
 

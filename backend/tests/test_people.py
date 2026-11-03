@@ -115,6 +115,36 @@ async def test_list_is_sorted_by_name_and_paginated(client: AsyncClient, anna: U
     assert second.json()["total"] == 3
 
 
+@pytest.mark.requirement("F-02", "Q-01", "Q-05")
+async def test_people_pagination_excludes_other_accounts(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    for name in ["Anton", "Carla", "Eva"]:
+        response = await client.post(PEOPLE, json={"name": name})
+        assert response.status_code == 201
+
+    await log_in_new_user(client, session, "bob@example.org")
+
+    for name in ["Bea", "Dora"]:
+        response = await client.post(PEOPLE, json={"name": name})
+        assert response.status_code == 201
+
+    first = await client.get(PEOPLE, params={"limit": 1, "offset": 0})
+    assert first.status_code == 200
+    assert [person["name"] for person in first.json()["items"]] == ["Bea"]
+    assert first.json()["total"] == 2
+
+    second = await client.get(PEOPLE, params={"limit": 1, "offset": 1})
+    assert second.status_code == 200
+    assert [person["name"] for person in second.json()["items"]] == ["Dora"]
+    assert second.json()["total"] == 2
+
+    third = await client.get(PEOPLE, params={"limit": 1, "offset": 2})
+    assert third.status_code == 200
+    assert third.json()["items"] == []
+    assert third.json()["total"] == 2
+
+
 @pytest.mark.requirement("F-02", "Q-05")
 async def test_list_rejects_oversized_page(client: AsyncClient, anna: User) -> None:
     r = await client.get(PEOPLE, params={"limit": 201})
@@ -148,6 +178,11 @@ async def test_unknown_or_malformed_id(client: AsyncClient, anna: User) -> None:
 async def test_people_require_login(client: AsyncClient) -> None:
     assert (await client.get(PEOPLE)).status_code == 401
     assert (await client.post(PEOPLE, json=LENA)).status_code == 401
+
+    item = f"{PEOPLE}/0192f6a0-0000-7000-8000-000000000000"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json=LENA)).status_code == 401
+    assert (await client.delete(item)).status_code == 401
 
 
 @pytest.mark.requirement("F-02", "F-17")

@@ -378,6 +378,14 @@ async def test_delete_account_removes_user_and_sessions(
     assert await session.scalar(select(func.count()).select_from(UserSession)) == 0
 
 
+@pytest.mark.requirement("F-17", "Q-01", "Q-03")
+async def test_delete_account_without_session_is_unauthorized(
+    client: AsyncClient,
+) -> None:
+    response = await client.delete(ACCOUNT)
+    assert response.status_code == 401
+
+
 @pytest.mark.requirement("Q-01", "Q-03")
 async def test_me_without_cookie_is_unauthorized(client: AsyncClient) -> None:
     r = await client.get(ME)

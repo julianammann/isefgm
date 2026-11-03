@@ -291,6 +291,11 @@ async def test_gifts_require_login(client: AsyncClient) -> None:
     assert (await client.get(GIFTS)).status_code == 401
     assert (await client.post(GIFTS, json=PI)).status_code == 401
 
+    item = f"{GIFTS}/{UNKNOWN_ID}"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json=PI)).status_code == 401
+    assert (await client.delete(item)).status_code == 401
+
 
 @pytest.mark.requirement("F-05", "F-17")
 async def test_deleting_the_account_deletes_its_gifts(

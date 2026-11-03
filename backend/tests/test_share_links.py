@@ -186,6 +186,11 @@ async def test_share_links_require_login(client: AsyncClient) -> None:
     assert (await client.get(SHARE_LINKS)).status_code == 401
     assert (await client.post(SHARE_LINKS, json={"person_ids": [UNKNOWN_ID]})).status_code == 401
 
+    item = f"{SHARE_LINKS}/{UNKNOWN_ID}"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json={"person_ids": [UNKNOWN_ID]})).status_code == 401
+    assert (await client.delete(item)).status_code == 401
+
 
 @pytest.mark.requirement("F-14", "Q-01")
 @pytest.mark.parametrize("method", ITEM_METHODS)
