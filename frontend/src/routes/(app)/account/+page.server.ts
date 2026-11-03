@@ -6,8 +6,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
-import { problemMessage } from '$lib/api/client';
-import { clearSessionCookies } from '$lib/server/session';
+import { problemMessage } from '#lib/api/client.js';
+import { clearSessionCookies } from '#lib/server/session.js';
 
 /**
  * `logoutAll`: ends every session of the account in the backend, on every device and this

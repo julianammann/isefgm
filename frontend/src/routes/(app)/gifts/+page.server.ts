@@ -13,11 +13,11 @@ import {
   parseGiftForm,
   updateGift,
   type GiftIn
-} from '$lib/server/gifts';
-import { groupByGift, listGiftings } from '$lib/server/giftings';
-import { listPersons } from '$lib/server/persons';
-import { listOccasions } from '$lib/server/occasions';
-import { pageCount, pageQuery, parsePage } from '$lib/pagination';
+} from '#lib/server/gifts.js';
+import { groupByGift, listGiftings } from '#lib/server/giftings.js';
+import { listPersons } from '#lib/server/persons.js';
+import { listOccasions } from '#lib/server/occasions.js';
+import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,

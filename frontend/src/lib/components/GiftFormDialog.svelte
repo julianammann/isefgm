@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { components } from '$lib/api/schema';
-  import FormDialog from '$lib/components/FormDialog.svelte';
-  import { CATEGORIES, formatPrice } from '$lib/display';
+  import type { components } from '#lib/api/schema.js';
+  import FormDialog from '#lib/components/FormDialog.svelte';
+  import { CATEGORIES, formatPrice } from '#lib/display.js';
 
   type GiftIn = components['schemas']['GiftIn'];
 

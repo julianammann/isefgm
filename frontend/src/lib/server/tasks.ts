@@ -6,7 +6,7 @@
  * @module
  */
 
-import type { components } from '$lib/api/schema';
+import type { components } from '#lib/api/schema.js';
 import { text } from './gifts';
 import { createGifting, deleteGifting } from './giftings';
 import { listAll, send, sendEmpty, type Messages, type Result } from './result';

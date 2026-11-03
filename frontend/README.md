@@ -69,10 +69,11 @@ Die Typen werden per Pre-Commit-Hook regeneriert, sobald sich Backend-Router ode
 
 ## Konfiguration
 
-| Variable  | Default                 | Bedeutung                                                                                                 |
-| --------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| `API_URL` | `http://localhost:8000` | Backend, das `handleFetch` und der Proxy ansprechen                                                       |
-| `ORIGIN`  | –                       | Öffentliche Origin, nötig für Form Actions und schreibende `/api`-Requests in Produktion (`adapter-node`) |
+| Variable          | Default                 | Bedeutung                                                                                                                                                                                 |
+| ----------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_URL`         | `http://localhost:8000` | Backend, das `handleFetch` und der Proxy ansprechen                                                                                                                                       |
+| `PROTOCOL_HEADER` | –                       | Header mit dem öffentlichen Protokoll, hinter Traefik `x-forwarded-proto`. Ohne ihn lehnt die CSRF-Prüfung in Produktion Form Actions und schreibende `/api`-Requests ab (`adapter-node`) |
+| `HOST_HEADER`     | –                       | Header mit dem öffentlichen Host, hinter Traefik `x-forwarded-host`                                                                                                                       |
 
 ## Docker
 

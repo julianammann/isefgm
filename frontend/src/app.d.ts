@@ -1,4 +1,4 @@
-import type { ApiClient, User } from '$lib/api/client';
+import type { ApiClient, User } from '#lib/api/client.js';
 
 declare global {
   namespace App {

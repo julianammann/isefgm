@@ -1,8 +1,8 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import { actionUrl, pageQuery } from '$lib/pagination';
+  import Pagination from '#lib/components/Pagination.svelte';
+  import { actionUrl, pageQuery } from '#lib/pagination.js';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -83,7 +83,7 @@
               {/if}
             </span>
             <a
-              href={resolve(`/persons${pageQuery(data.page, { edit: person.id })}`)}
+              href={resolve(`persons${pageQuery(data.page, { edit: person.id })}`)}
               class="text-sm underline"
             >
               Bearbeiten<span class="sr-only">: {person.name}</span>
@@ -102,7 +102,7 @@
     <Pagination
       page={data.page}
       total={data.total}
-      href={(p) => resolve(`/persons${pageQuery(p)}`)}
+      href={(p) => resolve(`persons${pageQuery(p)}`)}
     />
   </section>
 
@@ -158,8 +158,13 @@
         novalidate
         class="mt-4 flex flex-col gap-3"
       >
-        {#if form?.message}<p role="alert" class="text-sm text-red-800">{form.message}</p>{/if}
-        {#if isEdit}<input type="hidden" name="id" value={data.editing?.id} />{/if}
+        {#if form?.message}
+          <p role="alert" class="text-sm text-red-800">{form.message}</p>
+        {/if}
+
+        {#if isEdit}
+          <input type="hidden" name="id" value={data.editing?.id} />
+        {/if}
 
         <label for="name" class="text-sm font-medium">Name</label>
         <input
@@ -210,14 +215,17 @@
           aria-invalid={errors.notes ? 'true' : undefined}
           aria-describedby={errors.notes ? 'notes-error' : undefined}>{values.notes ?? ''}</textarea
         >
-        {#if errors.notes}<p id="notes-error" class="text-sm text-red-800">{errors.notes}</p>{/if}
+
+        {#if errors.notes}
+          <p id="notes-error" class="text-sm text-red-800">{errors.notes}</p>
+        {/if}
 
         <div class="flex items-center gap-4">
           <button type="submit" class="rounded bg-black px-4 py-2 text-white">
             {isEdit ? 'Speichern' : 'Anlegen'}
           </button>
           {#if isEdit}
-            <a href={resolve(`/persons${pageQuery(data.page)}`)} class="rounded border px-4 py-2"
+            <a href={resolve(`persons${pageQuery(data.page)}`)} class="rounded border px-4 py-2"
               >Abbrechen</a
             >
           {:else}

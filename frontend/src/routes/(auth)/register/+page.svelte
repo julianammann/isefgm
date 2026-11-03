@@ -73,6 +73,7 @@
   {/if}
 
   <p class="mt-6 text-sm">
-    Schon registriert? <a class="underline" href={resolve('/login')}>Anmelden</a>
+    Schon registriert?
+    <a class="underline" href={resolve('login')}>Anmelden</a>
   </p>
 </main>

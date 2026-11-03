@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { components } from '$lib/api/schema';
+import type { components } from '#lib/api/schema.js';
 
 type Occasion = components['schemas']['OccasionOut'];
 

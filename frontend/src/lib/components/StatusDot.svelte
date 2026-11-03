@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SystemStatus } from '$lib/health';
+  import type { SystemStatus } from '#lib/health.js';
 
   let { status }: { status: SystemStatus } = $props();
 

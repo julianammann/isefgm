@@ -5,7 +5,7 @@
  *
  * @module
  */
-import type { User } from '$lib/api/client';
+import type { User } from '#lib/api/client.js';
 
 /** Message of the 503 page when the backend cannot tell who is logged in. */
 export const SERVICE_UNAVAILABLE =

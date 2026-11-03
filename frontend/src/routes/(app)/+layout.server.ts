@@ -1,6 +1,6 @@
 /**
  * Shared data for every page that requires a login (route group `(app)`). The guard
- * itself runs in `hooks.server.ts` (`guard` from `$lib/server/guard`), which also
+ * itself runs in `hooks.server.ts` (`guard` from `#lib/server/guard.js`), which also
  * covers form actions and page loads; a layout load covers neither. The hook also
  * answers with 503 when the backend cannot tell who is logged in.
  *

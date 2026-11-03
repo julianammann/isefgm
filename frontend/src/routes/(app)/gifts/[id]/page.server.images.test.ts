@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { MAX_IMAGE_BYTES } from '$lib/images';
+import { MAX_IMAGE_BYTES } from '#lib/images.js';
 import { actions } from './+page.server.ts';
 
 type ActionEvent = Parameters<typeof actions.delete>[0];

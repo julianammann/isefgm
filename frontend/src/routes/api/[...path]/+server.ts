@@ -5,13 +5,11 @@
  *
  * @module
  */
-import { env } from '$env/dynamic/private';
+import { API_URL } from '$app/env/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-import { HOP_BY_HOP, proxyTarget, upstreamHeaders } from '$lib/server/proxy';
-
-const API_URL = env.API_URL ?? 'http://localhost:8000';
+import { HOP_BY_HOP, proxyTarget, upstreamHeaders } from '#lib/server/proxy.js';
 
 const proxy: RequestHandler = async ({ request, params, url }) => {
   const target = proxyTarget(params.path, url.search, API_URL);

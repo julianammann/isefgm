@@ -95,7 +95,6 @@ services:
       - no-new-privileges:true
     environment:
       API_URL: http://isefgm-api:8000
-      ORIGIN: ${ORIGIN:-http://localhost:3000}
       # Images up to 5 MB plus multipart overhead; adapter-node defaults to 512K.
       BODY_SIZE_LIMIT: 6M
       # Same value as the api: the api enforces it, the frontend only hides the link.
