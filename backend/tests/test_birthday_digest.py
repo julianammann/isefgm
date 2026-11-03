@@ -200,7 +200,8 @@ async def test_scheduler_sends_the_digest_once_per_month(
 ) -> None:
     user = await make_committed_user(committed_sessionmaker)
     async with committed_sessionmaker() as s, s.begin():
-        await add_person(s, user, "Anna", date(1990, 12, 3))
+        # No F-12 reminder (14 days ahead) is due on any of the runs below.
+        await add_person(s, user, "Anna", date(1990, 12, 20))
         await add_person(s, user, "Jan", date(2000, 1, 15))
     runs: list[tuple[datetime, list[str]]] = [
         (NOV_1, ["Geburtstage im Dezember"]),
@@ -211,12 +212,7 @@ async def test_scheduler_sends_the_digest_once_per_month(
         clock.current = now
         mailer = RecordingMailer()
         await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
-        # Only the digest; run_once also sends F-12 reminders (tests/test_occasion_reminder.py).
-        assert [
-            m.subject
-            for m in mailer.sent
-            if m.to == user.email and m.subject.startswith("Geburtstage im")
-        ] == subjects, now
+        assert [m.subject for m in mailer.sent if m.to == user.email] == subjects, now
 
 
 async def test_a_failing_account_does_not_stop_the_others(
