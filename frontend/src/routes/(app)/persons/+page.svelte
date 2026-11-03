@@ -5,6 +5,8 @@
   import { page } from '$app/state';
   import Pagination from '#lib/components/Pagination.svelte';
   import PersonFormDialog from '#lib/components/PersonFormDialog.svelte';
+  import ShareCreatedDialog from '#lib/components/ShareCreatedDialog.svelte';
+  import ShareLinkDialog from '#lib/components/ShareLinkDialog.svelte';
   import { formatDate } from '#lib/display.js';
   import { actionUrl, pageQuery } from '#lib/pagination.js';
   import type { ActionData, PageProps } from './$types';
@@ -17,7 +19,10 @@
    * belongs to an earlier opening. A new object per opening re-creates the dialog.
    */
   let session = $state.raw<{ seen: ActionData }>({ seen: null });
-  const personForm = $derived(form !== session.seen && form?.values ? form : null);
+  // Share results carry a scope; person results do not.
+  const personForm = $derived(
+    form !== session.seen && form?.values && form.scope === undefined ? form : null
+  );
   const values = $derived(
     personForm?.values ??
       data.editing ?? { name: '', birthday: null, relationship: null, notes: null }
@@ -52,6 +57,34 @@
     toDelete = person;
     dialog?.showModal();
   }
+
+  /** One opening of the share dialog, started from the row of `person`. */
+  let shareSession = $state.raw<{ seen: ActionData; person: { id: string; name: string } }>({
+    seen: null,
+    person: { id: '', name: '' }
+  });
+  let shareOpen = $state(false);
+  const shareFailed = $derived(
+    form !== shareSession.seen && form?.scope === 'share' && !form.created ? form : null
+  );
+
+  function openShare(person: { id: string; name: string }) {
+    shareSession = { seen: form, person };
+    createdSeen = form;
+    shareOpen = true;
+  }
+
+  /** The action result of the last created link, until its dialog is opened for it. */
+  let createdSeen = $state.raw<ActionData>(null);
+  let createdOpen = $state(false);
+  const createdUrl = $derived(form !== createdSeen ? (form?.created?.url ?? null) : null);
+  // The token comes back only with the create result: swap the form for the link dialog.
+  $effect(() => {
+    if (createdUrl) {
+      shareOpen = false;
+      createdOpen = true;
+    }
+  });
 </script>
 
 <svelte:head
@@ -106,6 +139,15 @@
                 {/if}
               </div>
               <div class="flex items-center gap-4">
+                <button
+                  type="button"
+                  class="text-sm underline"
+                  aria-haspopup="dialog"
+                  aria-controls="share-dialog"
+                  onclick={() => openShare(person)}
+                >
+                  Teilen<span class="sr-only">: Ideen von {person.name}</span>
+                </button>
                 <a
                   href={resolve(`persons${pageQuery(data.page, { edit: person.id })}`)}
                   class="text-sm underline"
@@ -184,4 +226,20 @@
       onclose={leaveEdit}
     />
   {/key}
+
+  {#key shareSession}
+    <ShareLinkDialog
+      id="share-dialog"
+      heading="Ideen von {shareSession.person.name} teilen"
+      submitLabel="Link erstellen"
+      action={actionUrl('share', data.page)}
+      bind:open={shareOpen}
+      people={data.people}
+      values={shareFailed?.values ?? { person_ids: [shareSession.person.id], expires_on: null }}
+      errors={shareFailed?.errors ?? {}}
+      message={shareFailed?.message ?? null}
+    />
+  {/key}
+
+  <ShareCreatedDialog bind:open={createdOpen} url={createdUrl ?? ''} />
 </main>

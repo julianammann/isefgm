@@ -172,4 +172,18 @@ describe('handle: route guard', () => {
     expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
     expect(response.headers.get('X-Frame-Options')).toBe('DENY');
   });
+
+  it('lets anyone open a shared view and keeps its token out of referrers, caches and indexes', async () => {
+    const fake = fakeEvent({
+      method: 'GET',
+      path: '/shared/some-token',
+      routeId: '/shared/[token]',
+      origin: null
+    });
+    const response = await run(fake);
+    expect(fake.resolve).toHaveBeenCalledOnce();
+    expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(response.headers.get('X-Robots-Tag')).toBe('noindex');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+  });
 });
