@@ -508,6 +508,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-11 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
 | F-11 | `tests/test_season_overview.py::test_rule_occasions_next_to_a_user_defined_type` | passed |
 | F-11 | `tests/test_season_overview.py::test_a_failing_account_does_not_stop_the_others` | passed |
+| F-12 | `tests/test_notifications.py::test_plan_refreshes_the_text_of_a_row_not_sent_yet` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_reminds_person_without_gifting` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_line_break_in_a_name_does_not_reach_the_subject` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_acquired_gift_does_not_suppress_the_rest` | passed |
@@ -528,6 +529,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-12 | `tests/test_occasion_reminder.py::test_birthday_reminder_without_rule_occasion` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_christmas_and_easter_get_no_two_week_reminder` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_scheduler_sends_the_reminder_once` | passed |
+| F-12 | `tests/test_occasion_reminder.py::test_reminder_not_sent_yet_gets_the_current_gaps` | passed |
+| F-12 | `tests/test_occasion_reminder.py::test_reminder_not_sent_yet_is_dropped_once_the_gaps_are_closed` | passed |
 | F-13 | `tests/test_config.py::test_smtp_defaults_point_at_local_mailpit` | passed |
 | F-13 | `tests/test_config.py::test_smtp_password_is_not_shown` | passed |
 | F-13 | `tests/test_mail.py::test_classify[exc0-transient]` | passed |
@@ -1022,6 +1025,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-01 | `tests/test_birthday_digest.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | QZ-05 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
 | QZ-05 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
+| QZ-05 | `tests/test_notifications.py::test_plan_refreshes_the_text_of_a_row_not_sent_yet` | passed |
 | QZ-05 | `tests/test_notifications.py::test_parallel_planning_creates_one_row` | passed |
 | QZ-05 | `tests/test_notifications.py::test_dispatch_sends_and_records` | passed |
 | QZ-05 | `tests/test_notifications.py::test_not_sent_before_scheduled_for` | passed |
@@ -1099,6 +1103,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_occasion_reminder.py::test_birthday_reminder_without_rule_occasion` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_christmas_and_easter_get_no_two_week_reminder` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_scheduler_sends_the_reminder_once` | passed |
+| QZ-09 | `tests/test_occasion_reminder.py::test_reminder_not_sent_yet_gets_the_current_gaps` | passed |
+| QZ-09 | `tests/test_occasion_reminder.py::test_reminder_not_sent_yet_is_dropped_once_the_gaps_are_closed` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_send_dates_christmas_2026` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_send_dates_easter_2027` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_send_dates_start_on_a_monday_is_not_doubled` | passed |

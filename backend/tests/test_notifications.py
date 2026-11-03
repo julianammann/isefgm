@@ -109,6 +109,23 @@ async def test_plan_twice_creates_one_row(session: AsyncSession) -> None:
     assert await session.scalar(select(func.count()).select_from(Notification)) == 1
 
 
+@pytest.mark.requirement("F-12", "QZ-05")
+async def test_plan_refreshes_the_text_of_a_row_not_sent_yet(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    mail = planned_mail(owner_id=user.id)
+    await plan(session, [mail])
+    assert await plan(session, [replace(mail, subject="Neu", body="Neuer Text")]) == 0
+    row = await session.scalar(select(Notification))
+    assert row is not None
+    await session.refresh(row)
+    assert (row.subject, row.body) == ("Neu", "Neuer Text")
+    row.status = NotificationStatus.SENT
+    await session.flush()
+    await plan(session, [replace(mail, subject="Später")])
+    await session.refresh(row)
+    assert row.subject == "Neu"
+
+
 @pytest.mark.requirement("F-13", "Q-02", "QZ-05")
 async def test_parallel_planning_creates_one_row(
     committed_sessionmaker: async_sessionmaker[AsyncSession],

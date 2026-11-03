@@ -8,7 +8,8 @@ from sqlalchemy import Engine, Select, event, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
-from giftmanager.models.gifting import GiftingStatus
+from giftmanager.core.mail import MailFailure
+from giftmanager.models.gifting import Gifting, GiftingStatus
 from giftmanager.models.notification import ReferenceType
 from giftmanager.models.occasion import OccasionRule, Recurrence
 from giftmanager.models.person import Person
@@ -322,5 +323,53 @@ async def test_scheduler_sends_the_reminder_once(
     for _ in range(2):
         await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
     assert [m.subject for m in mailer.sent if m.to == user.email] == [
+        "Erinnerung: Hochzeitstag am 20.11."
+    ]
+
+
+async def test_reminder_not_sent_yet_gets_the_current_gaps(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    async with committed_sessionmaker() as s, s.begin():
+        anna = await add_person(s, user, "Anna", None)
+        bernd = await add_person(s, user, "Bernd", None)
+        occasion = await add_occasion(s, user, "Hochzeitstag", EVENT, people=[anna, bernd])
+    clock.current = OPEN
+    down = RecordingMailer(fail_with=MailFailure.TRANSIENT)
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=down)
+    async with committed_sessionmaker() as s, s.begin():  # Anna is covered while mail is down
+        vase = await add_gift(s, user, "Vase")
+        await add_gifting(s, vase, [anna], GiftingStatus.ACQUIRED, occasion, EVENT)
+    clock.advance(timedelta(minutes=5))
+    up = RecordingMailer()
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=up)
+    [mail] = [m for m in up.sent if m.to == user.email]
+    assert "Noch ohne Beschenkung:\n- Bernd\n" in mail.body
+    assert "Anna" not in mail.body
+
+
+async def test_reminder_not_sent_yet_is_dropped_once_the_gaps_are_closed(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    async with committed_sessionmaker() as s, s.begin():
+        anna = await add_person(s, user, "Anna", None)
+        occasion = await add_occasion(s, user, "Hochzeitstag", EVENT, people=[anna])
+    clock.current = OPEN
+    down = RecordingMailer(fail_with=MailFailure.TRANSIENT)
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=down)
+    async with committed_sessionmaker() as s, s.begin():
+        vase = await add_gift(s, user, "Vase")
+        gifting = await add_gifting(s, vase, [anna], GiftingStatus.ACQUIRED, occasion, EVENT)
+    clock.advance(timedelta(minutes=5))
+    up = RecordingMailer()
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=up)
+    assert [m for m in up.sent if m.to == user.email] == []
+    async with committed_sessionmaker() as s, s.begin():  # the gap opens again
+        await s.delete(await s.get_one(Gifting, gifting.id))
+    clock.advance(timedelta(minutes=5))
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=up)
+    assert [m.subject for m in up.sent if m.to == user.email] == [
         "Erinnerung: Hochzeitstag am 20.11."
     ]

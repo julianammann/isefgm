@@ -6,13 +6,18 @@ from functools import partial
 from typing import NamedTuple
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.config import get_settings
 from giftmanager.models.gift import Gift
 from giftmanager.models.gifting import Gifting, GiftingStatus, gifting_person
-from giftmanager.models.notification import NotificationType, ReferenceType
+from giftmanager.models.notification import (
+    Notification,
+    NotificationStatus,
+    NotificationType,
+    ReferenceType,
+)
 from giftmanager.models.occasion import BIRTHDAY_TYPE_ID, Occasion, Recurrence, person_occasion
 from giftmanager.models.person import Person
 from giftmanager.models.user import User
@@ -20,6 +25,7 @@ from giftmanager.services.notification import (
     STATUS_LABELS,
     PlannedMail,
     active_recipients,
+    dedup_key,
     format_day,
     local_at,
     local_date,
@@ -240,11 +246,24 @@ async def _account(session: AsyncSession, user: User, now: datetime) -> list[Pla
 
 
 async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
-    """Reminders of own occasions and birthdays whose window is open and that still have gaps."""
+    """Reminders of own occasions and birthdays whose window is open and that still have gaps.
+
+    A reminder not sent yet that is no longer due (gaps closed, date moved) is deleted, so a
+    retry after a transient failure does not send it; if the gap opens again it is planned anew.
+    """
     mails: list[PlannedMail] = []
-    # shortcut: up to five queries per account, fine for the test accounts; batch across accounts if there are many.
+    # shortcut: up to six queries per account, fine for the test accounts; batch across accounts if there are many.
     for user in await active_recipients(session):
         # Mails are kept only when the whole account succeeded.
         async with skip_failed_account(session, user):
-            mails += await _account(session, user, now)
+            account = await _account(session, user, now)
+            await session.execute(
+                delete(Notification).where(
+                    Notification.owner_id == user.id,
+                    Notification.type == NotificationType.OCCASION,
+                    Notification.status == NotificationStatus.PLANNED,
+                    Notification.dedup_key.not_in([dedup_key(m) for m in account]),
+                )
+            )
+            mails += account
     return mails
