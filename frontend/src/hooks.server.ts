@@ -4,15 +4,18 @@
  *
  * @module
  */
-import { env } from '$env/dynamic/private';
-import { error, json, redirect, type Handle, type HandleFetch } from '@sveltejs/kit';
+import { API_URL } from '$app/env/private';
+import { error, json, redirect } from '@sveltejs/kit';
+import type { Handle, HandleFetch } from '@sveltejs/kit/hooks';
 
-import { createApiClient } from '$lib/api/client';
-import { isCrossSiteApiWrite } from '$lib/server/csrf';
-import { guard, SERVICE_UNAVAILABLE, type Auth } from '$lib/server/guard';
-import { clearSessionCookies, forwardSessionCookie, hasSessionCookie } from '$lib/server/session';
-
-const API_URL = env.API_URL ?? 'http://localhost:8000';
+import { createApiClient } from '#lib/api/client.js';
+import { isCrossSiteApiWrite } from '#lib/server/csrf.js';
+import { guard, SERVICE_UNAVAILABLE, type Auth } from '#lib/server/guard.js';
+import {
+  clearSessionCookies,
+  forwardSessionCookie,
+  hasSessionCookie
+} from '#lib/server/session.js';
 
 /**
  * Server-side `fetch('/api/...')` from load functions and form actions goes straight

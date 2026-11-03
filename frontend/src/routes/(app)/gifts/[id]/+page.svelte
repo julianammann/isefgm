@@ -1,8 +1,8 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import FormDialog from '$lib/components/FormDialog.svelte';
-  import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
-  import { CATEGORIES, formatPriceRange } from '$lib/display';
+  import FormDialog from '#lib/components/FormDialog.svelte';
+  import GiftFormDialog from '#lib/components/GiftFormDialog.svelte';
+  import { CATEGORIES, formatPriceRange } from '#lib/display.js';
   import NotesSection from './NotesSection.svelte';
   import LinksSection from './LinksSection.svelte';
   import GiftingsSection from './GiftingsSection.svelte';
@@ -56,8 +56,9 @@
 <svelte:head><title>{gift.title} – Geschenke-Manager</title></svelte:head>
 
 <!-- Room at the bottom, so the toast never hides the end of the page. -->
+
 <main class="mx-auto max-w-4xl p-8 {data.success ? 'pb-24' : ''}">
-  <a href={resolve('/gifts')} class="text-sm underline">← Alle Geschenkideen</a>
+  <a href={resolve('gifts')} class="text-sm underline">← Alle Geschenkideen</a>
 
   <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
     <h1 class="text-2xl font-bold">{gift.title}</h1>

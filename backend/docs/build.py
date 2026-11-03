@@ -59,7 +59,8 @@ def build(out_dir: Path) -> int:
         (src / "modules.rst").unlink()  # apidoc's own index; the site has its own
         (src / "index.rst").write_text(".. toctree::\n   :glob:\n\n   giftmanager*\n", "utf-8")
         shutil.rmtree(out_dir, ignore_errors=True)
-        code = build_main(["-q", "-b", "markdown", str(src), str(out_dir)])
+        # -W: a module autodoc cannot import would otherwise leave an empty page and exit 0.
+        code = build_main(["-q", "-W", "--keep-going", "-b", "markdown", str(src), str(out_dir)])
 
     shutil.rmtree(out_dir / ".doctrees", ignore_errors=True)
     for page in out_dir.glob("*.md"):

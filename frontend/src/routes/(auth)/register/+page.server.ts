@@ -6,8 +6,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
-import { problemMessage } from '$lib/api/client';
-import { forwardSessionCookie } from '$lib/server/session';
+import { problemMessage } from '#lib/api/client.js';
+import { forwardSessionCookie } from '#lib/server/session.js';
 
 /**
  * `default`: creates the account, which logs it in immediately, forwards the session

@@ -12,8 +12,8 @@ import {
   listPersonsPage,
   parsePersonForm,
   updatePerson
-} from '$lib/server/persons';
-import { pageCount, pageQuery, parsePage } from '$lib/pagination';
+} from '#lib/server/persons.js';
+import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,

@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from giftmanager.core.config import Settings
 
@@ -16,6 +17,15 @@ def test_app_env_defaults_to_production() -> None:
 def test_registration_is_closed_by_default() -> None:
     # Fail closed: a deployment that forgets REGISTRATION_ENABLED accepts no sign-ups.
     assert Settings.model_construct().registration_enabled is False
+
+
+@pytest.mark.requirement("Q-03")
+def test_database_url_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Fail closed: a deployment that forgets DATABASE_URL stops at startup instead of
+    # connecting with credentials published in this repo.
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    with pytest.raises(ValidationError, match="database_url"):
+        Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
 
 
 @pytest.mark.requirement("F-13")
@@ -42,3 +52,12 @@ def test_smtp_password_is_not_shown(monkeypatch: pytest.MonkeyPatch) -> None:
     s = Settings(_env_file=None)  # pyright: ignore[reportCallIssue]
     assert "re_secret" not in repr(s)
     assert s.smtp_password is not None and s.smtp_password.get_secret_value() == "re_secret"
+
+
+@pytest.mark.requirement("F-10")
+@pytest.mark.parametrize(
+    "raw", ["http://localhost:3000/", "http://localhost:3000///", "http://localhost:3000"]
+)
+def test_origin_drops_trailing_slash(raw: str) -> None:
+    s = Settings(_env_file=None, origin=raw)  # pyright: ignore[reportCallIssue]
+    assert s.origin == "http://localhost:3000"

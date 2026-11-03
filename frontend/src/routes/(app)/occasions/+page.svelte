@@ -1,9 +1,9 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { enhance } from '$app/forms';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import { occasionDateLabel } from '$lib/occasion-date';
-  import { actionUrl, pageQuery } from '$lib/pagination';
+  import Pagination from '#lib/components/Pagination.svelte';
+  import { occasionDateLabel } from '#lib/occasion-date.js';
+  import { actionUrl, pageQuery } from '#lib/pagination.js';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -19,8 +19,8 @@
         recurrence: 'none' as const
       }
   );
-  const errors = $derived(form?.errors ?? {});
 
+  const errors = $derived(form?.errors ?? {});
   let showForm = $state(false);
   let formDialog: HTMLDialogElement | undefined = $state();
   let previousEditId = $state<string | null>(null);
@@ -99,7 +99,7 @@
             {:else}
               <div class="flex items-center gap-2">
                 <a
-                  href={resolve(`/occasions${pageQuery(data.page, { edit: occasion.id })}`)}
+                  href={resolve(`occasions${pageQuery(data.page, { edit: occasion.id })}`)}
                   class="text-sm underline">Bearbeiten</a
                 >
                 <button
@@ -118,7 +118,7 @@
     <Pagination
       page={data.page}
       total={data.total}
-      href={(p) => resolve(`/occasions${pageQuery(p)}`)}
+      href={(p) => resolve(`occasions${pageQuery(p)}`)}
     />
   </section>
 
@@ -179,8 +179,13 @@
         novalidate
         class="mt-4 flex flex-col gap-3"
       >
-        {#if errors.general}<p role="alert" class="text-sm text-red-800">{errors.general}</p>{/if}
-        {#if isEdit}<input type="hidden" name="id" value={data.editOccasion?.id} />{/if}
+        {#if errors.general}
+          <p role="alert" class="text-sm text-red-800">{errors.general}</p>
+        {/if}
+
+        {#if isEdit}
+          <input type="hidden" name="id" value={data.editOccasion?.id} />
+        {/if}
 
         <label for="name" class="text-sm font-medium">Name</label>
         <input
@@ -277,7 +282,7 @@
             {isEdit ? 'Speichern' : 'Anlegen'}
           </button>
           {#if isEdit}
-            <a href={resolve(`/occasions${pageQuery(data.page)}`)} class="text-sm underline"
+            <a href={resolve(`occasions${pageQuery(data.page)}`)} class="text-sm underline"
               >Abbrechen</a
             >
           {:else}

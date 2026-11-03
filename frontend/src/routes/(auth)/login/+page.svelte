@@ -55,7 +55,8 @@
 
   {#if data.registrationEnabled}
     <p class="mt-6 text-sm">
-      Noch kein Konto? <a class="underline" href={resolve('/register')}>Registrieren</a>
+      Noch kein Konto?
+      <a class="underline" href={resolve('register')}>Registrieren</a>
     </p>
   {/if}
 </main>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { User } from '$lib/api/client';
+import type { User } from '#lib/api/client.js';
 
 import { guard, type Auth } from './guard.ts';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import FormDialog from '$lib/components/FormDialog.svelte';
-  import { IMAGE_TYPES, MAX_IMAGES, imageFileError } from '$lib/images';
+  import FormDialog from '#lib/components/FormDialog.svelte';
+  import { IMAGE_TYPES, MAX_IMAGES, imageFileError } from '#lib/images.js';
   import type { ActionData, PageData } from './$types';
 
   type Image = PageData['images'][number];

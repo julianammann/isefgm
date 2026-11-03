@@ -4,7 +4,7 @@
  *
  * @module
  */
-import type { components } from '$lib/api/schema';
+import type { components } from '#lib/api/schema.js';
 
 type GiftCategory = components['schemas']['GiftCategory'];
 type TaskStatus = components['schemas']['TaskStatus'];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createApiClient } from '$lib/api/client';
+import { createApiClient } from '#lib/api/client.js';
 import {
   birthdayRecipientError,
   createGifting,

@@ -6,8 +6,8 @@
  * @module
  */
 
-import type { components } from '$lib/api/schema';
-import { imageFileError } from '$lib/images';
+import type { components } from '#lib/api/schema.js';
+import { imageFileError } from '#lib/images.js';
 import { text } from './gifts';
 import { labelError } from './notes';
 import { listAll, send, sendEmpty, type Messages, type Result } from './result';

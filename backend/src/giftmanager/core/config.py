@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, SecretStr
+from pydantic import Field, PostgresDsn, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """Typed runtime configuration.
 
     Read from the process environment, `.env` in the working directory or `../.env`
-    (repo root). The field descriptions are rendered into docs/generated/konfiguration.md.
+    (repo root). The field descriptions are rendered into docs/generated/configuration.md.
     """
 
     model_config = SettingsConfigDict(
@@ -39,7 +39,6 @@ class Settings(BaseSettings):
         default="INFO", description="Log threshold for the app, Uvicorn, SQLAlchemy and Alembic."
     )
     database_url: PostgresDsn = Field(
-        default=PostgresDsn("postgresql+asyncpg://app:app@localhost:5432/app"),
         description="PostgreSQL connection. The `asyncpg` driver is required.",
     )
     default_timezone: str = Field(
@@ -100,6 +99,17 @@ class Settings(BaseSettings):
         "same variable). Accounts can always be created with `mise run create-user`.",
     )
 
+    origin: str = Field(
+        default="http://localhost:3000",
+        description="Public address of the app, used for links in mails. "
+        "Same value as the frontend's `ORIGIN`.",
+    )
+
+    @field_validator("origin")
+    @classmethod
+    def _strip_trailing_slash(cls, value: str) -> str:
+        return value.rstrip("/")
+
     @property
     def session_ttl(self) -> timedelta:
         """Session lifetime as a `timedelta`."""
@@ -119,4 +129,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Return the process-wide settings, read once and cached."""
-    return Settings()
+    return Settings()  # pyright: ignore[reportCallIssue]  # DATABASE_URL comes from env or .env

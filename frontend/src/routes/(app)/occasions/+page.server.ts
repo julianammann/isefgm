@@ -7,9 +7,9 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-import { pageCount, pageQuery, parsePage } from '$lib/pagination';
-import { isValidDate } from '$lib/server/dates';
-import { listPersons } from '$lib/server/persons';
+import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
+import { isValidDate } from '#lib/server/dates.js';
+import { listPersons } from '#lib/server/persons.js';
 import {
   createOccasion,
   deleteOccasion,
@@ -18,7 +18,7 @@ import {
   listOccasionTypes,
   updateOccasion,
   type OccasionInput
-} from '$lib/server/occasions';
+} from '#lib/server/occasions.js';
 
 type FieldErrors = Partial<Record<keyof OccasionInput | 'general', string>>;
 

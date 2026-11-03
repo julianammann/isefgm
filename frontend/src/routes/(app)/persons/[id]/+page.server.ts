@@ -13,9 +13,9 @@ import {
   getPersonOverview,
   parsePersonForm,
   updatePerson
-} from '$lib/server/persons';
-import { pageCount, pageQuery, parsePage } from '$lib/pagination';
-import { unwrap } from '$lib/server/result';
+} from '#lib/server/persons.js';
+import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
+import { unwrap } from '#lib/server/result.js';
 
 /**
  * Loads the person and their view in parallel: two requests, the view in a fixed number of

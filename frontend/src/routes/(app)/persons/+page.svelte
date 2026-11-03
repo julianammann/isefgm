@@ -3,10 +3,10 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
-  import { formatDate } from '$lib/display';
-  import { actionUrl, pageQuery } from '$lib/pagination';
+  import Pagination from '#lib/components/Pagination.svelte';
+  import PersonFormDialog from '#lib/components/PersonFormDialog.svelte';
+  import { formatDate } from '#lib/display.js';
+  import { actionUrl, pageQuery } from '#lib/pagination.js';
   import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -32,11 +32,7 @@
   /** Drops `?edit` when the edit dialog is closed with Escape or Abbrechen. */
   function leaveEdit() {
     if (page.url.searchParams.has('edit')) {
-      goto(resolve(`/persons${pageQuery(data.page)}`), {
-        replaceState: true,
-        noScroll: true,
-        keepFocus: true
-      });
+      goto(resolve(`persons${pageQuery(data.page)}`), { replace: true, reset: false });
     }
   }
 
@@ -97,7 +93,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 class="text-lg font-semibold">
-                  <a href={resolve(`/persons/${person.id}`)} class="font-bold underline"
+                  <a href={resolve(`persons/${person.id}`)} class="font-bold underline"
                     >{person.name}</a
                   >
                 </h3>
@@ -111,7 +107,7 @@
               </div>
               <div class="flex items-center gap-4">
                 <a
-                  href={resolve(`/persons${pageQuery(data.page, { edit: person.id })}`)}
+                  href={resolve(`persons${pageQuery(data.page, { edit: person.id })}`)}
                   class="text-sm underline"
                   >Bearbeiten<span class="sr-only">: {person.name}</span>
                 </a>
@@ -131,7 +127,7 @@
     <Pagination
       page={data.page}
       total={data.total}
-      href={(p) => resolve(`/persons${pageQuery(p)}`)}
+      href={(p) => resolve(`persons${pageQuery(p)}`)}
     />
   </section>
 

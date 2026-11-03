@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { components } from '$lib/api/schema';
-  import FormDialog from '$lib/components/FormDialog.svelte';
+  import type { components } from '#lib/api/schema.js';
+  import FormDialog from '#lib/components/FormDialog.svelte';
 
   type PersonInput = components['schemas']['PersonIn'];
 

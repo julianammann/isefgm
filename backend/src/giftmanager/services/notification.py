@@ -1,20 +1,22 @@
 """Planning and dispatch of notification mails (F-13)."""
 
 import logging
-from collections.abc import Iterable
+from collections.abc import AsyncGenerator, Iterable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import case, select, update
+from sqlalchemy import Exists, case, exists, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.clock import Clock
 from giftmanager.core.config import get_settings
 from giftmanager.core.mail import Mail, Mailer, MailError, MailFailure, is_reserved_address
-from giftmanager.models.gifting import GiftingStatus
+from giftmanager.models.gift import Gift, gift_person
+from giftmanager.models.gifting import Gifting, GiftingStatus, gifting_person
 from giftmanager.models.notification import (
     Notification,
     NotificationStatus,
@@ -97,6 +99,30 @@ async def active_recipients(session: AsyncSession) -> list[User]:
     return recipients
 
 
+@asynccontextmanager
+async def skip_failed_account(session: AsyncSession, user: User) -> AsyncGenerator[None]:
+    """Savepoint for one account's planning; an error is logged and only that account is skipped."""
+    try:
+        async with session.begin_nested():
+            yield
+    except Exception as exc:  # noqa: BLE001  # logged by type only, as in the scheduler
+        logger.error("Planning for account %s failed: %s", user.id, type(exc).__name__)
+
+
+def given_to_linked_person() -> Exists:
+    """EXISTS: the gift was already given to the person it is linked to (`gift_person`)."""
+    return (
+        exists()
+        .where(
+            Gifting.gift_id == Gift.id,
+            Gifting.status == GiftingStatus.GIVEN,
+            gifting_person.c.gifting_id == Gifting.id,
+            gifting_person.c.person_id == gift_person.c.person_id,
+        )
+        .correlate(Gift, gift_person)
+    )
+
+
 async def plan(session: AsyncSession, mails: Iterable[PlannedMail]) -> int:
     """Insert the mails as `planned`; a dedup key that already exists is left alone.
 
@@ -155,57 +181,69 @@ async def claim_next(session: AsyncSession, now: datetime) -> Notification | Non
 
 
 async def dispatch_due(
-    sessionmaker: async_sessionmaker[AsyncSession], mailer: Mailer, clock: Clock
+    sessionmaker: async_sessionmaker[AsyncSession],
+    mailer: Mailer,
+    clock: Clock,
+    *,
+    until: datetime | None = None,
 ) -> int:
     """Send every due mail once and record the outcome; returns the number sent.
 
     Claim and outcome are separate transactions so no row lock is held while sending.
-    A transient failure puts the row back to `planned` and ends the run.
+    A transient failure puts the row back to `planned` and ends the run, as does reaching `until`.
     """
     sent = 0
-    while True:
-        async with sessionmaker() as session, session.begin():
-            claimed = await claim_next(session, clock.now())
-            if claimed is None:
+    try:
+        while True:
+            if until is not None and clock.now() >= until:
                 return sent
-            notification_id = claimed.id
-            # shortcut: subject and body are fixed when planned, so a retry after a transient
-            # failure can still name a person deleted since; render at send time if that matters.
-            mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
+            async with sessionmaker() as session, session.begin():
+                claimed = await claim_next(session, clock.now())
+                if claimed is None:
+                    return sent
+                notification_id = claimed.id
+                # shortcut: subject and body are fixed when planned, so a retry after a transient
+                # failure can still name a person deleted since; render at send time if that matters.
+                mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
 
-        failure: MailError | None = None
-        try:
-            await mailer.send(mail)
-        except MailError as exc:
-            failure = exc
+            failure: MailError | None = None
+            try:
+                await mailer.send(mail)
+            except MailError as exc:
+                failure = exc
 
-        async with sessionmaker() as session, session.begin():
-            notification = await session.get(Notification, notification_id)
-            # None: the account was deleted while sending and ON DELETE CASCADE took the row.
-            if notification is None:
+            async with sessionmaker() as session, session.begin():
+                notification = await session.get(Notification, notification_id)
+                # None: the account was deleted while sending and ON DELETE CASCADE took the row.
+                if notification is None:
+                    if failure is None:
+                        sent += 1
+                    continue
+                # No `status == sending` guard: a late TRANSIENT means nothing was delivered, so a retry
+                # is a first delivery; a late success correctly overwrites `failed`.
                 if failure is None:
+                    notification.status = NotificationStatus.SENT
+                    notification.sent_at = clock.now()
+                    notification.error = None
                     sent += 1
-                continue
-            # No `status == sending` guard: a late TRANSIENT means nothing was delivered, so a retry
-            # is a first delivery; a late success correctly overwrites `failed`.
-            if failure is None:
-                notification.status = NotificationStatus.SENT
-                notification.sent_at = clock.now()
-                notification.error = None
-                sent += 1
-            elif failure.failure is MailFailure.TRANSIENT:
-                notification.status = NotificationStatus.PLANNED
-                notification.error = failure.detail
-                logger.warning("Notification %s not sent (transient), will retry", notification_id)
-                return sent
-            elif failure.failure is MailFailure.PERMANENT:
-                notification.status = NotificationStatus.FAILED
-                notification.error = failure.detail
-                logger.warning("Notification %s not sent (permanent)", notification_id)
-            else:
-                notification.status = NotificationStatus.FAILED
-                notification.error = "Versandergebnis unklar: " + failure.detail
-                logger.warning("Delivery result of notification %s is unclear", notification_id)
+                elif failure.failure is MailFailure.TRANSIENT:
+                    notification.status = NotificationStatus.PLANNED
+                    notification.error = failure.detail
+                    logger.warning(
+                        "Notification %s not sent (transient), will retry", notification_id
+                    )
+                    return sent
+                elif failure.failure is MailFailure.PERMANENT:
+                    notification.status = NotificationStatus.FAILED
+                    notification.error = failure.detail
+                    logger.warning("Notification %s not sent (permanent)", notification_id)
+                else:
+                    notification.status = NotificationStatus.FAILED
+                    notification.error = "Versandergebnis unklar: " + failure.detail
+                    logger.warning("Delivery result of notification %s is unclear", notification_id)
+    finally:
+        if sent:
+            logger.info("Sent %d mails", sent)
 
 
 async def expire(session: AsyncSession, now: datetime) -> int:

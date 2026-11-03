@@ -5,7 +5,7 @@
  */
 import type { LayoutServerLoad } from './$types';
 
-import { systemStatus } from '$lib/health';
+import { systemStatus } from '#lib/health.js';
 
 /** Loads `GET /api/v1/health/ready`; an unreachable backend becomes a red dot, not an error. */
 export const load: LayoutServerLoad = async ({ locals }) => {

@@ -1,6 +1,6 @@
 /**
  * Session cookie handling on the SvelteKit server. Server-only: SvelteKit
- * refuses to import `$lib/server` from browser code.
+ * refuses to import `#lib/server` from browser code.
  *
  * @module
  */

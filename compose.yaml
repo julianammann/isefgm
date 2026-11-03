@@ -25,7 +25,7 @@ x-backend: &backend
 
 services:
   db:
-    image: docker.io/library/postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    image: docker.io/library/postgres:17-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -72,14 +72,16 @@ services:
       migrate:
         condition: service_completed_successfully
 
-  # Separate process, exactly one replica. Opt-in via profile until
-  # `python -m giftmanager.scheduler` exists. Profiles survive the deploy gate:
-  # inactive services are dropped from `docker compose config`.
+  # Separate process, exactly one replica.
   scheduler:
     <<: *backend
     command: ["python", "-m", "giftmanager.scheduler"]
-    profiles: [scheduler]
+    # Python as PID 1 ignores SIGTERM; an init process makes `docker stop` immediate.
+    init: true
     restart: unless-stopped
+    environment:
+      <<: *backend-env
+      ORIGIN: ${ORIGIN:-http://localhost:3000}
     volumes:
       - uploads:/data/uploads
     depends_on:
@@ -93,7 +95,6 @@ services:
       - no-new-privileges:true
     environment:
       API_URL: http://isefgm-api:8000
-      ORIGIN: ${ORIGIN:-http://localhost:3000}
       # Images up to 5 MB plus multipart overhead; adapter-node defaults to 512K.
       BODY_SIZE_LIMIT: 6M
       # Same value as the api: the api enforces it, the frontend only hides the link.

@@ -1,7 +1,10 @@
 """Sphinx configuration for the backend code reference (Markdown pages for VitePress)."""
 
+import builtins
 import logging
 from typing import Any
+
+from sphinx.addnodes import pending_xref
 
 project = "giftmanager"
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
@@ -19,7 +22,8 @@ autodoc_inherit_docstrings = False
 
 markdown_anchor_signatures = True
 # Inherited SQLAlchemy docs reference labels that only exist in SQLAlchemy's own docs.
-suppress_warnings = ["ref.ref"]
+# ref.python: attributes named `type` on several classes make that cross-reference ambiguous.
+suppress_warnings = ["ref.ref", "ref.python"]
 
 
 class _KeywordOnlyStarFilter(logging.Filter):
@@ -34,7 +38,22 @@ class _KeywordOnlyStarFilter(logging.Filter):
         return "unknown node type: <abbreviation" not in record.getMessage()
 
 
+def _exact_builtin_refs(app: Any, doctree: Any) -> None:
+    """Resolve builtins in signatures by exact name only.
+
+    Sphinx checks `hasattr(node, "refspecific")` instead of its value, so every
+    signature type is looked up "fuzzy" by suffix: `type[T]` then matches the `type`
+    fields of ValidationIssue and Problem. Builtins are never documented here, so
+    dropping the flag leaves them unlinked; project types keep the fuzzy lookup.
+    """
+    for node in doctree.findall(pending_xref):
+        if node.get("refdomain") == "py" and hasattr(builtins, node.get("reftarget", "")):
+            node.attributes.pop("refspecific", None)
+
+
 def setup(app: Any) -> None:
-    """Install the filter on Sphinx's log handlers."""
+    """Install the filter on Sphinx's log handlers and the builtin-ref fix."""
     for handler in logging.getLogger("sphinx").handlers:
-        handler.addFilter(_KeywordOnlyStarFilter())
+        # First in line: Sphinx's own filter counts the warning for -W before later ones run.
+        handler.filters.insert(0, _KeywordOnlyStarFilter())
+    app.connect("doctree-read", _exact_builtin_refs)

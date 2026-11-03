@@ -7,12 +7,12 @@
     TASK_STATUS,
     formatDate,
     formatPriceRange
-  } from '$lib/display';
-  import FormDialog from '$lib/components/FormDialog.svelte';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
-  import { occasionDateLabel } from '$lib/occasion-date';
-  import { PAGE_SIZE, actionUrl, pageQuery } from '$lib/pagination';
+  } from '#lib/display.js';
+  import FormDialog from '#lib/components/FormDialog.svelte';
+  import Pagination from '#lib/components/Pagination.svelte';
+  import PersonFormDialog from '#lib/components/PersonFormDialog.svelte';
+  import { occasionDateLabel } from '#lib/occasion-date.js';
+  import { PAGE_SIZE, actionUrl, pageQuery } from '#lib/pagination.js';
   import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -67,7 +67,7 @@
   {@const remaining = list.total - data.page * PAGE_SIZE}
   {#if remaining > 0}
     <a
-      href={resolve(`/persons/${person.id}${pageQuery(data.page + 1)}#${heading}`)}
+      href={resolve(`persons/${person.id}${pageQuery(data.page + 1)}#${heading}`)}
       class="mt-2 inline-block text-sm underline"
     >
       {remaining} weitere anzeigen
@@ -83,7 +83,7 @@
       {#each list.items as g (g.id)}
         <li class="rounded border p-3">
           <div class="flex flex-wrap items-center gap-2">
-            <a href={resolve(`/gifts/${g.gift.id}`)} class="font-semibold underline">
+            <a href={resolve(`gifts/${g.gift.id}`)} class="font-semibold underline">
               {g.gift.title}
             </a>
             <span
@@ -123,7 +123,7 @@
 
 <!-- Room at the bottom, so the toast never hides the end of the page. -->
 <main class="mx-auto max-w-5xl p-8 {data.success ? 'pb-24' : ''}">
-  <a href={resolve('/persons')} class="text-sm underline">← Alle Personen</a>
+  <a href={resolve('persons')} class="text-sm underline">← Alle Personen</a>
 
   <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
     <h1 class="text-2xl font-bold">{person.name}</h1>
@@ -199,7 +199,7 @@
             {@const price = formatPriceRange(idea)}
             <li class="rounded border p-3">
               <div class="flex flex-wrap items-center gap-2">
-                <a href={resolve(`/gifts/${idea.id}`)} class="font-semibold underline">
+                <a href={resolve(`gifts/${idea.id}`)} class="font-semibold underline">
                   {idea.title}
                 </a>
                 <span class="rounded-full border px-2 py-0.5 text-sm">
@@ -236,7 +236,7 @@
   <Pagination
     page={data.page}
     total={data.total}
-    href={(p) => resolve(`/persons/${person.id}${pageQuery(p)}`)}
+    href={(p) => resolve(`persons/${person.id}${pageQuery(p)}`)}
   />
 
   <!-- Fixed to the screen, so the message shows where the user is. -->

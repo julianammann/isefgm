@@ -1,5 +1,5 @@
 <script lang="ts">
-  import FormDialog from '$lib/components/FormDialog.svelte';
+  import FormDialog from '#lib/components/FormDialog.svelte';
   import type { ActionData, PageData } from './$types';
 
   type Note = PageData['notes'][number];

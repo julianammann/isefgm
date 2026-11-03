@@ -3,10 +3,10 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import GiftFormDialog from '$lib/components/GiftFormDialog.svelte';
-  import { CATEGORIES, giftingSummary } from '$lib/display';
-  import { actionUrl, pageQuery } from '$lib/pagination';
+  import Pagination from '#lib/components/Pagination.svelte';
+  import GiftFormDialog from '#lib/components/GiftFormDialog.svelte';
+  import { CATEGORIES, giftingSummary } from '#lib/display.js';
+  import { actionUrl, pageQuery } from '#lib/pagination.js';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -25,8 +25,8 @@
         occasion_ids: []
       }
   );
-  const errors = $derived(form?.errors ?? {});
 
+  const errors = $derived(form?.errors ?? {});
   let showForm = $state(false);
   let previousEditId = $state<string | null>(null);
   let deleteDialog: HTMLDialogElement | null = null;
@@ -35,11 +35,7 @@
   /** Drops `?edit` when the edit dialog is closed with Escape or Abbrechen. */
   function leaveEdit() {
     if (page.url.searchParams.has('edit')) {
-      goto(resolve(`/gifts${pageQuery(data.page)}`), {
-        replaceState: true,
-        noScroll: true,
-        keepFocus: true
-      });
+      goto(resolve(`gifts${pageQuery(data.page)}`), { replace: true, reset: false });
     }
   }
 
@@ -102,7 +98,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 class="text-lg font-semibold">
-                  <a href={resolve(`/gifts/${gift.id}`)} class="underline">{gift.title}</a>
+                  <a href={resolve(`gifts/${gift.id}`)} class="underline">{gift.title}</a>
                 </h3>
                 <p class="mt-1 text-sm text-gray-600">
                   {CATEGORIES[gift.category]}
@@ -118,7 +114,7 @@
               </div>
               <div class="flex items-center gap-4">
                 <a
-                  href={resolve(`/gifts${pageQuery(data.page, { edit: gift.id })}`)}
+                  href={resolve(`gifts${pageQuery(data.page, { edit: gift.id })}`)}
                   class="text-sm underline"
                 >
                   Bearbeiten<span class="sr-only">: {gift.title}</span>
@@ -136,11 +132,7 @@
         {/each}
       </ul>
     {/if}
-    <Pagination
-      page={data.page}
-      total={data.total}
-      href={(p) => resolve(`/gifts${pageQuery(p)}`)}
-    />
+    <Pagination page={data.page} total={data.total} href={(p) => resolve(`gifts${pageQuery(p)}`)} />
   </section>
 
   <dialog

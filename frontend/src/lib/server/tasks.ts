@@ -6,7 +6,7 @@
  * @module
  */
 
-import type { components } from '$lib/api/schema';
+import type { components } from '#lib/api/schema.js';
 import { isValidDate } from './dates';
 import { text } from './gifts';
 import { createGifting, deleteGifting } from './giftings';
