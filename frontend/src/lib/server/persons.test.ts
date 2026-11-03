@@ -129,6 +129,16 @@ describe('getPersonOverview', () => {
     const url = new URL(requests[0].url);
     expect(url.pathname).toBe(`/api/v1/people/${firstPerson.id}/overview`);
     expect(url.searchParams.get('limit')).toBe('200');
+    expect(url.searchParams.get('offset')).toBe('0');
+  });
+
+  it('turns the page into an offset', async () => {
+    const empty = { items: [], total: 0, limit: 200, offset: 400 };
+    const overview = { given: empty, giftings: empty, ideas: empty, occasions: empty };
+    const { api, requests } = createApi(async () => jsonResponse(overview));
+
+    await getPersonOverview(api, firstPerson.id, 3);
+    expect(new URL(requests[0].url).searchParams.get('offset')).toBe('400');
   });
 
   it('returns 404 for an unknown person', async () => {

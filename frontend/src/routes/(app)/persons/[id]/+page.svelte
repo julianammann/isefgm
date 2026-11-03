@@ -9,8 +9,10 @@
     formatPriceRange
   } from '$lib/display';
   import FormDialog from '$lib/components/FormDialog.svelte';
+  import Pagination from '$lib/components/Pagination.svelte';
   import PersonFormDialog from '$lib/components/PersonFormDialog.svelte';
   import { occasionDateLabel } from '$lib/occasion-date';
+  import { PAGE_SIZE, actionUrl, pageQuery } from '$lib/pagination';
   import type { ActionData, PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -55,18 +57,27 @@
 
 <svelte:head><title>{person.name} – Geschenke-Manager</title></svelte:head>
 
-<!-- „3 weitere nicht angezeigt“ when a list has more entries than one page. -->
-{#snippet more(list: { items: unknown[]; total: number })}
-  {#if list.total > list.items.length}
-    <p class="mt-2 text-sm text-gray-600">
-      {list.total - list.items.length} weitere nicht angezeigt
-    </p>
+<!-- A list can be empty on a later page only because it is shorter than the longest list. -->
+{#snippet none(list: { total: number }, empty: string)}
+  <p class="mt-2 text-sm text-gray-600">{list.total > 0 ? 'Keine weiteren Einträge.' : empty}</p>
+{/snippet}
+
+<!-- „xx weitere anzeigen“ when this list goes on after this page; jumps to it on the next page. -->
+{#snippet more(list: { total: number }, heading: string)}
+  {@const remaining = list.total - data.page * PAGE_SIZE}
+  {#if remaining > 0}
+    <a
+      href={resolve(`/persons/${person.id}${pageQuery(data.page + 1)}#${heading}`)}
+      class="mt-2 inline-block text-sm underline"
+    >
+      {remaining} weitere anzeigen
+    </a>
   {/if}
 {/snippet}
 
-{#snippet giftings(list: typeof overview.given, empty: string)}
+{#snippet giftings(list: typeof overview.given, empty: string, heading: string)}
   {#if list.items.length === 0}
-    <p class="mt-2 text-sm text-gray-600">{empty}</p>
+    {@render none(list, empty)}
   {:else}
     <ul class="mt-3 flex flex-col gap-3">
       {#each list.items as g (g.id)}
@@ -107,7 +118,7 @@
       {/each}
     </ul>
   {/if}
-  {@render more(list)}
+  {@render more(list, heading)}
 {/snippet}
 
 <!-- Room at the bottom, so the toast never hides the end of the page. -->
@@ -158,7 +169,7 @@
       </h2>
       <div class="mt-3 rounded border p-3">
         {#if overview.occasions.items.length === 0}
-          <p class="mt-2 text-sm text-gray-600">Keine Anlässe.</p>
+          {@render none(overview.occasions, 'Keine Anlässe.')}
         {:else}
           <ul class="flex flex-col gap-1">
             {#each overview.occasions.items as occasion (occasion.id)}
@@ -173,7 +184,7 @@
             {/each}
           </ul>
         {/if}
-        {@render more(overview.occasions)}
+        {@render more(overview.occasions, 'occasions-heading')}
       </div>
     </section>
     <section aria-labelledby="ideas-heading">
@@ -181,7 +192,7 @@
         Geschenkideen ({overview.ideas.total})
       </h2>
       {#if overview.ideas.items.length === 0}
-        <p class="mt-2 text-sm text-gray-600">Keine offenen Geschenkideen.</p>
+        {@render none(overview.ideas, 'Keine offenen Geschenkideen.')}
       {:else}
         <ul class="mt-3 flex flex-col gap-3">
           {#each overview.ideas.items as idea (idea.id)}
@@ -206,21 +217,27 @@
           {/each}
         </ul>
       {/if}
-      {@render more(overview.ideas)}
+      {@render more(overview.ideas, 'ideas-heading')}
     </section>
     <section aria-labelledby="planned-heading">
       <h2 id="planned-heading" class="text-lg font-semibold">
         Geplante Beschenkungen ({overview.giftings.total})
       </h2>
-      {@render giftings(overview.giftings, 'Keine offenen Beschenkungen.')}
+      {@render giftings(overview.giftings, 'Keine offenen Beschenkungen.', 'planned-heading')}
     </section>
     <section aria-labelledby="given-heading">
       <h2 id="given-heading" class="text-lg font-semibold">
         Vergangene Geschenke ({overview.given.total})
       </h2>
-      {@render giftings(overview.given, 'Noch nichts verschenkt.')}
+      {@render giftings(overview.given, 'Noch nichts verschenkt.', 'given-heading')}
     </section>
   </div>
+
+  <Pagination
+    page={data.page}
+    total={data.total}
+    href={(p) => resolve(`/persons/${person.id}${pageQuery(p)}`)}
+  />
 
   <!-- Fixed to the screen, so the message shows where the user is. -->
   <div role="status" class="pointer-events-none fixed inset-x-0 bottom-4 flex justify-center px-4">
@@ -235,7 +252,7 @@
   {#key session}
     <PersonFormDialog
       bind:open={editOpen}
-      action="?/update"
+      action={actionUrl('update', data.page)}
       editId={person.id}
       {values}
       errors={personForm?.errors ?? {}}
@@ -246,7 +263,7 @@
   <FormDialog
     id="person-delete"
     heading="Person löschen?"
-    action="?/delete"
+    action={actionUrl('delete', data.page)}
     submitLabel="Löschen"
     danger
     bind:open={deleteOpen}

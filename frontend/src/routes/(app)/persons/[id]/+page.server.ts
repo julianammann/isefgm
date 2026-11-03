@@ -14,22 +14,35 @@ import {
   parsePersonForm,
   updatePerson
 } from '$lib/server/persons';
+import { pageCount, pageQuery, parsePage } from '$lib/pagination';
 import { unwrap } from '$lib/server/result';
 
 /**
  * Loads the person and their view in parallel: two requests, the view in a fixed number of
- * queries (QZ-02). An unknown person gives a 404 page.
+ * queries (QZ-02). `?page=` applies to all lists at once, the backend has one offset for them; a
+ * page beyond the longest list redirects to its last page. An unknown person gives a 404 page.
  */
 export const load: PageServerLoad = async ({ locals, params, url }) => {
-  const [person, overview] = await Promise.all([
+  const page = parsePage(url);
+  const [person, overviewResult] = await Promise.all([
     getPerson(locals.api, params.id),
-    getPersonOverview(locals.api, params.id)
+    getPersonOverview(locals.api, params.id, page)
   ]);
   // A malformed id (not a UUID) gets 422 from the backend; for the user it is just unknown.
   if (!person.ok && person.status === 422) error(404, 'Person nicht gefunden.');
+  const overview = unwrap(overviewResult);
+  const { given, giftings, ideas, occasions } = overview;
+  const total = Math.max(given.total, giftings.total, ideas.total, occasions.total);
+  const last = pageCount(total);
+  if (page > last) {
+    const rest = Object.fromEntries([...url.searchParams].filter(([key]) => key !== 'page'));
+    redirect(303, `/persons/${encodeURIComponent(params.id)}${pageQuery(last, rest)}`);
+  }
   return {
     person: unwrap(person),
-    overview: unwrap(overview),
+    overview,
+    page,
+    total,
     // Only one message exists, so the key is checked instead of shown.
     success: url.searchParams.get('success') === 'updated' ? 'Änderungen gespeichert!' : null
   };
@@ -42,14 +55,15 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
  * the right dialog.
  */
 export const actions: Actions = {
-  update: async ({ request, locals, params }) => {
+  update: async ({ request, locals, params, url }) => {
     const { values, errors } = parsePersonForm(await request.formData());
     if (Object.keys(errors).length) return fail(400, { scope: 'person' as const, values, errors });
     const result = await updatePerson(locals.api, params.id, values);
     if (!result.ok) {
       return fail(result.status, { scope: 'person' as const, values, message: result.message });
     }
-    redirect(303, `/persons/${encodeURIComponent(params.id)}?success=updated`);
+    const query = pageQuery(parsePage(url), { success: 'updated' });
+    redirect(303, `/persons/${encodeURIComponent(params.id)}${query}`);
   },
 
   delete: async ({ locals, params }) => {

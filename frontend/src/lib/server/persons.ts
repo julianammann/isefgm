@@ -26,9 +26,6 @@ type Api = App.Locals['api'];
 
 const messages: Messages = { 404: 'Person nicht gefunden.' };
 
-/** Entries per list on the person view; separate from the list page size on purpose. */
-const OVERVIEW_LIMIT = 200;
-
 /** Returns all persons of the current account, sorted by name; reads every page of the list. */
 export function listPersons(api: Api): Promise<Result<Person[]>> {
   return listAll(
@@ -62,13 +59,20 @@ export async function getPerson(api: Api, id: string): Promise<Result<Person>> {
 }
 
 /**
- * Returns the person view (F-09) with up to `OVERVIEW_LIMIT` entries per list, each with its own
- * `total`; 404 if the id is unknown or belongs to another account.
+ * Returns one page of the person view (F-09): `page` applies to all its lists at once, each with
+ * its own `total`; 404 if the id is unknown or belongs to another account.
  */
-export async function getPersonOverview(api: Api, id: string): Promise<Result<PersonOverview>> {
+export async function getPersonOverview(
+  api: Api,
+  id: string,
+  page = 1
+): Promise<Result<PersonOverview>> {
   return send(
     api.GET('/api/v1/people/{person_id}/overview', {
-      params: { path: { person_id: id }, query: { limit: OVERVIEW_LIMIT } }
+      params: {
+        path: { person_id: id },
+        query: { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }
+      }
     }),
     messages
   );
