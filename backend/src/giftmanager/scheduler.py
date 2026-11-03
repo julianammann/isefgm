@@ -34,6 +34,9 @@ INTERVAL = timedelta(minutes=5)
 RUN_TIMEOUT = timedelta(minutes=4)
 # Soft deadline: no new mail is claimed after this, leaving headroom for the last send.
 SEND_BUDGET = timedelta(minutes=3)
+# Per planner, so a hung one is cut off and sending still runs; three planners leave half of
+# SEND_BUDGET for sending.
+PLANNER_TIMEOUT = timedelta(seconds=30)
 
 Planner = Callable[[AsyncSession, datetime], Awaitable[list[PlannedMail]]]
 
@@ -50,7 +53,7 @@ async def run_once(
 ) -> int:
     """Expire and fail stale rows, plan every type, send what is due; returns mails sent.
 
-    A failing planner is logged and does not stop the others or the sending. Raises
+    A failing or hung planner is logged and does not stop the others or the sending. Raises
     `TimeoutError` when the run exceeds `RUN_TIMEOUT`.
     """
     async with asyncio.timeout(RUN_TIMEOUT.total_seconds()):
@@ -60,7 +63,11 @@ async def run_once(
             await fail_stuck(session, now)
         for planner in planners:
             try:
-                async with sessionmaker() as session, session.begin():
+                async with (
+                    asyncio.timeout(PLANNER_TIMEOUT.total_seconds()),
+                    sessionmaker() as session,
+                    session.begin(),
+                ):
                     await plan(session, await planner(session, now))
             except Exception as exc:  # noqa: BLE001  # logged by type only, see below
                 # Type only: the message can carry mail contents (e.g. Postgres row DETAIL).

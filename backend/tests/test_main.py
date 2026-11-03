@@ -23,7 +23,7 @@ def _app(monkeypatch: pytest.MonkeyPatch, settings: Settings) -> FastAPI:
 async def test_schema_and_swagger_ui_are_served_only_in_development(
     monkeypatch: pytest.MonkeyPatch, app_env: Literal["development", "production"], status: int
 ) -> None:
-    app = _app(monkeypatch, Settings(app_env=app_env))
+    app = _app(monkeypatch, Settings.model_construct(app_env=app_env))
     async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as client:
         assert (await client.get("/openapi.json")).status_code == status
         assert (await client.get("/docs")).status_code == status
@@ -32,7 +32,7 @@ async def test_schema_and_swagger_ui_are_served_only_in_development(
 @pytest.mark.requirement("Q-06", "Q-09")
 def test_schema_export_does_not_depend_on_app_env(monkeypatch: pytest.MonkeyPatch) -> None:
     # export_openapi and export_docs call app.openapi(); CI runs them without APP_ENV.
-    development = _app(monkeypatch, Settings(app_env="development")).openapi()
-    production = _app(monkeypatch, Settings(app_env="production")).openapi()
+    development = _app(monkeypatch, Settings.model_construct(app_env="development")).openapi()
+    production = _app(monkeypatch, Settings.model_construct(app_env="production")).openapi()
     assert production == development
     assert "/api/v1/auth/login" in production["paths"]

@@ -13,7 +13,7 @@ import pytest
 from apscheduler.schedulers.asyncio import (  # pyright: ignore[reportMissingTypeStubs]
     AsyncIOScheduler,
 )
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -23,7 +23,7 @@ from giftmanager.core.mail import Mail, MailFailure
 from giftmanager.models.notification import Notification, NotificationStatus
 from giftmanager.models.user import User
 from giftmanager.scheduler import Planner, run_once
-from giftmanager.services.notification import PlannedMail, dispatch_due
+from giftmanager.services.notification import PlannedMail, dispatch_due, plan
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
 from tests.notifications import (
@@ -177,6 +177,39 @@ async def test_planner_without_qualname_does_not_stop_the_run(
     assert len(mailer.sent) == 1
 
 
+async def test_failing_planner_rolls_back_its_writes(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+
+    async def writes_then_fails(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        mail = planned_mail(
+            owner_id=user.id,
+            recipient=user.email,
+            interval="rolled-back",
+            scheduled_for=now,
+            expires_at=now + timedelta(days=1),
+        )
+        assert await plan(session, [mail]) == 1
+        await session.flush()
+        raise RuntimeError("boom")
+
+    mailer = RecordingMailer()
+    await run_once(
+        clock=clock,
+        sessionmaker=committed_sessionmaker,
+        mailer=mailer,
+        planners=[writes_then_fails, due_once(user)],
+    )
+    async with committed_sessionmaker() as s:
+        keys = (
+            await s.scalars(select(Notification.dedup_key).where(Notification.owner_id == user.id))
+        ).all()
+    assert len(keys) == 1
+    assert not keys[0].endswith(":rolled-back")
+    assert len(mailer.sent) == 1
+
+
 async def test_run_logs_sent_count_without_recipients(
     committed_sessionmaker: async_sessionmaker[AsyncSession],
     clock: FixedClock,
@@ -227,6 +260,31 @@ async def test_hung_run_times_out(
             mailer=RecordingMailer(delay=30),
             planners=[due_once(user)],
         )
+
+
+async def test_hung_planner_does_not_block_others_or_sending(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    monkeypatch.setattr(scheduler, "PLANNER_TIMEOUT", timedelta(seconds=0.2))
+
+    async def hung(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        await asyncio.sleep(30)
+        return []
+
+    mailer = RecordingMailer()
+    await run_once(
+        clock=clock,
+        sessionmaker=committed_sessionmaker,
+        mailer=mailer,
+        planners=[hung, due_once(user)],
+    )
+    assert len(mailer.sent) == 1
+    errors = [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
+    assert any(hung.__qualname__ in m and "TimeoutError" in m for m in errors)
 
 
 class ClockAdvancingMailer(RecordingMailer):
@@ -313,6 +371,36 @@ async def test_hard_timeout_still_logs_sent_count(
             clock=clock, sessionmaker=committed_sessionmaker, mailer=HangOnSecond(), planners=[]
         )
     assert "Sent 1 mails" in [r.getMessage() for r in caplog.records]
+
+
+async def test_send_cut_by_timeout_fails_after_15_minutes_and_is_not_resent(
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = clock.now()
+    row = await add_committed_notification(
+        committed_sessionmaker,
+        scheduled_for=now - timedelta(hours=1),
+        expires_at=now + timedelta(days=1),
+    )
+    monkeypatch.setattr(scheduler, "RUN_TIMEOUT", timedelta(seconds=0.2))
+    with pytest.raises(TimeoutError):
+        await run_once(
+            clock=clock,
+            sessionmaker=committed_sessionmaker,
+            mailer=RecordingMailer(delay=30),
+            planners=[],
+        )
+    assert (await reload(committed_sessionmaker, row.id)).status is NotificationStatus.SENDING
+
+    clock.advance(timedelta(minutes=15))
+    mailer = RecordingMailer()
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer, planners=[])
+    failed = await reload(committed_sessionmaker, row.id)
+    assert failed.status is NotificationStatus.FAILED
+    assert failed.error is not None and failed.error.startswith("Versandergebnis unklar")
+    assert mailer.sent == []
 
 
 async def test_serve_registers_the_interval_job(monkeypatch: pytest.MonkeyPatch) -> None:
