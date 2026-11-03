@@ -151,6 +151,39 @@ async def test_each_account_sees_only_its_own_reminders(session: AsyncSession) -
         assert other not in mails[mine] and "Sven" not in mails[mine]
 
 
+async def test_gifting_without_date_counts_only_for_the_first_event_after_it_was_created(
+    session: AsyncSession,
+) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    anna = await add_person(session, user, "Anna", None)
+    occasion = await add_occasion(
+        session, user, "Hochzeitstag", date(2020, 11, 20), Recurrence.YEARLY, people=[anna]
+    )
+    vase = await add_gift(session, user, "Vase")
+    # 23:59 local time on the 2025 Hochzeitstag, so it counted for 2025
+    last_year = datetime(2025, 11, 20, 22, 59, tzinfo=UTC)
+    await add_gifting(session, vase, [anna], GiftingStatus.ACQUIRED, occasion, None, last_year)
+    [mail] = only(user, await due(session, OPEN))
+    assert "Noch ohne Beschenkung:\n- Anna" in mail.body
+    book = await add_gift(session, user, "Kochbuch")
+    after_it = last_year + timedelta(minutes=1)  # 00:00 local time on the day after
+    await add_gifting(session, book, [anna], GiftingStatus.ACQUIRED, occasion, None, after_it)
+    assert only(user, await due(session, OPEN)) == []
+
+
+async def test_birthday_gifting_without_date_counts_only_for_the_next_birthday(
+    session: AsyncSession,
+) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    birthday = (await add_rule_occasions(session, user))[OccasionRule.BIRTHDAY]
+    anna = await add_person(session, user, "Anna", date(1990, 11, 20))
+    vase = await add_gift(session, user, "Vase")
+    last_year = datetime(2025, 11, 20, 22, 59, tzinfo=UTC)
+    await add_gifting(session, vase, [anna], GiftingStatus.ACQUIRED, birthday, None, last_year)
+    [mail] = only(user, await due(session, OPEN))
+    assert "Noch ohne Beschenkung:\n- Anna" in mail.body
+
+
 async def test_a_failing_account_does_not_stop_the_others(
     session: AsyncSession, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:

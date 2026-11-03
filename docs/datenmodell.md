@@ -190,6 +190,7 @@ erDiagram
 | Unabhängige Beschenkungen derselben Idee | mehrere `gifting`-Zeilen je `gift` |
 | Bei `given` sind Empfänger, Anlass, Termin, Verschenkdatum Pflicht (F-06) | Check-Constraint `ck_gifting_given_complete` auf `status <> 'given' OR (occasion_id IS NOT NULL AND occasion_date IS NOT NULL AND given_on IS NOT NULL)`; mindestens ein Empfänger wird im Service geprüft |
 | Weihnachten 2026 ≠ Weihnachten 2027 | `gifting.occasion_date` trägt den konkreten Termin, `occasion` nur die Regel |
+| Eine Beschenkung ohne Termin gilt nur für den ersten Termin ab ihrer Anlage (F-11, F-12) | Bei `occasion_date NULL` vergleichen Saisonübersicht und Erinnerung den nächsten Termin ab dem Tag von `created_at` (Ortszeit) mit dem anstehenden Termin. Sonst würde eine besorgte Beschenkung ohne Termin denselben Anlass in jedem späteren Jahr abdecken |
 | Kein Doppelversand (F-13, Q-02) | `UNIQUE(dedup_key)` auf `notification`; `type` `birthday` ist die Sammelmail, Erinnerungen 14 Tage vor einem Geburtstag sind `occasion` mit Bezug `person`; der Bezug (`reference_type`, `reference_id`) ist optional und kein Fremdschlüssel |
 | Freigabelink nicht erratbar, widerrufbar, ablaufend (F-14) | 256-Bit-Token, nur `token_hash` gespeichert, `active`, `expires_at` |
 | Kontolöschung löscht alles (F-17) | `ON DELETE CASCADE` auf allen `owner_id` und auf `user_session.user_id`; Dateien aus `attachment.storage_path` werden nach dem Commit gelöscht |

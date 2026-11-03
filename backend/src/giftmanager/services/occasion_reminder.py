@@ -1,6 +1,8 @@
 """Reminder two weeks before an own occasion (F-12)."""
 
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
+from functools import partial
 from typing import NamedTuple
 from uuid import UUID
 
@@ -40,6 +42,7 @@ def reminder_window(event: date) -> tuple[datetime, datetime]:
 class _Gifting(NamedTuple):
     occasion_id: UUID
     occasion_date: date | None
+    created_at: datetime
     gift_id: UUID
     title: str
     status: GiftingStatus
@@ -55,6 +58,7 @@ async def _giftings(
             Gifting.id,
             Gifting.occasion_id,
             Gifting.occasion_date,
+            Gifting.created_at,
             Gift.id,
             Gift.title,
             Gifting.status,
@@ -73,9 +77,9 @@ async def _giftings(
         .order_by(func.lower(Gift.title), Gift.id, Gifting.id)
     )
     giftings: dict[UUID, _Gifting] = {}
-    for gifting_id, occasion_id, day, gift_id, title, status, person_id, name in rows:
+    for gifting_id, occasion_id, day, created_at, gift_id, title, status, person_id, name in rows:
         gifting = giftings.setdefault(
-            gifting_id, _Gifting(occasion_id, day, gift_id, title, status, [])
+            gifting_id, _Gifting(occasion_id, day, created_at, gift_id, title, status, [])
         )
         if person_id is not None:
             gifting.recipients.append((person_id, name))
@@ -97,10 +101,22 @@ def _gaps(giftings: list[_Gifting], people: list[tuple[UUID, str]]) -> tuple[lis
     return missing, lines
 
 
-def _counting(giftings: list[_Gifting], occasion_id: UUID | None, event: date) -> list[_Gifting]:
-    """Giftings of the occasion that count for `event`."""
+def _counting(
+    giftings: list[_Gifting],
+    occasion_id: UUID | None,
+    event: date,
+    next_from: Callable[[date], date | None],
+) -> list[_Gifting]:
+    """Giftings of the occasion that count for `event`.
+
+    One without a date counts only for the first event from the day it was created on
+    (`next_from`), so it does not cover the same occasion in later years.
+    """
     return [
-        g for g in giftings if g.occasion_id == occasion_id and g.occasion_date in (None, event)
+        g
+        for g in giftings
+        if g.occasion_id == occasion_id
+        and (g.occasion_date or next_from(local_date(g.created_at))) == event
     ]
 
 
@@ -139,6 +155,10 @@ def _mail(
     )
 
 
+# (occasion or person id, name, event, open window, next event from a day on)
+type _Due = tuple[UUID, str, date, tuple[datetime, datetime], Callable[[date], date | None]]
+
+
 def _open_window(event: date, now: datetime) -> tuple[datetime, datetime] | None:
     """The reminder window of `event` if it is open at `now`."""
     opens, closes = reminder_window(event)
@@ -153,25 +173,27 @@ async def _account(session: AsyncSession, user: User, now: datetime) -> list[Pla
         .where(Occasion.date.is_not(None))
         .with_only_columns(Occasion.id, Occasion.name, Occasion.date, Occasion.recurrence)
     )
-    due_occasions: list[tuple[UUID, str, date, tuple[datetime, datetime]]] = []
+    due_occasions: list[_Due] = []
     for occasion_id, name, start, recurrence in occasions:
-        event = next_occurrence(start, recurrence, today)
+        next_from = partial(next_occurrence, start, recurrence)
+        event = next_from(today)
         if event and (window := _open_window(event, now)):
-            due_occasions.append((occasion_id, name, event, window))
+            due_occasions.append((occasion_id, name, event, window, next_from))
     persons = await session.execute(
         owned(Person, user.id)
         .where(Person.birthday.is_not(None))
         .with_only_columns(Person.id, Person.name, Person.birthday)
     )
-    due_birthdays: list[tuple[UUID, str, date, tuple[datetime, datetime]]] = []
+    due_birthdays: list[_Due] = []
     for person_id, name, birthday in persons:
-        event = next_occurrence(birthday, Recurrence.YEARLY, today)
+        next_from = partial(next_occurrence, birthday, Recurrence.YEARLY)
+        event = next_from(today)
         if event and (window := _open_window(event, now)):
-            due_birthdays.append((person_id, name, event, window))
+            due_birthdays.append((person_id, name, event, window, next_from))
     if not (due_occasions or due_birthdays):
         return []
 
-    due_ids = [occasion_id for occasion_id, _, _, _ in due_occasions]
+    due_ids = [occasion_id for occasion_id, *_ in due_occasions]
     people: dict[UUID, list[tuple[UUID, str]]] = {}
     if due_ids:
         rows = await session.execute(
@@ -191,19 +213,20 @@ async def _account(session: AsyncSession, user: User, now: datetime) -> list[Pla
             .limit(1)
         )
     occasion_ids = due_ids + ([birthday_occasion] if birthday_occasion else [])
-    events = {event for _, _, event, _ in due_occasions + due_birthdays}
+    events = {event for _, _, event, _, _ in due_occasions + due_birthdays}
     giftings = await _giftings(session, user.id, occasion_ids, events) if occasion_ids else []
 
     mails: list[PlannedMail] = []
-    for occasion_id, name, event, window in due_occasions:
-        gaps = _gaps(_counting(giftings, occasion_id, event), people.get(occasion_id, []))
+    for occasion_id, name, event, window, next_from in due_occasions:
+        counting = _counting(giftings, occasion_id, event, next_from)
+        gaps = _gaps(counting, people.get(occasion_id, []))
         if gaps[0] or gaps[1]:
             reference = (ReferenceType.OCCASION, occasion_id)
             mails.append(_mail(user, event, window, reference, name, f"ist {name}", gaps))
-    for person_id, name, event, window in due_birthdays:
+    for person_id, name, event, window, next_from in due_birthdays:
         theirs = [
             g
-            for g in _counting(giftings, birthday_occasion, event)
+            for g in _counting(giftings, birthday_occasion, event, next_from)
             if any(pid == person_id for pid, _ in g.recipients)
         ]
         gaps = _gaps(theirs, [(person_id, name)])

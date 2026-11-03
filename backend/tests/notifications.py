@@ -135,6 +135,11 @@ async def add_gift(
     return gift
 
 
+# Before every test event and after the occurrence before it, so a gifting without a date
+# counts for the test events whatever the wall clock says.
+CREATED = datetime(2026, 10, 1, tzinfo=UTC)
+
+
 async def add_gifting(
     session: AsyncSession,
     gift: Gift,
@@ -142,6 +147,7 @@ async def add_gifting(
     status: GiftingStatus,
     occasion: Occasion | None = None,
     occasion_date: date | None = None,
+    created_at: datetime = CREATED,
 ) -> Gifting:
     """Gifting of `gift` to `people`; a given one gets `given_on`, so the CHECK `given_complete` holds."""
     gifting = Gifting(
@@ -151,6 +157,7 @@ async def add_gifting(
         occasion_date=occasion_date,
         given_on=occasion_date if status is GiftingStatus.GIVEN else None,
         people=list(people),
+        created_at=created_at,
     )
     session.add(gifting)
     await session.flush()

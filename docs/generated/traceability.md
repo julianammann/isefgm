@@ -498,6 +498,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-11 | `tests/test_season_overview.py::test_given_idea_does_not_add_person` | passed |
 | F-11 | `tests/test_season_overview.py::test_last_years_gifting_does_not_count` | passed |
 | F-11 | `tests/test_season_overview.py::test_gifting_without_date_counts_and_without_recipient_is_listed` | passed |
+| F-11 | `tests/test_season_overview.py::test_gifting_without_date_counts_only_for_the_first_christmas_after_it_was_created` | passed |
 | F-11 | `tests/test_season_overview.py::test_easter_overview` | passed |
 | F-11 | `tests/test_season_overview.py::test_weekly_mails_have_their_own_keys` | passed |
 | F-11 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
@@ -517,6 +518,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-12 | `tests/test_occasion_reminder.py::test_window_on_dst_change_day` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_occasion_without_people_needs_an_open_gifting` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_each_account_sees_only_its_own_reminders` | passed |
+| F-12 | `tests/test_occasion_reminder.py::test_gifting_without_date_counts_only_for_the_first_event_after_it_was_created` | passed |
+| F-12 | `tests/test_occasion_reminder.py::test_birthday_gifting_without_date_counts_only_for_the_next_birthday` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_number_of_queries_does_not_grow_with_due_reminders` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_birthday_without_gifting` | passed |
@@ -1086,6 +1089,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_occasion_reminder.py::test_window_on_dst_change_day` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_occasion_without_people_needs_an_open_gifting` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_each_account_sees_only_its_own_reminders` | passed |
+| QZ-09 | `tests/test_occasion_reminder.py::test_gifting_without_date_counts_only_for_the_first_event_after_it_was_created` | passed |
+| QZ-09 | `tests/test_occasion_reminder.py::test_birthday_gifting_without_date_counts_only_for_the_next_birthday` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_number_of_queries_does_not_grow_with_due_reminders` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_birthday_without_gifting` | passed |
@@ -1112,6 +1117,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_season_overview.py::test_given_idea_does_not_add_person` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_last_years_gifting_does_not_count` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_gifting_without_date_counts_and_without_recipient_is_listed` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_gifting_without_date_counts_only_for_the_first_christmas_after_it_was_created` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_easter_overview` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_weekly_mails_have_their_own_keys` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |

@@ -249,6 +249,22 @@ async def test_gifting_without_date_counts_and_without_recipient_is_listed(
     assert f"Ohne Empfänger\n- Plätzchen (Idee): {ORIGIN}/gifts/{cookies.id}" in mail.body
 
 
+async def test_gifting_without_date_counts_only_for_the_first_christmas_after_it_was_created(
+    session: AsyncSession,
+) -> None:
+    user, xmas = await setup_account(session)
+    cookies = await add_gift(session, user, "Plätzchen")
+    # 23:59 local time on Christmas Eve 2025, so it counted for 2025
+    last_year = datetime(2025, 12, 24, 22, 59, tzinfo=UTC)
+    await add_gifting(session, cookies, [], GiftingStatus.IDEA, xmas, None, last_year)
+    assert only(user, await due(session, START)) == []
+    stollen = await add_gift(session, user, "Stollen")
+    await add_gifting(session, stollen, [], GiftingStatus.IDEA, xmas, None)
+    [mail] = only(user, await due(session, START))
+    assert "Stollen" in mail.body
+    assert "Plätzchen" not in mail.body
+
+
 async def test_easter_overview(session: AsyncSession) -> None:
     user = await make_user(session, "konto@isefgm.localhost")
     easter = (await add_rule_occasions(session, user))[OccasionRule.EASTER]
@@ -435,11 +451,11 @@ async def test_a_failing_account_does_not_stop_the_others(
     entries = season_overview._entries  # pyright: ignore[reportPrivateUsage]
 
     async def fails_for_first(
-        s: AsyncSession, user_id: UUID, occasion_id: UUID, event: date
+        s: AsyncSession, user_id: UUID, occasion_id: UUID, event: date, rule: OccasionRule
     ) -> tuple[dict[UUID, tuple[str, list[Line]]], list[Line]]:
         if user_id == first.id:
             await s.execute(text("SELECT 1/0"))  # aborts the transaction like a real query error
-        return await entries(s, user_id, occasion_id, event)
+        return await entries(s, user_id, occasion_id, event, rule)
 
     monkeypatch.setattr(season_overview, "_entries", fails_for_first)
     mails = await due(session, START)

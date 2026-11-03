@@ -61,14 +61,26 @@ def open_send(event: date, now: datetime) -> tuple[date, datetime, datetime] | N
 
 
 async def _entries(
-    session: AsyncSession, user_id: UUID, occasion_id: UUID, event: date
+    session: AsyncSession, user_id: UUID, occasion_id: UUID, event: date, rule: OccasionRule
 ) -> tuple[
     dict[UUID, tuple[str, list[Line]]],
     list[Line],
 ]:
-    """(per person: name and giftings, giftings without recipient) of the occasion on `event`."""
+    """(per person: name and giftings, giftings without recipient) of the occasion on `event`.
+
+    A gifting without a date counts only for the first `event` from the day it was created on,
+    so it does not show up again in later years.
+    """
     rows = await session.execute(
-        select(Person.id, Person.name, Gift.id, Gift.title, Gifting.status)
+        select(
+            Person.id,
+            Person.name,
+            Gift.id,
+            Gift.title,
+            Gifting.status,
+            Gifting.occasion_date,
+            Gifting.created_at,
+        )
         .select_from(Gifting)
         .join(Gift, Gift.id == Gifting.gift_id)
         .outerjoin(gifting_person, gifting_person.c.gifting_id == Gifting.id)
@@ -82,7 +94,9 @@ async def _entries(
     )
     people: dict[UUID, tuple[str, list[Line]]] = {}
     nobody: list[Line] = []
-    for person_id, name, gift_id, title, status in rows:
+    for person_id, name, gift_id, title, status, day, created_at in rows:
+        if day is None and rule_date(rule, local_date(created_at)) != event:
+            continue
         if person_id is None:
             nobody.append((gift_id, title, status))
         else:
@@ -168,7 +182,7 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
                 ).one_or_none()
                 if occasion_id is None:
                     continue
-                people, nobody = await _entries(session, user.id, occasion_id, event)
+                people, nobody = await _entries(session, user.id, occasion_id, event, rule)
                 ideas = await _idea_people(session, user.id, occasion_id)
                 if not (people or ideas or nobody):
                     continue
