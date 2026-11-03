@@ -72,6 +72,8 @@ jobs:
       - run: mise run apidocs
         env:
           DOCS_BASE: /${{ github.event.repository.name }}/
+          # Sphinx imports giftmanager.main, which reads settings; no database is used.
+          DATABASE_URL: postgresql+asyncpg://unused@localhost/unused
 
       - if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

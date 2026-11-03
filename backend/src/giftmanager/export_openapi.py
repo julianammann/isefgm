@@ -5,7 +5,11 @@ normally via ``mise run openapi``.
 """
 
 import json
+import os
 import sys
+
+# main reads settings at import, which require DATABASE_URL; the export never connects.
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://unused@localhost/unused")
 
 from giftmanager.main import app
 
