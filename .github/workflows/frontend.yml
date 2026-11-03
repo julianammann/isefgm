@@ -33,7 +33,7 @@ jobs:
           # Part of the cache key, so a cached binary always matches. Dependabot does
           # not bump this input; raise it by hand (#92).
           version: 2026.10.3
-          install_args: node pnpm
+          install_args: node pnpm java
 
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

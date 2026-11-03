@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { resolve } from '$app/paths';
   import type { PageProps } from './$types';
 
   let { data, form }: PageProps = $props();
@@ -15,6 +16,22 @@
     <dt class="text-gray-600">E-Mail-Adresse</dt>
     <dd>{data.user.email}</dd>
   </dl>
+
+  <section class="mt-10 rounded border p-4" aria-labelledby="full-list-heading">
+    <h2 id="full-list-heading" class="font-semibold">Vollständige Liste</h2>
+    <p class="mt-2 text-sm">
+      Alle Personen, Geschenkideen und vergangenen Geschenke dieses Kontos als eine HTML-Seite.
+    </p>
+    <!-- Both bypass the client router: target="_blank" and download are left to the browser. -->
+    <p class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+      <a class="underline" href={resolve('full-list')} target="_blank" rel="noopener noreferrer">
+        Liste öffnen (neuer Tab)
+      </a>
+      <a class="underline" href={resolve('full-list')} download="vollstaendige-liste.html">
+        Als HTML herunterladen
+      </a>
+    </p>
+  </section>
 
   <section class="mt-10 rounded border p-4" aria-labelledby="logout-all-heading">
     <h2 id="logout-all-heading" class="font-semibold">Auf allen Geräten abmelden</h2>
