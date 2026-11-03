@@ -406,7 +406,7 @@ async def test_rule_occasions_next_to_a_user_defined_type(session: AsyncSession)
     await session.flush()
     rules = await add_rule_occasions(session, user)
     assert set(rules) == set(OccasionRule)
-    # the dated occasion of type Christmas exists first; the overview still uses the rule one
+    # next to a dated occasion of type Christmas the overview uses the rule one
     for occasion, title in [(rules[OccasionRule.CHRISTMAS], "Kerze"), (party, "Wichteln")]:
         await add_gifting(
             session, await add_gift(session, user, title), [], GiftingStatus.IDEA, occasion

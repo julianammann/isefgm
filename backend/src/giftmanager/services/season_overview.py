@@ -166,11 +166,13 @@ async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
         send_day, scheduled_for, expires_at = window
         # shortcut: three queries per account and open season, fine for the test accounts, revisit with many accounts.
         for user in await active_recipients(session):
-            occasion_id = await session.scalar(
-                owned(Occasion, user.id)
-                .where(Occasion.occasion_type_id == type_id, Occasion.date.is_(None))
-                .with_only_columns(Occasion.id)
-            )
+            occasion_id = (
+                await session.scalars(
+                    owned(Occasion, user.id)
+                    .where(Occasion.occasion_type_id == type_id, Occasion.date.is_(None))
+                    .with_only_columns(Occasion.id)
+                )
+            ).one_or_none()
             if occasion_id is None:
                 continue
             people, nobody = await _entries(session, user.id, occasion_id, event)
