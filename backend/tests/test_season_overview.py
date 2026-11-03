@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from giftmanager.core.config import get_settings
 from giftmanager.models.gifting import GiftingStatus
 from giftmanager.models.notification import NotificationType
-from giftmanager.models.occasion import Occasion, OccasionRule, OccasionType, Recurrence
+from giftmanager.models.occasion import (
+    CHRISTMAS_TYPE_ID,
+    Occasion,
+    OccasionRule,
+    OccasionType,
+    Recurrence,
+)
 from giftmanager.models.user import User
 from giftmanager.scheduler import run_once
 from giftmanager.services.notification import dedup_key
@@ -125,18 +131,74 @@ async def test_lists_recipients_with_status_and_idea_people(session: AsyncSessio
         await add_person(session, user, "Bernd", None),
     )
     book = await add_gift(session, user, "Kochbuch")
+    scarf = await add_gift(session, user, "Schal")
     await add_gifting(session, book, [anna], GiftingStatus.ACQUIRED, xmas, XMAS)
+    await add_gifting(session, scarf, [anna], GiftingStatus.PLANNED, xmas, XMAS)
     await add_gift(session, user, "Puzzle", people=[bernd], occasions=[xmas])
+    await add_gift(session, user, "Bilderrahmen", people=[bernd], occasions=[xmas])
     [mail] = only(user, await due(session, START))
     assert mail.subject == "Weihnachten 2026: Stand der Geschenke"
-    assert f"Anna\n- Kochbuch (Besorgt): {ORIGIN}/gifts/{book.id}" in mail.body
-    assert "Bernd\n- noch keine Beschenkung, Ideen: Puzzle" in mail.body
-    assert (mail.type, mail.reference_id, mail.event_date, mail.interval) == (
+    assert (
+        f"Anna\n- Kochbuch (Besorgt): {ORIGIN}/gifts/{book.id}\n"
+        f"- Schal (Geplant): {ORIGIN}/gifts/{scarf.id}\n"
+    ) in mail.body
+    assert "Bernd\n- noch keine Beschenkung, Ideen: Bilderrahmen, Puzzle" in mail.body
+    assert (
+        mail.type,
+        mail.reference_id,
+        mail.event_date,
+        mail.interval,
+        mail.scheduled_for,
+        mail.expires_at,
+    ) == (
         NotificationType.CHRISTMAS,
         xmas.id,
         XMAS,
         "2026-11-12",
+        START,
+        datetime(2026, 11, 16, 7, 0, tzinfo=UTC),
     )
+
+
+async def test_christmas_overview_lists_only_christmas(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    rules = await add_rule_occasions(session, user)
+    anna = await add_person(session, user, "Anna", None)
+    for rule, gifted, idea, idea_person in [
+        (OccasionRule.CHRISTMAS, "Kochbuch", "Puzzle", "Bernd"),
+        (OccasionRule.EASTER, "Schokohase", "Eierbecher", "Clara"),
+        (OccasionRule.BIRTHDAY, "Schal", "Vase", "Dora"),
+    ]:
+        occasion = rules[rule]
+        # no occasion date, so only the occasion separates the giftings
+        await add_gifting(
+            session, await add_gift(session, user, gifted), [anna], GiftingStatus.PLANNED, occasion
+        )
+        person = await add_person(session, user, idea_person, None)
+        await add_gift(session, user, idea, people=[person], occasions=[occasion])
+    [mail] = only(user, await due(session, START))
+    assert "Kochbuch" in mail.body and "Bernd\n- noch keine Beschenkung, Ideen: Puzzle" in mail.body
+    assert not any(
+        w in mail.body for w in ("Schokohase", "Eierbecher", "Clara", "Schal", "Vase", "Dora")
+    )
+
+
+@pytest.mark.parametrize(
+    "now",
+    [
+        datetime(2026, 11, 12, 6, 59, tzinfo=UTC),  # a minute before the season starts
+        datetime(2026, 12, 23, 23, 0, tzinfo=UTC),  # Christmas Eve, 00:00 Berlin
+        datetime(2026, 12, 26, 7, 0, tzinfo=UTC),
+    ],
+)
+async def test_no_overview_outside_the_season(session: AsyncSession, now: datetime) -> None:
+    user, xmas = await setup_account(session)
+    anna = await add_person(session, user, "Anna", None)
+    await add_gifting(
+        session, await add_gift(session, user, "Kerze"), [anna], GiftingStatus.IDEA, xmas, XMAS
+    )
+    await add_gift(session, user, "Puzzle", people=[anna], occasions=[xmas])
+    assert only(user, await due(session, now)) == []
 
 
 async def test_idea_given_to_someone_else_still_adds_person(session: AsyncSession) -> None:
@@ -234,6 +296,22 @@ async def test_scheduler_sends_one_overview_per_week(
     ] * 2
 
 
+@pytest.mark.requirement("F-11", "QZ-05")
+async def test_scheduler_catches_up_after_the_send_time(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    user = await make_committed_user(committed_sessionmaker)
+    async with committed_sessionmaker() as s, s.begin():
+        xmas = (await add_rule_occasions(s, user))[OccasionRule.CHRISTMAS]
+        await add_gifting(s, await add_gift(s, user, "Kerze"), [], GiftingStatus.IDEA, xmas, XMAS)
+    clock.current = datetime(2026, 11, 13, 10, 0, tzinfo=UTC)  # first run a day late
+    mailer = RecordingMailer()
+    await run_once(clock=clock, sessionmaker=committed_sessionmaker, mailer=mailer)
+    assert [m.subject for m in mailer.sent if m.to == user.email] == [
+        "Weihnachten 2026: Stand der Geschenke"
+    ]
+
+
 @pytest.mark.requirement("F-11", "Q-01", "Q-04")
 async def test_each_account_sees_only_its_own_overview(session: AsyncSession) -> None:
     owners = {
@@ -306,14 +384,33 @@ async def test_rule_occasions_next_to_a_user_defined_type(session: AsyncSession)
     custom = OccasionType(owner_id=user.id, name="Jubilaeum", default_recurrence=Recurrence.NONE)
     session.add(custom)
     await session.flush()
-    session.add(
-        Occasion(
-            owner_id=user.id,
-            occasion_type_id=custom.id,
-            name="Feier",
-            date=date(2027, 5, 1),
-            recurrence=Recurrence.NONE,
-        )
+    party = Occasion(
+        owner_id=user.id,
+        occasion_type_id=CHRISTMAS_TYPE_ID,
+        name="Weihnachtsfeier",
+        date=date(2026, 12, 18),
+        recurrence=Recurrence.NONE,
+    )
+    session.add_all(
+        [
+            Occasion(
+                owner_id=user.id,
+                occasion_type_id=custom.id,
+                name="Feier",
+                date=date(2027, 5, 1),
+                recurrence=Recurrence.NONE,
+            ),
+            party,
+        ]
     )
     await session.flush()
-    assert set(await add_rule_occasions(session, user)) == set(OccasionRule)
+    rules = await add_rule_occasions(session, user)
+    assert set(rules) == set(OccasionRule)
+    # the dated occasion of type Christmas exists first; the overview still uses the rule one
+    for occasion, title in [(rules[OccasionRule.CHRISTMAS], "Kerze"), (party, "Wichteln")]:
+        await add_gifting(
+            session, await add_gift(session, user, title), [], GiftingStatus.IDEA, occasion
+        )
+    [mail] = only(user, await due(session, START))
+    assert mail.reference_id == rules[OccasionRule.CHRISTMAS].id
+    assert "Kerze" in mail.body and "Wichteln" not in mail.body

@@ -486,6 +486,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-11 | `tests/test_season_overview.py::test_open_send_christmas[now4-None]` | passed |
 | F-11 | `tests/test_season_overview.py::test_open_send_easter_starts_on_sunday` | passed |
 | F-11 | `tests/test_season_overview.py::test_lists_recipients_with_status_and_idea_people` | passed |
+| F-11 | `tests/test_season_overview.py::test_christmas_overview_lists_only_christmas` | passed |
+| F-11 | `tests/test_season_overview.py::test_no_overview_outside_the_season[now0]` | passed |
+| F-11 | `tests/test_season_overview.py::test_no_overview_outside_the_season[now1]` | passed |
+| F-11 | `tests/test_season_overview.py::test_no_overview_outside_the_season[now2]` | passed |
 | F-11 | `tests/test_season_overview.py::test_idea_given_to_someone_else_still_adds_person` | passed |
 | F-11 | `tests/test_season_overview.py::test_given_idea_does_not_add_person` | passed |
 | F-11 | `tests/test_season_overview.py::test_last_years_gifting_does_not_count` | passed |
@@ -493,6 +497,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-11 | `tests/test_season_overview.py::test_easter_overview` | passed |
 | F-11 | `tests/test_season_overview.py::test_weekly_mails_have_their_own_keys` | passed |
 | F-11 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
+| F-11 | `tests/test_season_overview.py::test_scheduler_catches_up_after_the_send_time` | passed |
 | F-11 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
 | F-11 | `tests/test_season_overview.py::test_gifting_with_several_recipients_is_listed_under_each` | passed |
 | F-11 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
@@ -1008,6 +1013,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_scheduler.py::test_engine_errors_do_not_contain_bound_parameters` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_api_process_loads_no_scheduler_or_mail` | passed |
 | QZ-05 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
+| QZ-05 | `tests/test_season_overview.py::test_scheduler_catches_up_after_the_send_time` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_lists_exactly_next_month` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_december_lists_january` | passed |
 | QZ-09 | `tests/test_birthday_digest.py::test_lists_known_ideas_but_not_given_ones` | passed |
@@ -1036,6 +1042,10 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_season_overview.py::test_open_send_christmas[now4-None]` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_open_send_easter_starts_on_sunday` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_lists_recipients_with_status_and_idea_people` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_christmas_overview_lists_only_christmas` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_no_overview_outside_the_season[now0]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_no_overview_outside_the_season[now1]` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_no_overview_outside_the_season[now2]` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_idea_given_to_someone_else_still_adds_person` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_given_idea_does_not_add_person` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_last_years_gifting_does_not_count` | passed |
@@ -1043,6 +1053,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_season_overview.py::test_easter_overview` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_weekly_mails_have_their_own_keys` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_scheduler_sends_one_overview_per_week` | passed |
+| QZ-09 | `tests/test_season_overview.py::test_scheduler_catches_up_after_the_send_time` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_each_account_sees_only_its_own_overview` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_gifting_with_several_recipients_is_listed_under_each` | passed |
 | QZ-09 | `tests/test_season_overview.py::test_person_with_a_gifting_gets_no_idea_line` | passed |
