@@ -1,2 +1,6 @@
 allowBuilds:
   esbuild: true
+# vitepress 1.6 (latest stable) pins vite 5. Dependabot #4 to #13 need vite 6.4.4+ (brings esbuild 0.25) and source-map-js 1.2.2.
+overrides:
+  vite@<6.4.4: ^6.4.4
+  source-map-js@<1.2.2: ^1.2.2
