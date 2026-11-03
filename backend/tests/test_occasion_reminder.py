@@ -4,7 +4,7 @@ from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from sqlalchemy import Select, text
+from sqlalchemy import Engine, Select, event, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from giftmanager.core.config import get_settings
@@ -177,6 +177,40 @@ async def test_a_failing_account_does_not_stop_the_others(
         "Erinnerung: Hochzeitstag am 20.11.",
     ]
     assert f"Planning for account {first.id} failed" in caplog.text
+
+
+async def test_number_of_queries_does_not_grow_with_due_reminders(session: AsyncSession) -> None:
+    user = await make_user(session, "konto@isefgm.localhost")
+    await add_rule_occasions(session, user)
+    statements: list[str] = []
+
+    def _record(_conn: object, _cursor: object, statement: str, *_: object) -> None:
+        statements.append(statement)
+
+    async def add_due(name: str) -> None:
+        person = await add_person(session, user, name, date(1990, 11, 20))
+        occasion = await add_occasion(session, user, f"Feier {name}", EVENT, people=[person])
+        gift = await add_gift(session, user, f"{name}-Buch")
+        await add_gifting(session, gift, [person], GiftingStatus.PLANNED, occasion, EVENT)
+
+    async def count(reminders: int) -> int:
+        statements.clear()
+        assert len(only(user, await due(session, OPEN))) == reminders
+        return len(statements)
+
+    event.listen(Engine, "before_cursor_execute", _record)
+    try:
+        await add_due("Anna")
+        few = await count(2)
+        for name in ("Bernd", "Clara", "Dora"):
+            await add_due(name)
+        many = await count(8)
+    finally:
+        event.remove(Engine, "before_cursor_execute", _record)
+
+    # The spy does see the planner, so equal counts are no blind spot.
+    assert few > 0
+    assert many == few
 
 
 async def test_birthday_without_gifting(session: AsyncSession) -> None:

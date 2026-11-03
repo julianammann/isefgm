@@ -518,6 +518,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-12 | `tests/test_occasion_reminder.py::test_occasion_without_people_needs_an_open_gifting` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_each_account_sees_only_its_own_reminders` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_a_failing_account_does_not_stop_the_others` | passed |
+| F-12 | `tests/test_occasion_reminder.py::test_number_of_queries_does_not_grow_with_due_reminders` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_birthday_without_gifting` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_birthday_with_acquired_and_planned_gifting` | passed |
 | F-12 | `tests/test_occasion_reminder.py::test_birthday_gifting_for_another_person_does_not_count` | passed |
@@ -1086,6 +1087,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-09 | `tests/test_occasion_reminder.py::test_occasion_without_people_needs_an_open_gifting` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_each_account_sees_only_its_own_reminders` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_a_failing_account_does_not_stop_the_others` | passed |
+| QZ-09 | `tests/test_occasion_reminder.py::test_number_of_queries_does_not_grow_with_due_reminders` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_birthday_without_gifting` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_birthday_with_acquired_and_planned_gifting` | passed |
 | QZ-09 | `tests/test_occasion_reminder.py::test_birthday_gifting_for_another_person_does_not_count` | passed |
