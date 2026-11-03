@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import exists, extract, func, select
+from sqlalchemy import extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.config import get_settings
@@ -18,6 +18,7 @@ from giftmanager.services.notification import (
     PlannedMail,
     active_recipients,
     format_day,
+    given_to_linked_person,
     local_at,
     local_date,
 )
@@ -61,16 +62,6 @@ async def _ideas_by_person(
     session: AsyncSession, user_id: UUID, person_ids: list[UUID]
 ) -> dict[UUID, list[tuple[UUID, str]]]:
     """Per person: linked gifts not yet given to them, plus gifts of their open giftings."""
-    given_to_person = (
-        exists()
-        .where(
-            Gifting.gift_id == Gift.id,
-            Gifting.status == GiftingStatus.GIVEN,
-            gifting_person.c.gifting_id == Gifting.id,
-            gifting_person.c.person_id == gift_person.c.person_id,
-        )
-        .correlate(Gift, gift_person)
-    )
     linked = (
         select(
             gift_person.c.person_id.label("person_id"),
@@ -78,7 +69,11 @@ async def _ideas_by_person(
             Gift.title.label("title"),
         )
         .join(Gift, Gift.id == gift_person.c.gift_id)
-        .where(gift_person.c.person_id.in_(person_ids), Gift.owner_id == user_id, ~given_to_person)
+        .where(
+            gift_person.c.person_id.in_(person_ids),
+            Gift.owner_id == user_id,
+            ~given_to_linked_person(),
+        )
     )
     planned = (
         select(

@@ -3,7 +3,7 @@
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import exists, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from giftmanager.core.config import get_settings
@@ -17,6 +17,7 @@ from giftmanager.services.notification import (
     STATUS_LABELS,
     PlannedMail,
     active_recipients,
+    given_to_linked_person,
     local_at,
     local_date,
     local_midnight,
@@ -92,16 +93,6 @@ async def _idea_people(
     session: AsyncSession, user_id: UUID, occasion_id: UUID
 ) -> dict[UUID, tuple[str, list[str]]]:
     """Per person: name and titles of ideas of the occasion not yet given to them."""
-    given_to_person = (
-        exists()
-        .where(
-            Gifting.gift_id == Gift.id,
-            Gifting.status == GiftingStatus.GIVEN,
-            gifting_person.c.gifting_id == Gifting.id,
-            gifting_person.c.person_id == gift_person.c.person_id,
-        )
-        .correlate(Gift, gift_person)
-    )
     rows = await session.execute(
         select(Person.id, Person.name, Gift.title)
         .select_from(gift_occasion)
@@ -112,7 +103,7 @@ async def _idea_people(
             gift_occasion.c.occasion_id == occasion_id,
             Gift.owner_id == user_id,
             Person.owner_id == user_id,
-            ~given_to_person,
+            ~given_to_linked_person(),
         )
         .order_by(func.lower(Gift.title), Gift.id)
     )
