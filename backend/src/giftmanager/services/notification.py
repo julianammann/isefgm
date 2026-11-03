@@ -8,7 +8,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import Exists, case, exists, select, update
+from sqlalchemy import Exists, String, Text, case, column, exists, select, update, values
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -124,9 +124,11 @@ def given_to_linked_person() -> Exists:
 
 
 async def plan(session: AsyncSession, mails: Iterable[PlannedMail]) -> int:
-    """Insert the mails as `planned`; a dedup key that already exists is left alone.
+    """Insert the mails as `planned`; a dedup key that already exists is not inserted again.
 
-    Returns the number of newly created rows.
+    A row with that key that is still `planned` gets the current subject and body, so a mail
+    retried after a transient failure says what is true now. Returns the number of newly
+    created rows.
     """
     rows = [
         {
@@ -147,8 +149,20 @@ async def plan(session: AsyncSession, mails: Iterable[PlannedMail]) -> int:
     ]
     if not rows:
         return 0
-    # shortcut: one INSERT per call, asyncpg caps bind params at 32767 (~2,500
-    # rows); chunk if a single run ever plans more.
+    fresh = values(
+        column("dedup_key", String), column("subject", String), column("body", Text), name="fresh"
+    ).data([(r["dedup_key"], r["subject"], r["body"]) for r in rows])
+    await session.execute(
+        update(Notification)
+        .where(
+            Notification.dedup_key == fresh.c.dedup_key,
+            Notification.status == NotificationStatus.PLANNED,
+        )
+        .values(subject=fresh.c.subject, body=fresh.c.body)
+        .execution_options(synchronize_session=False)
+    )
+    # shortcut: one UPDATE and one INSERT per call, asyncpg caps bind params at 32767
+    # (~2,500 rows); chunk if a single run ever plans more.
     result = await session.execute(
         insert(Notification)
         .values(rows)
@@ -202,8 +216,8 @@ async def dispatch_due(
                 if claimed is None:
                     return sent
                 notification_id = claimed.id
-                # shortcut: subject and body are fixed when planned, so a retry after a transient
-                # failure can still name a person deleted since; render at send time if that matters.
+                # shortcut: subject and body are as of the last planning run (plan() refreshes rows
+                # not sent yet); render at send time if that is not fresh enough.
                 mail = Mail(to=claimed.recipient, subject=claimed.subject, body=claimed.body)
 
             failure: MailError | None = None

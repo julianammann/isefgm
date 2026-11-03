@@ -200,7 +200,8 @@ async def test_scheduler_sends_the_digest_once_per_month(
 ) -> None:
     user = await make_committed_user(committed_sessionmaker)
     async with committed_sessionmaker() as s, s.begin():
-        await add_person(s, user, "Anna", date(1990, 12, 3))
+        # No F-12 reminder (14 days ahead) is due on any of the runs below.
+        await add_person(s, user, "Anna", date(1990, 12, 20))
         await add_person(s, user, "Jan", date(2000, 1, 15))
     runs: list[tuple[datetime, list[str]]] = [
         (NOV_1, ["Geburtstage im Dezember"]),
