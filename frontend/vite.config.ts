@@ -3,6 +3,22 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
+import type { BrowserCommand } from 'vitest/node';
+
+/**
+ * Renders a component on the server like SvelteKit's SSR, so a browser test can hydrate the HTML
+ * and catch markup that only breaks hydration, which a plain client-side mount never sees.
+ */
+const renderOnServer: BrowserCommand<[path: string, props: Record<string, unknown>]> = async (
+  { project },
+  path,
+  props
+) => {
+  // Through Vite as well, so render and component share one Svelte runtime.
+  const { render } = await project.vite.ssrLoadModule('svelte/server');
+  const { default: component } = await project.vite.ssrLoadModule(path);
+  return render(component, { props }).body;
+};
 
 export default defineConfig({
   server: { port: 3000 },
@@ -57,7 +73,8 @@ export default defineConfig({
           browser: {
             enabled: true,
             provider: playwright(),
-            instances: [{ browser: 'chromium', headless: true }]
+            instances: [{ browser: 'chromium', headless: true }],
+            commands: { renderOnServer }
           },
           include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
           exclude: ['src/lib/server/**']

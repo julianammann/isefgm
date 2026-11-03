@@ -106,9 +106,10 @@
                     · für {gift.people.map((p) => p.name).join(', ')}{/if}
                 </p>
                 <p class="mt-1 text-sm">
-                  {summary.lead}{#each summary.parts as part, i (part.label)}{i
-                      ? ' · '
-                      : ''}{part.count}<span aria-hidden="true">{part.icon}</span>
+                  <!-- Only a non-empty text: the server writes no node for '', so hydration would pick the wrong one. -->
+                  {summary.lead}{#each summary.parts as part, i (part.label)}{#if i || part.count}{(i
+                        ? ' · '
+                        : '') + part.count}{/if}<span aria-hidden="true">{part.icon}</span>
                     {part.label}{/each}
                 </p>
               </div>
