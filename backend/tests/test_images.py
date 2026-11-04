@@ -569,6 +569,51 @@ async def test_shared_image_of_an_idea_for_two_shared_people(
     assert r.status_code == 200
 
 
+@pytest.mark.requirement("F-14", "Q-01")
+async def test_removing_a_person_from_share_revokes_their_image(
+    client: AsyncClient, anna: User, clock: FixedClock
+) -> None:
+    lena = await create_person(client, "Lena")
+    tom = await create_person(client, "Tom")
+
+    book = await create_gift_for(client, "Buch", [lena])
+    game = await create_gift_for(client, "Spiel", [tom])
+
+    lena_image = await create_image(client, book)
+    tom_image = await create_image(client, game)
+
+    created = await share(client, [lena, tom])
+
+    owner_cookies = Cookies(client.cookies)
+    client.cookies.clear()
+
+    lena_url = f"{SHARED}/{created['token']}/images/{lena_image['id']}"
+    tom_url = f"{SHARED}/{created['token']}/images/{tom_image['id']}"
+
+    assert (await client.get(lena_url)).status_code == 200
+    assert (await client.get(tom_url)).status_code == 200
+
+    client.cookies = owner_cookies
+
+    updated = await client.put(
+        f"{SHARE_LINKS}/{created['id']}",
+        json={"person_ids": [tom]},
+    )
+    assert updated.status_code == 200
+
+    client.cookies.clear()
+
+    shared = await client.get(f"{SHARED}/{created['token']}")
+    assert shared.status_code == 200
+    assert [person["name"] for person in shared.json()["people"]] == ["Tom"]
+
+    denied = await client.get(lena_url)
+    assert denied.status_code == 404
+    assert denied.json() == SHARE_LINK_NOT_FOUND
+
+    assert (await client.get(tom_url)).status_code == 200
+
+
 @pytest.mark.requirement("F-14", "Q-01", "Q-03")
 @pytest.mark.parametrize(
     "case",

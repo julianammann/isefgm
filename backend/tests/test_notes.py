@@ -171,6 +171,11 @@ async def test_notes_require_login(client: AsyncClient) -> None:
     body = {"gift_id": UNKNOWN_ID, "label": "Größe", "text": "M"}
     assert (await client.post(NOTES, json=body)).status_code == 401
 
+    item = f"{NOTES}/{UNKNOWN_ID}"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json=body)).status_code == 401
+    assert (await client.delete(item)).status_code == 401
+
 
 # --- Tenant separation (Q-01) --------------------------------------------------
 

@@ -375,6 +375,11 @@ async def test_giftings_require_login(client: AsyncClient) -> None:
     assert (await client.get(GIFTINGS)).status_code == 401
     assert (await client.post(GIFTINGS, json={"gift_id": UNKNOWN_ID})).status_code == 401
 
+    item = f"{GIFTINGS}/{UNKNOWN_ID}"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json={"gift_id": UNKNOWN_ID})).status_code == 401
+    assert (await client.delete(item)).status_code == 401
+
 
 # --- Tenant separation (Q-01) --------------------------------------------------
 

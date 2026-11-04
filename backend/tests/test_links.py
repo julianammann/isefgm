@@ -211,6 +211,11 @@ async def test_links_require_login(client: AsyncClient) -> None:
     body = {"gift_id": UNKNOWN_ID, "label": "Thalia", "url": THALIA}
     assert (await client.post(LINKS, json=body)).status_code == 401
 
+    item = f"{LINKS}/{UNKNOWN_ID}"
+    assert (await client.get(item)).status_code == 401
+    assert (await client.put(item, json=body)).status_code == 401
+    assert (await client.delete(item)).status_code == 401
+
 
 # --- Tenant separation (Q-01) --------------------------------------------------
 
