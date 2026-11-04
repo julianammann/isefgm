@@ -17,7 +17,8 @@ const data = {
   total: 0,
   editing: null,
   success: null,
-  deleted: false
+  deleted: false,
+  people: []
 };
 
 /** What a create rejected for its birthday leaves in `form`. */

@@ -1,5 +1,6 @@
 /**
- * Persons page (`/persons`): list, create, edit and delete persons (F-02).
+ * Persons page (`/persons`): list, create, edit and delete persons (F-02), and share the ideas of
+ * a person through a read-only link (F-14).
  *
  * @module
  */
@@ -9,11 +10,14 @@ import type { Actions, PageServerLoad } from './$types';
 import {
   createPerson,
   deletePerson,
+  listPersons,
   listPersonsPage,
   parsePersonForm,
   updatePerson
 } from '#lib/server/persons.js';
 import { pageCount, pageQuery, parsePage } from '#lib/pagination.js';
+import { unwrap } from '#lib/server/result.js';
+import { shareAction } from '#lib/server/share-links.js';
 
 /**
  * Display messages for `?success=<key>` after a redirect. Only the key travels in the URL,
@@ -31,10 +35,16 @@ function isSuccessKey(key: string | null): key is SuccessKey {
   return key !== null && Object.prototype.hasOwnProperty.call(successMessages, key);
 }
 
-/** Loads one page of persons; `?edit=<id>` returns one of them for the edit form. */
+/**
+ * Loads one page of persons; `?edit=<id>` returns one of them for the edit form. All persons are
+ * loaded as well, so the share dialog can add people from other pages.
+ */
 export const load: PageServerLoad = async ({ locals, url }) => {
   const page = parsePage(url);
-  const result = await listPersonsPage(locals.api, page);
+  const [result, everyone] = await Promise.all([
+    listPersonsPage(locals.api, page),
+    listPersons(locals.api)
+  ]);
   if (!result.ok) error(result.status, result.message);
   const { items, total } = result.data;
   const last = pageCount(total);
@@ -49,6 +59,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     page,
     total,
     editing: items.find((p) => p.id === editId) ?? null,
+    people: unwrap(everyone).map(({ id, name }) => ({ id, name })),
     success: isSuccessKey(success) ? successMessages[success] : null,
     // The toast turns red after a delete, so removing a person does not look like saving one.
     deleted: success === 'deleted'
@@ -59,6 +70,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
  * `create` / `update`: validate the form and save the person; field errors return with 400.
  *
  * `delete`: removes the person; confirmation happens in the page dialog.
+ *
+ * `share`: creates a share link and returns its URL (see `shareAction`).
  */
 export const actions: Actions = {
   create: async ({ request, locals }) => {
@@ -82,5 +95,7 @@ export const actions: Actions = {
     const result = await deletePerson(locals.api, id);
     if (!result.ok) return fail(result.status, { deleteMessage: result.message });
     throw redirect(303, '/persons' + pageQuery(parsePage(url), { success: 'deleted' }));
-  }
+  },
+  share: async ({ request, locals, url }) =>
+    shareAction(locals.api, await request.formData(), url.origin)
 };

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { resolve } from '$app/paths';
   import {
     CATEGORIES,
@@ -11,6 +12,8 @@
   import FormDialog from '#lib/components/FormDialog.svelte';
   import Pagination from '#lib/components/Pagination.svelte';
   import PersonFormDialog from '#lib/components/PersonFormDialog.svelte';
+  import ShareCreatedDialog from '#lib/components/ShareCreatedDialog.svelte';
+  import ShareLinkDialog from '#lib/components/ShareLinkDialog.svelte';
   import { occasionDateLabel } from '#lib/occasion-date.js';
   import { PAGE_SIZE, actionUrl, pageQuery } from '#lib/pagination.js';
   import type { ActionData, PageProps } from './$types';
@@ -52,6 +55,69 @@
   function askDelete() {
     deleteSeen = form;
     deleteOpen = true;
+  }
+
+  type ShareLinkRow = (typeof data.shareLinks)[number];
+
+  /** One opening of the share dialog: a new link (`link: null`) or an edit of `link`. */
+  let shareSession = $state.raw<{ seen: ActionData; link: ShareLinkRow | null }>({
+    seen: null,
+    link: null
+  });
+  let shareOpen = $state(false);
+  /** The failed submit of the open share dialog, if any; a created link is not a failure. */
+  const shareFailed = $derived.by(() => {
+    if (form === shareSession.seen) return null;
+    if (form?.scope === 'share' && !shareSession.link && !form.created) return form;
+    if (form?.scope === 'shareEdit' && shareSession.link) return form;
+    return null;
+  });
+  const shareValues = $derived(
+    shareFailed?.values ??
+      (shareSession.link
+        ? {
+            person_ids: shareSession.link.people.map((p) => p.id),
+            expires_on: shareSession.link.expires_on
+          }
+        : { person_ids: [person.id], expires_on: null })
+  );
+
+  function openShare(link: ShareLinkRow | null) {
+    shareSession = { seen: form, link };
+    createdSeen = form;
+    shareOpen = true;
+  }
+
+  /** The action result of the last created link, until its dialog is opened for it. */
+  let createdSeen = $state.raw<ActionData>(null);
+  let createdOpen = $state(false);
+  const createdUrl = $derived(form !== createdSeen ? (form?.created?.url ?? null) : null);
+  // The token comes back only with the create result: swap the form for the link dialog.
+  $effect(() => {
+    if (createdUrl) {
+      shareOpen = false;
+      createdOpen = true;
+    }
+  });
+
+  let shareToDelete = $state<ShareLinkRow | null>(null);
+  let shareDeleteOpen = $state(false);
+  let shareDeleteSeen = $state.raw<ActionData>(null);
+  const shareDeleteFailed = $derived(
+    shareDeleteOpen && form !== shareDeleteSeen && form?.scope === 'shareDelete' ? form : null
+  );
+
+  function askDeleteShare(link: ShareLinkRow) {
+    shareToDelete = link;
+    shareDeleteSeen = form;
+    shareDeleteOpen = true;
+  }
+
+  /** Label and colour of a link's state; an expired link may still be marked active. */
+  function shareState(link: ShareLinkRow): { label: string; class: string } {
+    if (!link.active) return { label: 'Deaktiviert', class: 'border-gray-400 text-gray-700' };
+    if (!link.open) return { label: 'Abgelaufen', class: 'border-amber-700 text-amber-800' };
+    return { label: 'Aktiv', class: 'border-green-700 text-green-800' };
   }
 </script>
 
@@ -132,6 +198,15 @@
         type="button"
         class="text-sm underline"
         aria-haspopup="dialog"
+        aria-controls="share-dialog"
+        onclick={() => openShare(null)}
+      >
+        Teilen<span class="sr-only">: Ideen von {person.name}</span>
+      </button>
+      <button
+        type="button"
+        class="text-sm underline"
+        aria-haspopup="dialog"
         aria-controls="person-form-dialog"
         onclick={openEdit}
       >
@@ -161,6 +236,70 @@
     </dl>
   {/if}
   {#if person.notes}<p class="mt-4 whitespace-pre-line">{person.notes}</p>{/if}
+
+  <!-- F-14: read-only links to the ideas of this person, created with „Teilen“ above. -->
+  <section class="mt-8" aria-labelledby="share-heading">
+    <h2 id="share-heading" class="text-lg font-semibold">
+      Geteilte Links ({data.shareLinks.length})
+    </h2>
+    {#if form?.scope === 'shareToggle'}
+      <p role="alert" class="mt-2 text-sm text-red-800">{form.message}</p>
+    {/if}
+    {#if data.shareLinks.length === 0}
+      <p class="mt-2 text-sm text-gray-600">
+        Noch nicht geteilt. Mit „Teilen“ entsteht ein Link, über den andere die Ideen ohne Konto
+        ansehen können.
+      </p>
+    {:else}
+      <ul class="mt-3 flex flex-col gap-3">
+        {#each data.shareLinks as link (link.id)}
+          {@const state = shareState(link)}
+          {@const names = link.people.map((p) => p.name).join(', ')}
+          <li class="rounded border p-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold">{names}</span>
+              <span class="rounded-full border px-2 py-0.5 text-sm {state.class}">
+                {state.label}
+              </span>
+            </div>
+            <p class="mt-1 text-sm text-gray-600">
+              {link.expires_on ? `gültig bis ${formatDate(link.expires_on)}` : 'unbegrenzt gültig'}
+              · erstellt am {formatDate(link.created_on)}
+            </p>
+            <div class="mt-2 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                class="text-sm underline"
+                aria-haspopup="dialog"
+                aria-controls="share-dialog"
+                onclick={() => openShare(link)}
+              >
+                Bearbeiten<span class="sr-only">: Link für {names}</span>
+              </button>
+              <form method="POST" action={actionUrl('toggleShare', data.page)} use:enhance>
+                <input type="hidden" name="id" value={link.id} />
+                <input type="hidden" name="active" value={String(!link.active)} />
+                <button type="submit" class="text-sm underline">
+                  {link.active ? 'Deaktivieren' : 'Aktivieren'}<span class="sr-only"
+                    >: Link für {names}</span
+                  >
+                </button>
+              </form>
+              <button
+                type="button"
+                class="text-sm text-red-800 underline"
+                aria-haspopup="dialog"
+                aria-controls="share-delete"
+                onclick={() => askDeleteShare(link)}
+              >
+                Löschen<span class="sr-only">: Link für {names}</span>
+              </button>
+            </div>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
 
   <div class="mt-10 grid gap-8">
     <section aria-labelledby="occasions-heading">
@@ -242,7 +381,11 @@
   <!-- Fixed to the screen, so the message shows where the user is. -->
   <div role="status" class="pointer-events-none fixed inset-x-0 bottom-4 flex justify-center px-4">
     {#if data.success}
-      <p class="max-w-md rounded bg-green-800 px-4 py-2 text-sm text-white shadow-lg">
+      <p
+        class="max-w-md rounded px-4 py-2 text-sm text-white shadow-lg {data.deleted
+          ? 'bg-red-800'
+          : 'bg-green-800'}"
+      >
         {data.success}
       </p>
     {/if}
@@ -270,5 +413,40 @@
     message={deleteFailed?.message ?? null}
   >
     <p class="text-sm">„{person.name}“ wird mit allen zugehörigen Daten endgültig gelöscht.</p>
+  </FormDialog>
+
+  {#key shareSession}
+    <ShareLinkDialog
+      id="share-dialog"
+      heading={shareSession.link ? 'Teilen-Link bearbeiten' : `Ideen von ${person.name} teilen`}
+      submitLabel={shareSession.link ? 'Speichern' : 'Link erstellen'}
+      action={actionUrl(shareSession.link ? 'updateShare' : 'share', data.page)}
+      bind:open={shareOpen}
+      people={data.people}
+      values={shareValues}
+      errors={shareFailed?.errors ?? {}}
+      message={shareFailed?.message ?? null}
+      linkId={shareSession.link?.id ?? null}
+      active={shareSession.link?.active ?? true}
+      currentExpiresAt={shareSession.link?.expires_at ?? null}
+    />
+  {/key}
+
+  <ShareCreatedDialog bind:open={createdOpen} url={createdUrl ?? ''} />
+
+  <FormDialog
+    id="share-delete"
+    heading="Teilen-Link löschen?"
+    action={actionUrl('deleteShare', data.page)}
+    submitLabel="Löschen"
+    danger
+    bind:open={shareDeleteOpen}
+    message={shareDeleteFailed?.message ?? null}
+  >
+    <input type="hidden" name="id" value={shareToDelete?.id} />
+    <p class="text-sm">
+      Der Link für {shareToDelete?.people.map((p) => p.name).join(', ')} öffnet danach nicht mehr. Das
+      lässt sich nicht rückgängig machen; zum vorübergehenden Sperren gibt es „Deaktivieren“.
+    </p>
   </FormDialog>
 </main>

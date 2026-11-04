@@ -91,7 +91,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   const response = await resolve(event);
   response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-Frame-Options', 'DENY');
+  // The share token in /shared/<token> works like a password (F-14): no referrer to the shops it
+  // links to, no search engine index and no cache. Also for its 404 page, which has the same route.
+  if (event.route.id?.startsWith('/shared/')) {
+    response.headers.set('Referrer-Policy', 'no-referrer');
+    response.headers.set('X-Robots-Tag', 'noindex');
+    response.headers.set('Cache-Control', 'no-store');
+  } else {
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  }
   return response;
 };

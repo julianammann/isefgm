@@ -13,8 +13,14 @@ const empty = { items: [], total: 0, limit: 200, offset: 0 };
 const overview = { given: empty, giftings: empty, ideas: empty, occasions: empty };
 
 /** Load event whose backend answers GET by path. */
+/** Load event whose backend answers GET by path; share links and people default to empty. */
 function loadEvent(responses: Record<string, unknown>, search = '') {
-  const GET = vi.fn(async (path: string) => responses[path] ?? status(500));
+  const all: Record<string, unknown> = {
+    '/api/v1/share-links': ok(empty),
+    '/api/v1/people': ok(empty),
+    ...responses
+  };
+  const GET = vi.fn(async (path: string) => all[path] ?? status(500));
   return {
     event: {
       locals: { api: { GET } },
@@ -26,7 +32,7 @@ function loadEvent(responses: Record<string, unknown>, search = '') {
 }
 
 describe('load', () => {
-  it('returns the person and their view from two parallel requests', async () => {
+  it('returns the person, their view, share links and people from parallel requests', async () => {
     const { event, GET } = loadEvent({
       '/api/v1/people/{person_id}': ok(person),
       '/api/v1/people/{person_id}/overview': ok(overview)
@@ -36,9 +42,12 @@ describe('load', () => {
       overview,
       page: 1,
       total: 0,
-      success: null
+      shareLinks: [],
+      people: [],
+      success: null,
+      deleted: false
     });
-    expect(GET).toHaveBeenCalledTimes(2);
+    expect(GET).toHaveBeenCalledTimes(4);
   });
 
   it('shows the saved message after an update', async () => {
@@ -193,6 +202,145 @@ describe('delete', () => {
     await expect(actions.delete(event)).resolves.toMatchObject({
       status: 404,
       data: { scope: 'delete', message: 'Person nicht gefunden.' }
+    });
+  });
+});
+
+describe('share links', () => {
+  const lena = { id: 'p1', name: 'Lena' };
+  const link = {
+    id: 'l1',
+    people: [lena],
+    active: true,
+    expires_at: '2026-12-24T22:59:59Z',
+    created_at: '2026-10-04T09:30:00Z'
+  };
+
+  it('lists only the links that show this person, with their state and days', async () => {
+    const other = { ...link, id: 'l2', people: [{ id: 'p2', name: 'Max' }] };
+    const off = { ...link, id: 'l3', active: false, expires_at: null };
+    const { event } = loadEvent({
+      '/api/v1/people/{person_id}': ok(person),
+      '/api/v1/people/{person_id}/overview': ok(overview),
+      '/api/v1/share-links': ok({ ...empty, items: [link, other, off], total: 3 })
+    });
+    const data = (await load(event)) as { shareLinks: unknown[] };
+    expect(data.shareLinks).toEqual([
+      { ...link, open: true, expires_on: '2026-12-24', created_on: '2026-10-04' },
+      { ...off, open: false, expires_on: null, created_on: '2026-10-04' }
+    ]);
+  });
+
+  /** Action event with form fields (repeated keys allowed) and the given backend. */
+  function shareEvent(fields: [string, string][], api: object, search = '') {
+    const body = new URLSearchParams(fields);
+    return {
+      request: new Request('http://localhost/persons/p1', { method: 'POST', body }),
+      locals: { api },
+      params: { id: 'p1' },
+      url: new URL(`http://localhost/persons/p1${search}`)
+    } as unknown as ActionEvent;
+  }
+
+  it('creates a link and returns its URL without a redirect', async () => {
+    const POST = vi.fn().mockResolvedValue(ok({ ...link, token: 'secret-token' }));
+    const event = shareEvent(
+      [
+        ['person_ids', 'p1'],
+        ['person_ids', 'p2'],
+        ['expires_on', '2099-12-24']
+      ],
+      { POST }
+    );
+    await expect(actions.share(event)).resolves.toEqual({
+      scope: 'share',
+      created: { url: 'http://localhost/shared/secret-token' }
+    });
+    expect(POST.mock.calls[0][1]).toEqual({
+      body: { person_ids: ['p1', 'p2'], expires_at: '2099-12-24T23:59:59+01:00', active: true }
+    });
+  });
+
+  it('keeps the dialog open without people and does not call the backend', async () => {
+    const POST = vi.fn();
+    await expect(actions.share(shareEvent([], { POST }))).resolves.toMatchObject({
+      status: 400,
+      data: { scope: 'share', errors: { person_ids: 'Bitte wähle mindestens eine Person aus.' } }
+    });
+    expect(POST).not.toHaveBeenCalled();
+  });
+
+  it('shows an expiry the backend finds in the past at its field', async () => {
+    const POST = vi.fn().mockResolvedValue(status(400));
+    await expect(
+      actions.share(shareEvent([['person_ids', 'p1']], { POST }))
+    ).resolves.toMatchObject({
+      status: 400,
+      data: {
+        scope: 'share',
+        errors: { expires_on: 'Das Ablaufdatum darf nicht in der Vergangenheit liegen.' }
+      }
+    });
+  });
+
+  it('edits people and expiry but keeps the active flag', async () => {
+    const PUT = vi.fn().mockResolvedValue(ok(link));
+    const event = shareEvent(
+      [
+        ['id', 'l1'],
+        ['active', 'false'],
+        ['person_ids', 'p1'],
+        ['expires_on', '']
+      ],
+      { PUT },
+      '?page=2'
+    );
+    await expect(actions.updateShare(event)).rejects.toMatchObject({
+      status: 303,
+      location: '/persons/p1?page=2&success=shareUpdated'
+    });
+    expect(PUT.mock.calls[0][1]).toEqual({
+      params: { path: { share_link_id: 'l1' } },
+      body: { person_ids: ['p1'], expires_at: null, active: false }
+    });
+  });
+
+  it('toggles only the active flag and keeps people and expiry', async () => {
+    const GET = vi.fn().mockResolvedValue(ok(link));
+    const PUT = vi.fn().mockResolvedValue(ok({ ...link, active: false }));
+    const event = shareEvent(
+      [
+        ['id', 'l1'],
+        ['active', 'false']
+      ],
+      { GET, PUT }
+    );
+    await expect(actions.toggleShare(event)).rejects.toMatchObject({
+      status: 303,
+      location: '/persons/p1?success=shareDeactivated'
+    });
+    expect(PUT.mock.calls[0][1].body).toEqual({
+      person_ids: ['p1'],
+      expires_at: link.expires_at,
+      active: false
+    });
+  });
+
+  it('deletes a link and colours the message red', async () => {
+    const DELETE = vi.fn().mockResolvedValue(status(204));
+    await expect(actions.deleteShare(shareEvent([['id', 'l1']], { DELETE }))).rejects.toMatchObject(
+      { status: 303, location: '/persons/p1?success=shareDeleted' }
+    );
+    const { event } = loadEvent(
+      {
+        '/api/v1/people/{person_id}': ok(person),
+        '/api/v1/people/{person_id}/overview': ok(overview)
+      },
+      '?success=shareDeleted'
+    );
+    await expect(load(event)).resolves.toMatchObject({
+      success: 'Teilen-Link gelöscht!',
+      deleted: true
     });
   });
 });
