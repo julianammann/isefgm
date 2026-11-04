@@ -1,5 +1,7 @@
-"""Gift suggestions (F-16) from category, price band and counts of other accounts only (Q-04)."""
+"""Gift suggestions (F-16) from category, price band and counts of other accounts only (Q-04),
+and the titles of given gifts of all accounts without the names of their people."""
 
+import re
 import uuid
 from decimal import Decimal
 
@@ -11,6 +13,7 @@ from giftmanager.models import (
     Gift,
     GiftCategory,
     Gifting,
+    GiftingStatus,
     Person,
     PriceBand,
     Suggestion,
@@ -41,6 +44,11 @@ def _price_band() -> ColumnElement[str | None]:
         (price < 100, PriceBand.FROM_50_TO_100.value),
         else_=PriceBand.OVER_100.value,
     )
+
+
+def _words(text: str) -> set[str]:
+    """Words of a text, ignoring case."""
+    return set(re.findall(r"\w+", text.casefold()))
 
 
 def _feature(category: str, band: str | None) -> Feature:
@@ -140,6 +148,39 @@ async def list_suggestions(
         limit=limit,
         offset=offset,
     )
+
+
+async def list_given_titles(
+    session: AsyncSession, *, limit: int, offset: int
+) -> tuple[list[str], int]:
+    """Return one page of the titles of given gift ideas of all accounts, alphabetically.
+
+    A title holding a word of the name of one of the giving account's people is left out,
+    so names do not leak to other accounts (Q-04). Titles that differ only in case or
+    outer spaces count once.
+    """
+    # Words are matched in Python: SQL regex word classes depend on the database locale.
+    # shortcut: loads all given titles per request; page in SQL once they reach tens of thousands.
+    given = select(Gift.owner_id, Gift.title).where(
+        Gift.id.in_(select(Gifting.gift_id).where(Gifting.status == GiftingStatus.GIVEN))
+    )
+    names: dict[uuid.UUID, set[str]] = {}
+    for owner_id, name in await session.execute(
+        select(Person.owner_id, Person.name).where(
+            Person.owner_id.in_(given.with_only_columns(Gift.owner_id))
+        )
+    ):
+        names.setdefault(owner_id, set()).update(_words(name))
+    kept = sorted(
+        title.strip()
+        for owner_id, title in await session.execute(given)
+        if not _words(title) & names.get(owner_id, set())
+    )
+    unique: dict[str, str] = {}
+    for title in kept:
+        unique.setdefault(title.casefold(), title)
+    titles = sorted(unique.values(), key=str.casefold)
+    return titles[offset : offset + limit], len(titles)
 
 
 async def get_suggestion(

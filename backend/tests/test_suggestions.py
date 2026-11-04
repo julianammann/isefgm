@@ -10,9 +10,19 @@ from httpx import AsyncClient, Cookies
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from giftmanager.models import Gift, GiftCategory, Note, Person, PriceBand, Suggestion, User
+from giftmanager.models import (
+    Gift,
+    GiftCategory,
+    GiftingStatus,
+    Note,
+    Person,
+    PriceBand,
+    Suggestion,
+    User,
+)
 from giftmanager.services import suggestion as suggestion_service
 from tests.accounts import log_in_new_user
+from tests.notifications import add_gifting, add_given_gifting
 from tests.ownership import assert_invisible_to_other_account
 
 SUGGESTIONS = "/api/v1/suggestions"
@@ -509,3 +519,118 @@ async def test_unknown_suggestion_returns_404(client: AsyncClient, anna: User, p
     r = await client.request(method, f"{SUGGESTIONS}{path}")
 
     assert r.status_code == 404
+
+
+TITLES = f"{SUGGESTIONS}/titles"
+
+
+async def other_account(session: AsyncSession) -> User:
+    user = User(
+        email=f"{uuid.uuid4().hex}@example.org",
+        password_hash="not-a-real-hash",
+        display_name="Fremdes Konto",
+    )
+    session.add(user)
+    await session.flush()
+    return user
+
+
+async def give(
+    session: AsyncSession, user: User, *titles: str, person: str = "Geheime Person"
+) -> None:
+    """`user` gave a new person of the account one gift idea per title."""
+    friend = Person(owner_id=user.id, name=person)
+    session.add(friend)
+    for title in titles:
+        gift = Gift(
+            owner_id=user.id,
+            title=title,
+            description="Geheime Beschreibung",
+            category=GiftCategory.OTHER,
+        )
+        session.add(gift)
+        await session.flush()
+        await add_given_gifting(session, user, gift, friend)
+
+
+async def titles(client: AsyncClient) -> list[str]:
+    r = await client.get(TITLES)
+    assert r.status_code == 200
+    return r.json()["items"]
+
+
+@pytest.mark.requirement("F-16")
+async def test_titles_of_given_gifts_of_all_accounts_are_listed_alphabetically(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    await give(session, await other_account(session), "Kochbuch")
+    await give(session, await other_account(session), "brettspiel")
+    await give(session, anna, "Armband")
+
+    assert await titles(client) == ["Armband", "brettspiel", "Kochbuch"]
+
+
+@pytest.mark.requirement("F-16")
+async def test_ideas_that_were_not_given_are_not_listed(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    user = await other_account(session)
+    friend = Person(owner_id=user.id, name="Geheime Person")
+    session.add_all([friend, Gift(owner_id=user.id, title="Nur Idee")])
+    for status in (GiftingStatus.IDEA, GiftingStatus.PLANNED, GiftingStatus.ACQUIRED):
+        gift = Gift(owner_id=user.id, title=status.value)
+        session.add(gift)
+        await session.flush()
+        await add_gifting(session, gift, [friend], status)
+
+    assert await titles(client) == []
+
+
+@pytest.mark.requirement("F-16", "Q-04")
+async def test_titles_are_paged_and_hold_nothing_but_the_title(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    await give(session, await other_account(session), "C", "A", "B")
+
+    r = await client.get(TITLES, params={"limit": 1, "offset": 1})
+
+    assert r.json() == {"items": ["B"], "total": 3, "limit": 1, "offset": 1}
+
+
+@pytest.mark.requirement("F-16", "Q-01")
+async def test_titles_require_login(client: AsyncClient) -> None:
+    r = await client.get(TITLES)
+    assert r.status_code == 401
+
+
+@pytest.mark.requirement("F-16")
+async def test_titles_that_differ_only_in_case_or_outer_spaces_are_listed_once(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    await give(session, await other_account(session), "Kochbuch")
+    await give(session, await other_account(session), "  kochbuch ")
+    await give(session, await other_account(session), "KOCHBUCH", "Koch buch")
+
+    listed = await titles(client)
+
+    assert [t.casefold() for t in listed] == ["koch buch", "kochbuch"]
+
+
+@pytest.mark.requirement("F-16", "Q-04")
+async def test_titles_with_a_name_word_of_the_giving_accounts_people_are_left_out(
+    client: AsyncClient, session: AsyncSession, anna: User
+) -> None:
+    user = await other_account(session)
+    session.add(Person(owner_id=user.id, name="Opa Jörg"))
+    await give(
+        session,
+        user,
+        "Fotobuch für LENA",
+        "Tante-Emma-Laden",
+        "Kaffee für JÖRG",
+        "Lenas Kalender",
+        person="Tante Lena",
+    )
+    await give(session, await other_account(session), "Buch für Lena")
+
+    assert await titles(client) == ["Buch für Lena", "Lenas Kalender"]

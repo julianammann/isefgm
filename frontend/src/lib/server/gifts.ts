@@ -76,6 +76,21 @@ export async function listGiftsPage(
     : result;
 }
 
+/** Returns one page of the titles of gifts given in any account (F-16); nothing but the titles. */
+export async function listGivenTitlesPage(
+  api: Api,
+  page: number
+): Promise<Result<{ items: string[]; total: number }>> {
+  const result = await send(
+    api.GET('/api/v1/suggestions/titles', {
+      params: { query: { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE } }
+    })
+  );
+  return result.ok
+    ? { ok: true, data: { items: result.data.items, total: result.data.total } }
+    : result;
+}
+
 /** Returns one gift idea; 404 if the id is unknown or belongs to another account. */
 export async function getGift(api: Api, id: string): Promise<Result<GiftOut>> {
   return send(api.GET('/api/v1/gifts/{gift_id}', { params: { path: { gift_id: id } } }));
