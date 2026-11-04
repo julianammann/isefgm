@@ -77,6 +77,43 @@ async def test_run_once_twice_sends_once(
     assert len(mailer.sent) == 1
 
 
+async def test_parallel_runs_send_each_mail_once(
+    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+) -> None:
+    # Two scheduler instances by mistake: both plan and send the same ten mails at once.
+    user = await make_committed_user(committed_sessionmaker)
+
+    async def ten_due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        return [
+            planned_mail(
+                owner_id=user.id,
+                recipient=user.email,
+                interval=f"i{i}",
+                scheduled_for=now,
+                expires_at=now + timedelta(days=1),
+            )
+            for i in range(10)
+        ]
+
+    mailer = RecordingMailer(delay=0.01)
+    sent = await asyncio.gather(
+        *(
+            run_once(
+                clock=clock,
+                sessionmaker=committed_sessionmaker,
+                mailer=mailer,
+                planners=[ten_due],
+            )
+            for _ in range(2)
+        )
+    )
+    assert sum(sent) == 10
+    assert len(mailer.sent) == 10
+    async with committed_sessionmaker() as s:
+        rows = await s.scalars(select(Notification.status).where(Notification.owner_id == user.id))
+        assert list(rows) == [NotificationStatus.SENT] * 10
+
+
 async def test_mail_outage_keeps_rows_and_does_not_raise(
     committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
 ) -> None:
