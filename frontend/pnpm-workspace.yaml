@@ -1,5 +1,7 @@
 allowBuilds:
   esbuild: true
+  # Its postinstall only downloads a Java runtime; Java comes from mise instead.
+  vnu-jar: false
 overrides:
   cookie@<0.7.0: ^0.7.0
   minimatch@<11.0.1: ^11.0.1
