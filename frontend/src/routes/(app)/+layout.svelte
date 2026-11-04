@@ -25,6 +25,8 @@
 
     <a class="text-sm underline" href={resolve('gifts')}>Geschenke</a>
 
+    <a class="text-sm underline" href={resolve('ideas')}>Ideen</a>
+
     <a class="text-sm underline" href={resolve('account')}>Konto</a>
 
     <form method="POST" action="/logout" use:enhance>

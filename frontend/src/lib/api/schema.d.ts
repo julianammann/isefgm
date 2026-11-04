@@ -744,6 +744,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/suggestions/titles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List titles of given gifts
+         * @description Returns the titles of gift ideas that any account, the current one included, has given (status `given`), one page at a time, alphabetically. Titles that differ only in case or outer spaces appear once. A title is left out when it holds a word of the name of one of the giving account's people, ignoring case. Nothing but the title is returned: no recipient, account, occasion or date (Q-04).
+         */
+        get: operations["listGivenTitles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suggestions/{suggestion_id}": {
         parameters: {
             query?: never;
@@ -1861,6 +1881,17 @@ export interface components {
         Page_TaskOut_: {
             /** Items */
             items: components["schemas"]["TaskOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** Page[str] */
+        Page_str_: {
+            /** Items */
+            items: string[];
             /** Limit */
             limit: number;
             /** Offset */
@@ -5167,6 +5198,47 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    listGivenTitles: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_str_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

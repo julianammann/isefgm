@@ -708,6 +708,12 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-16 | `tests/test_suggestions.py::test_suggestions_require_login[POST-/0192f6a0-0000-7000-8000-000000000000/dismiss]` | passed |
 | F-16 | `tests/test_suggestions.py::test_unknown_suggestion_returns_404[/0192f6a0-0000-7000-8000-000000000000]` | passed |
 | F-16 | `tests/test_suggestions.py::test_unknown_suggestion_returns_404[/0192f6a0-0000-7000-8000-000000000000/dismiss]` | passed |
+| F-16 | `tests/test_suggestions.py::test_titles_of_given_gifts_of_all_accounts_are_listed_alphabetically` | passed |
+| F-16 | `tests/test_suggestions.py::test_ideas_that_were_not_given_are_not_listed` | passed |
+| F-16 | `tests/test_suggestions.py::test_titles_are_paged_and_hold_nothing_but_the_title` | passed |
+| F-16 | `tests/test_suggestions.py::test_titles_require_login` | passed |
+| F-16 | `tests/test_suggestions.py::test_titles_that_differ_only_in_case_or_outer_spaces_are_listed_once` | passed |
+| F-16 | `tests/test_suggestions.py::test_titles_with_a_name_word_of_the_giving_accounts_people_are_left_out` | passed |
 | F-17 | `tests/test_auth.py::test_delete_account_removes_user_and_sessions` | passed |
 | F-17 | `tests/test_auth.py::test_delete_account_without_session_is_unauthorized` | passed |
 | F-17 | `tests/test_giftings.py::test_deleting_the_account_deletes_its_giftings` | passed |
@@ -827,6 +833,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-01 | `tests/test_suggestions.py::test_suggestions_require_login[GET-/0192f6a0-0000-7000-8000-000000000000]` | passed |
 | Q-01 | `tests/test_suggestions.py::test_suggestions_require_login[POST-/0192f6a0-0000-7000-8000-000000000000/accept]` | passed |
 | Q-01 | `tests/test_suggestions.py::test_suggestions_require_login[POST-/0192f6a0-0000-7000-8000-000000000000/dismiss]` | passed |
+| Q-01 | `tests/test_suggestions.py::test_titles_require_login` | passed |
 | Q-01 | `tests/test_tasks.py::test_tasks_require_login` | passed |
 | Q-01 | `tests/test_tasks.py::test_tasks_of_another_account_are_invisible[GET]` | passed |
 | Q-01 | `tests/test_tasks.py::test_tasks_of_another_account_are_invisible[PUT]` | passed |
@@ -961,6 +968,8 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-04 | `tests/test_suggestions.py::test_features_of_fewer_than_three_accounts_are_not_suggested` | passed |
 | Q-04 | `tests/test_suggestions.py::test_own_ideas_do_not_count_towards_the_accounts` | passed |
 | Q-04 | `tests/test_suggestions.py::test_suggestions_hold_nothing_of_other_accounts_but_counts` | passed |
+| Q-04 | `tests/test_suggestions.py::test_titles_are_paged_and_hold_nothing_but_the_title` | passed |
+| Q-04 | `tests/test_suggestions.py::test_titles_with_a_name_word_of_the_giving_accounts_people_are_left_out` | passed |
 | Q-05 | `tests/test_giftings.py::test_list_is_newest_first_and_paginated` | passed |
 | Q-05 | `tests/test_giftings.py::test_list_rejects_oversized_page` | passed |
 | Q-05 | `tests/test_gifts.py::test_list_is_newest_first_and_paginated` | passed |

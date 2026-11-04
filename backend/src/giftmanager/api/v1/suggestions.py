@@ -1,4 +1,5 @@
-"""Suggestion endpoints (F-16): make, list, show, accept and dismiss gift suggestions."""
+"""Suggestion endpoints (F-16): make, list, show, accept and dismiss gift suggestions, and
+list the titles of given gifts of all accounts."""
 
 import uuid
 from typing import Annotated
@@ -7,7 +8,7 @@ from fastapi import APIRouter, Query, status
 
 from giftmanager.core.auth import CurrentUser
 from giftmanager.core.db import SessionDep
-from giftmanager.schemas.common import Page, problem_responses
+from giftmanager.schemas.common import Page, PageParams, problem_responses
 from giftmanager.schemas.gift import GiftOut
 from giftmanager.schemas.suggestion import (
     SuggestionAccept,
@@ -70,6 +71,28 @@ async def list_suggestions(
         limit=page.limit,
         offset=page.offset,
     )
+
+
+# Declared before /{suggestion_id}, which would otherwise take "titles" as an ID.
+@router.get(
+    "/titles",
+    operation_id="listGivenTitles",
+    summary="List titles of given gifts",
+    description="Returns the titles of gift ideas that any account, the current one "
+    "included, has given (status `given`), one page at a time, alphabetically. Titles that "
+    "differ only in case or outer spaces appear once. A title is left out when it holds a "
+    "word of the name of one of the giving account's people, ignoring case. Nothing but the "
+    "title is returned: no recipient, account, occasion or date (Q-04).",
+    responses=problem_responses(401),
+)
+async def list_given_titles(
+    _user: CurrentUser, session: SessionDep, page: Annotated[PageParams, Query()]
+) -> Page[str]:
+    """Return one page of the titles of given gift ideas of all accounts."""
+    titles, total = await suggestion_service.list_given_titles(
+        session, limit=page.limit, offset=page.offset
+    )
+    return Page[str](items=titles, total=total, limit=page.limit, offset=page.offset)
 
 
 @router.get(

@@ -1922,6 +1922,37 @@
         "title": "Page[TaskOut]",
         "type": "object"
       },
+      "Page_str_": {
+        "properties": {
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[str]",
+        "type": "object"
+      },
       "PersonIn": {
         "description": "Data of a person; used for create and for full update (PUT).",
         "properties": {
@@ -6613,6 +6644,73 @@
         ]
       }
     },
+    "/api/v1/suggestions/titles": {
+      "get": {
+        "description": "Returns the titles of gift ideas that any account, the current one included, has given (status `given`), one page at a time, alphabetically. Titles that differ only in case or outer spaces appear once. A title is left out when it holds a word of the name of one of the giving account's people, ignoring case. Nothing but the title is returned: no recipient, account, occasion or date (Q-04).",
+        "operationId": "listGivenTitles",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_str_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List titles of given gifts",
+        "tags": [
+          "suggestions"
+        ]
+      }
+    },
     "/api/v1/suggestions/{suggestion_id}": {
       "get": {
         "description": "Returns one suggestion of the current account in any status. A suggestion of another account returns 404, like a missing one.",
@@ -7207,7 +7305,7 @@
       "name": "full-list"
     },
     {
-      "description": "Gift suggestions for a person (F-16): category and price band shared by the gift ideas of several other accounts, without titles, texts or people of other accounts (Q-04). Visible only to their account (Q-01).",
+      "description": "Gift suggestions for a person (F-16): category and price band shared by the gift ideas of several other accounts, without titles, texts or people of other accounts (Q-04). Visible only to their account (Q-01). Also the titles of gifts given in any account, with nothing else of those gifts.",
       "name": "suggestions"
     }
   ]
