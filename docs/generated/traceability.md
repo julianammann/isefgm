@@ -579,6 +579,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_mail.py::test_ehlo_uses_sender_domain_without_dns_lookup` | passed |
 | F-13 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | F-13 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
+| F-13 | `tests/test_mail.py::test_scheduler_rides_out_smtp_outage_and_sends_once_back` | passed |
 | F-13 | `tests/test_notifications.py::test_notification_rows_go_with_the_account` | passed |
 | F-13 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
 | F-13 | `tests/test_notifications.py::test_dedup_key_covers_account_reference_date_type_and_interval` | passed |
@@ -598,6 +599,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | F-13 | `tests/test_notifications.py::test_account_deleted_while_sending_does_not_stop_the_run` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_once_plans_and_sends` | passed |
 | F-13 | `tests/test_scheduler.py::test_run_once_twice_sends_once` | passed |
+| F-13 | `tests/test_scheduler.py::test_parallel_runs_send_each_mail_once` | passed |
 | F-13 | `tests/test_scheduler.py::test_mail_outage_keeps_rows_and_does_not_raise` | passed |
 | F-13 | `tests/test_scheduler.py::test_failing_planner_does_not_block_others` | passed |
 | F-13 | `tests/test_scheduler.py::test_failing_planner_is_logged_with_qualified_name` | passed |
@@ -877,6 +879,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | Q-02 | `tests/test_mail.py::test_ehlo_uses_sender_domain_without_dns_lookup` | passed |
 | Q-02 | `tests/test_mail.py::test_invalid_client_config_is_transient` | passed |
 | Q-02 | `tests/test_mail.py::test_recording_mailer_fails_on_demand_then_records` | passed |
+| Q-02 | `tests/test_mail.py::test_scheduler_rides_out_smtp_outage_and_sends_once_back` | passed |
 | Q-02 | `tests/test_notifications.py::test_dedup_key_is_unique` | passed |
 | Q-02 | `tests/test_notifications.py::test_dedup_key_covers_account_reference_date_type_and_interval` | passed |
 | Q-02 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
@@ -1059,6 +1062,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-01 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
 | QZ-01 | `tests/test_birthday_digest.py::test_a_failing_account_does_not_stop_the_others` | passed |
 | QZ-05 | `tests/test_birthday_digest.py::test_scheduler_sends_the_digest_once_per_month` | passed |
+| QZ-05 | `tests/test_mail.py::test_scheduler_rides_out_smtp_outage_and_sends_once_back` | passed |
 | QZ-05 | `tests/test_notifications.py::test_plan_twice_creates_one_row` | passed |
 | QZ-05 | `tests/test_notifications.py::test_plan_refreshes_the_text_of_a_row_not_sent_yet` | passed |
 | QZ-05 | `tests/test_notifications.py::test_parallel_planning_creates_one_row` | passed |
@@ -1077,6 +1081,7 @@ Requirement IDs from `docs/ms1_projektkonfiguration.md`. Outcome of the last ful
 | QZ-05 | `tests/test_occasion_reminder.py::test_scheduler_sends_the_reminder_once` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_once_plans_and_sends` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_run_once_twice_sends_once` | passed |
+| QZ-05 | `tests/test_scheduler.py::test_parallel_runs_send_each_mail_once` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_mail_outage_keeps_rows_and_does_not_raise` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_failing_planner_does_not_block_others` | passed |
 | QZ-05 | `tests/test_scheduler.py::test_failing_planner_is_logged_with_qualified_name` | passed |

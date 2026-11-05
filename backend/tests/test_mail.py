@@ -1,11 +1,15 @@
 import asyncio
+import functools
 import socket
 import time
 from collections.abc import Iterator
+from datetime import datetime, timedelta
 
 import aiosmtplib
 import httpx
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testcontainers.core.container import DockerContainer
 
 from giftmanager.core.config import Settings
@@ -17,7 +21,12 @@ from giftmanager.core.mail import (
     classify,
     is_reserved_address,
 )
+from giftmanager.models.notification import Notification, NotificationStatus
+from giftmanager.scheduler import run_once
+from giftmanager.services.notification import PlannedMail
+from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
+from tests.notifications import make_committed_user, planned_mail, reload
 
 pytestmark = pytest.mark.requirement("F-13", "Q-02")
 
@@ -272,3 +281,57 @@ async def test_recording_mailer_fails_on_demand_then_records() -> None:
     mailer.fail_with = None
     await mailer.send(mail)
     assert mailer.sent == [mail]
+
+
+@pytest.mark.requirement("QZ-05")
+async def test_scheduler_rides_out_smtp_outage_and_sends_once_back(
+    mailpit: tuple[str, int, int],
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    host, smtp_port, http_port = mailpit
+    _clear_smtp_env(monkeypatch)
+    user = await make_committed_user(committed_sessionmaker)
+
+    async def due(session: AsyncSession, now: datetime) -> list[PlannedMail]:
+        return [
+            planned_mail(
+                owner_id=user.id,
+                recipient=user.email,
+                scheduled_for=now,
+                expires_at=now + timedelta(days=1),
+            )
+        ]
+
+    # Outage: nothing listens on port 1, the real SmtpMailer cannot connect.
+    down = SmtpMailer(
+        Settings(_env_file=None, smtp_host="127.0.0.1", smtp_port=1, smtp_timeout_seconds=2)  # pyright: ignore[reportCallIssue]
+    )
+    run = functools.partial(
+        run_once, clock=clock, sessionmaker=committed_sessionmaker, planners=[due]
+    )
+    assert await run(mailer=down) == 0
+    async with committed_sessionmaker() as s:
+        row = (await s.scalars(select(Notification).where(Notification.owner_id == user.id))).one()
+    assert row.status == NotificationStatus.PLANNED
+    assert row.error
+
+    async def delivered() -> int:
+        async with httpx.AsyncClient(base_url=f"http://{host}:{http_port}") as http:
+            messages = (await http.get("/api/v1/messages")).json()["messages"]
+        return [m["To"][0]["Address"] for m in messages].count(user.email)
+
+    clock.advance(timedelta(minutes=5))
+    up = SmtpMailer(Settings(_env_file=None, smtp_host=host, smtp_port=smtp_port))  # pyright: ignore[reportCallIssue]
+    assert await run(mailer=up) == 1
+    assert await delivered() == 1
+    row = await reload(committed_sessionmaker, row.id)
+    assert row.status == NotificationStatus.SENT
+    assert row.sent_at == clock.now()
+    assert row.error is None
+
+    # The next tick must not send the delivered mail again.
+    clock.advance(timedelta(minutes=5))
+    assert await run(mailer=up) == 0
+    assert await delivered() == 1
