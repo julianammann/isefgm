@@ -315,4 +315,12 @@ docker compose up --build -d
 docker compose ps -a
 ```
 
+Beim ersten Update von einem Stand mit `python:3.14-slim` auf `python:3.14-alpine` ändern sich die IDs des Benutzers `app` von 999:999 auf 100:101. Das Volume `uploads` gehört dann noch den alten IDs. Hochladen und Löschen von Bildern scheitern mit HTTP 500, obwohl die Healthchecks grün sind. Ein Löschen in diesem Zustand entfernt den Datensatz, die Datei bleibt aber liegen. Deshalb direkt nach diesem Update einmal die Rechte übertragen:
+
+```text
+docker compose run --rm --no-deps --user root api chown -R app:app /data/uploads
+```
+
+Stimmen die Rechte schon, ändert der Befehl nichts. Er darf also wiederholt werden.
+
 Anschließend die Prüfung aus Abschnitt 3.4 wiederholen und Anmeldung sowie einen bestehenden Datensatz kontrollieren. Schemaänderungen laufen über den Service `migrate`. Ein zurückgesetztes Image ist bei Schemaänderungen kein erprobtes Rollback.
