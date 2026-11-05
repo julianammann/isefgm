@@ -45,7 +45,7 @@ services:
   frontend:
     build:
       context: ./frontend
-    args:
-      ORIGIN: ${ORIGIN:-http://localhost:3000}
+      args:
+        ORIGIN: ${ORIGIN:-http://localhost:3000}
     ports:
       - "3000:3000"
