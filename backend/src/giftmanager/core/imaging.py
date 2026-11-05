@@ -23,8 +23,8 @@ MIME_TYPE: Final = "image/webp"
 _FORMATS: Final = ("JPEG", "PNG", "WEBP")
 
 # Checked from the header before decoding: a small file can unpack to a huge bitmap.
-# Measured peak of to_webp at these limits (python:3.14-slim, Pillow 13): JPEG +50 MiB
-# (decoded at a reduced scale), PNG up to +170 MiB, WebP up to +190 MiB (Pillow's decoder
+# Measured peak of to_webp at these limits (python:3.14-alpine, Pillow 13): JPEG +50 MiB
+# (decoded at a reduced scale), PNG up to +170 MiB, WebP up to +195 MiB (Pillow's decoder
 # holds two full canvases). With the app and three Argon2 hashes (192 MiB, core/security.py)
 # that stays inside the api container's 512 MiB, but only for one image at a time.
 MAX_PIXELS: Final = {"JPEG": 24_000_000, "MPO": 24_000_000, "PNG": 16_000_000, "WEBP": 10_000_000}

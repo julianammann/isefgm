@@ -188,7 +188,7 @@ Immer Key-Value statt f-Strings – im JSON-Modus werden daraus filterbare Felde
 docker build --build-arg UV_VERSION=$(mise current uv) -t giftmanager-backend .
 ```
 
-Multi-Stage: uv-Builder → `python:3.14-slim`, Non-Root-User, nur Produktions-Dependencies. Port 8000. Migrationen laufen nicht im Container-Start, sondern über den `migrate`-Service in `compose.yaml`.
+Multi-Stage: uv-Builder → `python:3.14-alpine`, Non-Root-User, nur Produktions-Dependencies. Port 8000. Migrationen laufen nicht im Container-Start, sondern über den `migrate`-Service in `compose.yaml`.
 
 ## Endpoints
 
