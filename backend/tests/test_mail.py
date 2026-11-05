@@ -26,7 +26,7 @@ from giftmanager.scheduler import run_once
 from giftmanager.services.notification import PlannedMail
 from tests.conftest import FixedClock
 from tests.mail import RecordingMailer
-from tests.notifications import make_committed_user, planned_mail
+from tests.notifications import make_committed_user, planned_mail, reload
 
 pytestmark = pytest.mark.requirement("F-13", "Q-02")
 
@@ -317,9 +317,21 @@ async def test_scheduler_rides_out_smtp_outage_and_sends_once_back(
     assert row.status == NotificationStatus.PLANNED
     assert row.error
 
+    async def delivered() -> int:
+        async with httpx.AsyncClient(base_url=f"http://{host}:{http_port}") as http:
+            messages = (await http.get("/api/v1/messages")).json()["messages"]
+        return [m["To"][0]["Address"] for m in messages].count(user.email)
+
     clock.advance(timedelta(minutes=5))
     up = SmtpMailer(Settings(_env_file=None, smtp_host=host, smtp_port=smtp_port))  # pyright: ignore[reportCallIssue]
     assert await run(mailer=up) == 1
-    async with httpx.AsyncClient(base_url=f"http://{host}:{http_port}") as http:
-        messages = (await http.get("/api/v1/messages")).json()["messages"]
-    assert [m["To"][0]["Address"] for m in messages].count(user.email) == 1
+    assert await delivered() == 1
+    row = await reload(committed_sessionmaker, row.id)
+    assert row.status == NotificationStatus.SENT
+    assert row.sent_at == clock.now()
+    assert row.error is None
+
+    # The next tick must not send the delivered mail again.
+    clock.advance(timedelta(minutes=5))
+    assert await run(mailer=up) == 0
+    assert await delivered() == 1

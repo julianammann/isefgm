@@ -6,6 +6,7 @@ import logging
 import os
 import subprocess
 import sys
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -78,7 +79,9 @@ async def test_run_once_twice_sends_once(
 
 
 async def test_parallel_runs_send_each_mail_once(
-    committed_sessionmaker: async_sessionmaker[AsyncSession], clock: FixedClock
+    committed_sessionmaker: async_sessionmaker[AsyncSession],
+    clock: FixedClock,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Two scheduler instances by mistake: both plan and send the same ten mails at once.
     user = await make_committed_user(committed_sessionmaker)
@@ -91,11 +94,37 @@ async def test_parallel_runs_send_each_mail_once(
                 interval=f"i{i}",
                 scheduled_for=now,
                 expires_at=now + timedelta(days=1),
+                subject=f"Betreff {i}",
             )
             for i in range(10)
         ]
 
     mailer = RecordingMailer(delay=0.01)
+    # Forces the overlap: a run sends one mail at a time, so the first two sends that meet here
+    # come from both runs at once. Without an overlap the wait times out and the test fails.
+    barrier = asyncio.Barrier(2)
+    record = mailer.send
+    calls = 0
+
+    async def send(mail: Mail) -> None:
+        nonlocal calls
+        calls += 1
+        if calls <= 2:
+            async with asyncio.timeout(5):
+                await barrier.wait()
+        await record(mail)
+
+    mailer.send = send
+    # Both runs plan before either sends; otherwise one skips rows the other's plan() UPDATE
+    # still locks and ends with 0 sends.
+    planned = asyncio.Barrier(2)
+
+    async def dispatch_after_both_planned(*args: Any, **kwargs: Any) -> int:
+        async with asyncio.timeout(5):
+            await planned.wait()
+        return await dispatch_due(*args, **kwargs)
+
+    monkeypatch.setattr(scheduler, "dispatch_due", dispatch_after_both_planned)
     sent = await asyncio.gather(
         *(
             run_once(
@@ -108,7 +137,7 @@ async def test_parallel_runs_send_each_mail_once(
         )
     )
     assert sum(sent) == 10
-    assert len(mailer.sent) == 10
+    assert Counter(m.subject for m in mailer.sent) == Counter(f"Betreff {i}" for i in range(10))
     async with committed_sessionmaker() as s:
         rows = await s.scalars(select(Notification.status).where(Notification.owner_id == user.id))
         assert list(rows) == [NotificationStatus.SENT] * 10
