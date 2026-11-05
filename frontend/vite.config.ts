@@ -36,6 +36,11 @@ export default defineConfig({
       // See https://svelte.dev/docs/kit/adapters for more information about adapters.
       adapter: adapter(),
 
+      // adapter-node 6 ignores ORIGIN at runtime and assumes https without PROTOCOL_HEADER,
+      // so a plain-http local build fails the CSRF check. Unset (CI image), the origin
+      // comes from the proxy headers set in compose.production.yaml.
+      paths: { origin: process.env.ORIGIN || undefined },
+
       // Defence in depth against XSS: SvelteKit adds a nonce (hash when prerendered) to
       // the inline scripts it generates, everything else must come from the app itself.
       // No inline styles either, hence class="contents" instead of a style attribute in
