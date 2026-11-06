@@ -14,6 +14,8 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
+% Zusammengesetzte Woerter an der Wortfuge trennen, nicht "Geschen-kideen"
+\babelhyphenation[ngerman]{Geschenk-idee Geschenk-ideen}
 
 % Schrift: Arial-Ersatz (Helvetica-Klon)
 \usepackage{helvet}
@@ -221,7 +223,7 @@ Die Person steht danach in der Übersicht, mit Geburtstag und Beziehung in einer
 
 Ist ein Geburtstag eingetragen, legt der Geschenke-Manager dafür automatisch den Anlass „Geburtstag“ an, der sich jedes Jahr wiederholt.
 
-Pro Person stehen in der Übersicht drei Aktionen bereit: \ui{Teilen} (Kapitel~\ref{sec:teilen}), \ui{Bearbeiten} und \ui{Löschen}. Löschen entfernt die Person mit allen zugehörigen Daten endgültig und muss in einem Dialog bestätigt werden.
+Pro Person stehen in der Übersicht drei Aktionen bereit: \ui{Teilen} (Kapitel~\ref{sec:teilen}), \ui{Bearbeiten} und \ui{Löschen}. Löschen entfernt die Person mit den personenbezogenen Daten sowie die Zuordnungen und muss in einem Dialog bestätigt werden. Beschenkungen verlieren die Person als Empfänger. 
 
 \subsection{Die Personenseite}
 

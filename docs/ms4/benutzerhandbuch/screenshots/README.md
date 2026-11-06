@@ -9,7 +9,7 @@ Automatisierter Durchlauf der Kernabläufe mit Playwright. Die Screenshots sind 
 | Datum | 06.11.2026 |
 | Getesteter Stand | `ea8a375` auf `feature/benutzerhandbuch`. Die Oberfläche (`frontend/src`) ist identisch mit `main` (`fc28c35`). |
 | Umgebung | lokal: Backend mit `uvicorn` (Port 8100), Frontend mit `vite dev` (Port 3100), lokale PostgreSQL. Für den Lauf waren `REGISTRATION_ENABLED=true` gesetzt und `API_URL` auf das Backend gerichtet. |
-| Browser | Chromium 156.0.8078.4 über Playwright, je ein eigener Browser-Kontext für das Konto und für den Zugriff ohne Anmeldung, Sprache `de-DE`, Zeitzone `Europe/Berlin` |
+| Browser | Chromium 156.0.8078.4 über Playwright, je ein eigener Browser-Kontext für das Konto und für den Zugriff ohne Anmeldung, Browsersprache `--lang=de-DE` (sonst zeigen Datumsfelder das US-Format), Locale `de-DE`, Zeitzone `Europe/Berlin` |
 | Fenster | 1280 × 663 CSS-Pixel, Pixeldichte 2 (Screenshots 2560 × 1326 Pixel), wie in `docs/ms4/e2e-test-screenshots/` |
 | Testdaten | synthetisch: Konto „E2E-Test“ (`e2e-test@example.org`, reservierte Domain), Person „Testperson E2E“, Idee „Kriminalroman“ |
 
