@@ -1,0 +1,387 @@
+% =====================================================================
+% Benutzerhandbuch Geschenke-Manager (LG-05, Meilenstein 4)
+% Bauen (aus docs/ms4/benutzerhandbuch/):
+%   latexmk -pdf -outdir=build benutzerhandbuch.tex
+% Die PDF-Abgabefassung liegt unter docs/pdf/benutzerhandbuch.pdf.
+% Die Abbildungen stammen aus dem E2E-Lauf in screenshots/ (Protokoll: screenshots/README.md).
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+% Seitenraender (2 cm), wie im MS-1-Dokument
+\usepackage[a4paper,top=2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+
+% Kodierung + Sprache: Deutsch (pdfLaTeX)
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+% Zusammengesetzte Woerter an der Wortfuge trennen, nicht "Geschen-kideen"
+\babelhyphenation[ngerman]{Geschenk-idee Geschenk-ideen}
+
+% Schrift: Arial-Ersatz (Helvetica-Klon)
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Zeilenabstand 1,5
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{microtype}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% Ueberschriften ~12pt fett
+\usepackage{titlesec}
+\titleformat{\section}{\fontsize{12}{14}\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\fontsize{12}{14}\bfseries}{\thesubsection}{1em}{}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+
+% Seitenzahlen unten zentriert
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% Grafiken, Tabellen, Listen, Links
+\usepackage{graphicx}
+\graphicspath{{screenshots/}}
+\usepackage{float}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{tabularx}
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=2pt}
+\usepackage[hidelinks]{hyperref}
+% Pfade mit \path{...}: duerfen an / umbrechen, statt ueber den Rand zu laufen
+\usepackage{xurl}
+
+% Bedienelemente der Oberflaeche einheitlich auszeichnen: \ui{Anlegen}
+\newcommand{\ui}[1]{\textbf{#1}}
+
+% Screenshot mit duennem Rahmen, damit weisse Seiten sich vom Papier abheben:
+% \screenshot{datei}{Bildunterschrift}{label}
+\newcommand{\screenshot}[3]{%
+  \begin{figure}[H]
+    \centering
+    \setlength{\fboxsep}{0pt}%
+    \fbox{\includegraphics[width=0.92\linewidth]{#1}}
+    \caption{#2}
+    \label{#3}
+  \end{figure}}
+
+% Hinweiskasten
+\newcommand{\hinweis}[1]{%
+  \par\noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{\textbf{Hinweis:} #1}}\par}
+
+\begin{document}
+
+% ---------------- Titelblatt (keine Seitenzahl) ----------------
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+\vspace*{2.5cm}
+
+{\Huge\bfseries BENUTZERHANDBUCH\par}
+\vspace{0.6cm}
+{\Large Meilenstein 4\par}
+\vspace{1.2cm}
+
+{\Large ISEF01: Projekt Software Engineering\par}
+\vspace{1.5cm}
+
+{\large Thema E\par}
+\vspace{0.2cm}
+{\Large\bfseries Geschenke-Manager\par}
+\vspace{0.3cm}
+{\large Eine datenschutzorientierte, browserbasierte Webanwendung\par}
+
+\vfill
+
+{\large
+\begin{tabular}{@{}ll@{}}
+Julian Ammann & 31911823 \\
+Yin Yin Wu-Hanke & 42303256 \\
+Anton Hirsch & IU14119299 \\
+Kevin Jordan Taghu & IU14150888 \\
+\end{tabular}\par}
+
+\vspace{1.0cm}
+{\large
+Tutor: Prof.\ Dr.\ rer.\ nat.\ Tobias Brückmann\par
+% To Do: Datum anpassen
+Datum: \today % <- auf den realen Abgabetag anpassen
+\par}
+
+\end{titlepage}
+
+% ---------------- Vorderteil: roemisch ----------------
+\pagenumbering{Roman}
+\setcounter{page}{1}
+
+\tableofcontents
+
+\clearpage
+\addcontentsline{toc}{section}{Abbildungsverzeichnis}
+\listoffigures
+
+% ---------------- Textteil: arabisch ----------------
+\clearpage
+\pagenumbering{arabic}
+
+% =====================================================================
+\section{Einleitung}
+% =====================================================================
+
+Der Geschenke-Manager hilft dabei, Geschenke für Familie, Freundinnen und Freunde zu planen: Wer bekommt zu welchem Anlass was, was ist schon besorgt, und was wurde früher schon verschenkt? Dieses Handbuch beschreibt die Bedienung für Nutzerinnen und Nutzer der Webanwendung. Vorkenntnisse sind nicht nötig, ein aktueller Browser genügt.
+
+\subsection{Aufbau des Handbuchs}
+
+Jedes Kapitel beschreibt einen \emph{Kernablauf}, also eine zusammenhängende Aufgabe vom Anfang bis zum Ergebnis:
+
+\begin{enumerate}
+  \item Konto anlegen und anmelden (Kapitel~\ref{sec:konto})
+  \item Eine Person anlegen (Kapitel~\ref{sec:person})
+  \item Eine Geschenkidee erfassen (Kapitel~\ref{sec:idee})
+  \item Eine Beschenkung planen und als verschenkt eintragen (Kapitel~\ref{sec:beschenkung})
+  \item Ideen über einen Link teilen (Kapitel~\ref{sec:teilen})
+  \item Das Konto löschen (Kapitel~\ref{sec:loeschen})
+\end{enumerate}
+
+Die Kapitel bauen aufeinander auf: Die in Kapitel~\ref{sec:person} angelegte Person bekommt in Kapitel~\ref{sec:idee} eine Idee, die in Kapitel~\ref{sec:beschenkung} verschenkt und in Kapitel~\ref{sec:teilen} geteilt wird. Weitere Funktionen, die zu keinem eigenen Kernablauf gehören, fasst Kapitel~\ref{sec:weitere} kurz zusammen.
+
+\subsection{Herkunft der Abbildungen}
+
+% To Do: Fix Zeilenumbruch bei "Die Testläufe sind mit allen Schritten unter ..."
+Alle Abbildungen sind Screenshots aus einem End-to-End-Testlauf der Kernabläufe vom 06.11.2026 in Chromium. Die gezeigten Daten (Konto „E2E-Test“, Person „Testperson E2E“, Idee „Kriminalroman“) sind ausgedacht. Der Lauf ist mit allen Schritten unter \path{docs/ms4/benutzerhandbuch/screenshots/} protokolliert.
+
+\subsection{Grundlagen der Bedienung}
+
+\begin{itemize}
+  \item \textbf{Navigation:} Nach der Anmeldung steht oben die Navigation mit \ui{Personen}, \ui{Anlässe}, \ui{Geschenke}, \ui{Ideen}, \ui{Konto} und \ui{Abmelden}. Ein Klick auf \ui{Geschenke-Manager} führt zur Startseite.
+  \item \textbf{Statuspunkt:} Der farbige Punkt neben dem Namen zeigt, ob die Anwendung erreichbar ist. Grün heißt, alles ist erreichbar. Gelb heißt, die Datenbank ist gerade nicht erreichbar, und Rot heißt, die Anwendung selbst ist nicht erreichbar. Wer mit der Maus über den Punkt fährt, sieht den Grund als Text.
+  \item \textbf{Dialoge:} Anlegen und Bearbeiten geschieht in Dialogfenstern über der Seite. \ui{Abbrechen} oder die Escape-Taste schließt einen Dialog, ohne etwas zu speichern.
+  \item \textbf{Meldungen:} Nach dem Speichern erscheint unten auf der Seite eine kurze grüne Meldung, etwa „Person angelegt!“. Nach dem Löschen ist sie rot. Fehler bei einer Eingabe stehen rot direkt unter dem betroffenen Feld.
+  \item \textbf{Pflichtfelder:} Felder ohne den Zusatz „(optional)“ müssen ausgefüllt werden.
+\end{itemize}
+
+% =====================================================================
+\section{Konto anlegen und anmelden}\label{sec:konto}
+% =====================================================================
+
+Alle Daten gehören zu einem Konto und sind nur nach der Anmeldung sichtbar. Andere Konten sehen sie nicht.
+
+\subsection{Konto anlegen}
+
+\begin{enumerate}
+  \item Auf der Anmeldeseite \ui{Registrieren} anklicken.
+  \item Einen \ui{Anzeigenamen}, die \ui{E-Mail-Adresse} und ein \ui{Passwort} mit mindestens 8 Zeichen eingeben (Abbildung~\ref{fig:registrieren}). Der Anzeigename erscheint später in der Navigation und bei geteilten Links.
+  \item \ui{Konto anlegen} anklicken.
+\end{enumerate}
+
+\screenshot{01-registrieren-formular.png}{Formular „Konto anlegen“}{fig:registrieren}
+
+Das Konto ist sofort angelegt, und du bist angemeldet. Die Startseite begrüßt dich mit deinem Anzeigenamen (Abbildung~\ref{fig:startseite}).
+
+\screenshot{02-registriert-startseite.png}{Startseite nach der Registrierung}{fig:startseite}
+
+\hinweis{Die Registrierung kann vom Betrieb geschlossen sein. Dann steht dort „Die Registrierung ist derzeit geschlossen.“, und ein Konto legt die Betreiberin oder der Betreiber der Anwendung an.}
+
+\subsection{Anmelden und abmelden}
+
+Zum Anmelden die \ui{E-Mail-Adresse} und das \ui{Passwort} eingeben und \ui{Anmelden} anklicken (Abbildung~\ref{fig:anmelden}). Wer eine geschützte Seite direkt aufruft, landet zuerst hier und nach der Anmeldung wieder auf dieser Seite.
+
+\screenshot{17-konto-geloescht-login.png}{Anmeldeseite}{fig:anmelden}
+
+Stimmen E-Mail-Adresse oder Passwort nicht, erscheint „E-Mail-Adresse oder Passwort ist falsch.“ (Abbildung~\ref{fig:anmeldefehler}). Aus Sicherheitsgründen sagt die Meldung nicht, welche der beiden Angaben falsch ist.
+
+\screenshot{18-anmeldung-geloeschtes-konto-abgewiesen.png}{Fehlgeschlagene Anmeldung}{fig:anmeldefehler}
+
+\ui{Abmelden} in der Navigation beendet die Sitzung in diesem Browser. Wer sich überall abmelden möchte, etwa nach dem Verlust eines Geräts, nutzt \ui{Auf allen Geräten abmelden} auf der Seite \ui{Konto}.
+
+% =====================================================================
+\section{Eine Person anlegen}\label{sec:person}
+% =====================================================================
+
+Personen sind die Menschen, die du beschenken möchtest. Geschenkideen, Beschenkungen und Anlässe werden ihnen zugeordnet.
+
+\begin{enumerate}
+  \item In der Navigation \ui{Personen} öffnen und \ui{Person hinzufügen} anklicken.
+  \item Den \ui{Namen} eingeben. \ui{Geburtstag}, \ui{Beziehung} und \ui{Notizen} sind freiwillig (Abbildung~\ref{fig:person-formular}).
+  \item \ui{Anlegen} anklicken.
+\end{enumerate}
+
+\screenshot{03-person-anlegen-formular.png}{Dialog „Person anlegen“}{fig:person-formular}
+
+Die Person steht danach in der Übersicht, mit Geburtstag und Beziehung in einer Zeile darunter (Abbildung~\ref{fig:person-liste}).
+
+\screenshot{04-person-angelegt.png}{Personenübersicht mit der neuen Person}{fig:person-liste}
+
+Ist ein Geburtstag eingetragen, legt der Geschenke-Manager dafür automatisch den Anlass „Geburtstag“ an, der sich jedes Jahr wiederholt.
+
+Pro Person stehen in der Übersicht drei Aktionen bereit: \ui{Teilen} (Kapitel~\ref{sec:teilen}), \ui{Bearbeiten} und \ui{Löschen}. Löschen entfernt die Person mit den personenbezogenen Daten sowie die Zuordnungen und muss in einem Dialog bestätigt werden. Beschenkungen verlieren die Person als Empfänger. 
+
+\subsection{Die Personenseite}
+
+Ein Klick auf den Namen öffnet die Personenseite. Sie zeigt auf einen Blick alles zu dieser Person: Stammdaten und Notizen, geteilte Links, Anlässe, offene Geschenkideen, geplante Beschenkungen und vergangene Geschenke (Abbildung~\ref{fig:personenseite} in Kapitel~\ref{sec:beschenkung}). Auch hier lässt sich die Person bearbeiten, löschen und teilen.
+
+% =====================================================================
+\section{Eine Geschenkidee erfassen}\label{sec:idee}
+% =====================================================================
+
+Eine Geschenkidee ist ein möglicher Geschenkgegenstand. Sie kann für mehrere Personen und Anlässe in Frage kommen.
+
+\begin{enumerate}
+  \item In der Navigation \ui{Geschenke} öffnen und \ui{Geschenkidee hinzufügen} anklicken.
+  \item Einen \ui{Titel} eingeben. Freiwillig sind eine \ui{Beschreibung}, die \ui{Kategorie}, ein Preisrahmen mit \ui{Preis von}, \ui{Preis bis} und \ui{Währung}, die \ui{möglichen Empfänger:innen} und die \ui{möglichen Anlässe} (Abbildung~\ref{fig:idee-formular}). Preise werden mit Komma geschrieben, etwa 12,00.
+  \item \ui{Anlegen} anklicken.
+\end{enumerate}
+
+\screenshot{05-idee-anlegen-formular.png}{Dialog „Geschenkidee anlegen“, nach unten gescrollt}{fig:idee-formular}
+
+Die Idee steht danach in der Übersicht mit Kategorie, den möglichen Empfänger:innen und dem Stand ihrer Beschenkungen, hier noch „Noch keine Beschenkung“ (Abbildung~\ref{fig:idee-liste}).
+
+\screenshot{06-idee-angelegt.png}{Übersicht der Geschenkideen mit der neuen Idee}{fig:idee-liste}
+
+Ein Klick auf den Titel öffnet die Detailseite der Idee. Dort lassen sich Notizen, Links zu Shops und bis zu fünf Bilder ergänzen (\ui{+ Notiz}, \ui{+ Link}, \ui{+ Bild}) und Beschenkungen anlegen (Kapitel~\ref{sec:beschenkung}).
+
+% =====================================================================
+\section{Eine Beschenkung planen und als verschenkt eintragen}\label{sec:beschenkung}
+% =====================================================================
+
+Eine \emph{Beschenkung} hält fest, dass eine Idee tatsächlich jemandem geschenkt werden soll oder wurde. Sie durchläuft vier Stufen, die immer als Text und Symbol angezeigt werden:
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Status & Bedeutung \\
+\midrule
+Idee & Die Idee ist für jemanden vorgemerkt. \\
+Geplant & Das Geschenk ist fest eingeplant. \\
+Besorgt & Das Geschenk liegt bereit. \\
+Verschenkt & Das Geschenk wurde übergeben. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Beschenkung planen}
+
+\begin{enumerate}
+  \item Auf der Detailseite der Idee im Abschnitt \ui{Beschenkungen} auf \ui{+ Beschenkung} klicken.
+  \item Den \ui{Status} wählen, etwa \ui{Geplant}, und die \ui{tatsächlichen Empfänger:innen} ankreuzen.
+  \item Optional einen \ui{Anlass} und den \ui{Anlasstermin} angeben (Abbildung~\ref{fig:beschenkung-formular}). Bei Weihnachten und Ostern trägt die Anwendung den nächsten Termin selbst ein. Er lässt sich ändern.
+  \item \ui{Anlegen} anklicken.
+\end{enumerate}
+
+\screenshot{07-beschenkung-anlegen-formular.png}{Dialog „Beschenkung anlegen“}{fig:beschenkung-formular}
+
+Die Beschenkung erscheint mit Empfängerin, Anlass, Termin und dem Status \ui{Geplant} (Abbildung~\ref{fig:beschenkung-geplant}). Darunter lassen sich mit \ui{+ Aufgabe} Aufgaben für die Besorgung festhalten, etwa „Im Buchladen bestellen“ mit einem Fälligkeitsdatum.
+
+\screenshot{08-beschenkung-geplant.png}{Geplante Beschenkung auf der Detailseite der Idee}{fig:beschenkung-geplant}
+
+\subsection{Als verschenkt eintragen}
+
+\begin{enumerate}
+  \item Bei der Beschenkung \ui{Bearbeiten} anklicken.
+  \item Den \ui{Status} auf \ui{Verschenkt} setzen. Dann sind Empfänger:innen, \ui{Anlass} und \ui{Anlasstermin} Pflicht, und das Feld \ui{Verschenkdatum} erscheint (Abbildung~\ref{fig:verschenkt-formular}).
+  \item Das \ui{Verschenkdatum} prüfen und \ui{Speichern} anklicken.
+\end{enumerate}
+
+\screenshot{09-beschenkung-verschenkt-formular.png}{Dialog „Beschenkung bearbeiten“ mit Status „Verschenkt“}{fig:verschenkt-formular}
+
+Die Beschenkung zeigt nun „verschenkt am“ mit dem Datum und den Status \ui{Verschenkt} (Abbildung~\ref{fig:verschenkt}).
+
+\screenshot{10-beschenkung-verschenkt.png}{Beschenkung mit Status „Verschenkt“}{fig:verschenkt}
+
+Auf der Personenseite steht das Geschenk jetzt unter \ui{Vergangene Geschenke}. Unter \ui{Geschenkideen} zählt die Idee für diese Person nicht mehr als offen (Abbildung~\ref{fig:personenseite}). So ist später sichtbar, was jemand schon bekommen hat.
+
+\screenshot{11-person-vergangene-geschenke.png}{Personenseite mit dem vergangenen Geschenk}{fig:personenseite}
+
+% =====================================================================
+\section{Ideen über einen Link teilen}\label{sec:teilen}
+% =====================================================================
+
+Mit einem Teilen-Link können andere die Geschenkideen ausgewählter Personen ansehen, ohne ein eigenes Konto. Typisches Beispiel: Die Großeltern sollen sehen, was sich ein Enkelkind wünschen könnte. Der Link erlaubt nur das Ansehen, ändern lässt sich darüber nichts.
+
+\subsection{Link erstellen}
+
+\begin{enumerate}
+  \item Auf der Personenseite oder in der Personenübersicht bei der Person \ui{Teilen} anklicken.
+  \item Die Person ist bereits ausgewählt. Weitere Personen lassen sich ankreuzen, dann zeigt ein Link die Ideen mehrerer Personen.
+  \item Optional unter \ui{Gültig bis einschließlich} ein Datum wählen (Abbildung~\ref{fig:teilen-formular}). Der Link funktioniert dann bis zum Ende dieses Tages. Leer bedeutet unbegrenzt.
+  \item \ui{Link erstellen} anklicken.
+\end{enumerate}
+
+\screenshot{12-teilen-link-formular.png}{Dialog zum Teilen der Ideen einer Person}{fig:teilen-formular}
+
+Der Dialog \ui{Link erstellt} zeigt den Link (Abbildung~\ref{fig:teilen-link}). \ui{Kopieren} legt ihn in die Zwischenablage, der Button zeigt dann „Link kopiert!“. Den Link verschickst du selbst, etwa per Messenger oder E-Mail.
+
+\screenshot{13-teilen-link-erstellt.png}{Dialog „Link erstellt“ mit dem Link zum Kopieren}{fig:teilen-link}
+
+\hinweis{Der Link ist nur in diesem Moment sichtbar und lässt sich später nicht noch einmal anzeigen. Geht er verloren, einfach einen neuen erstellen. Wer den Link hat, kann die Ideen sehen; er sollte daher nur an Menschen gehen, für die er gedacht ist.}
+
+\subsection{Was die Empfängerinnen und Empfänger sehen}
+
+Wer den Link öffnet, sieht ohne Anmeldung, wer die Ideen geteilt hat, und pro Person die Geschenkideen mit Kategorie, Preis, Beschreibung, Shop-Links und Bildern (Abbildung~\ref{fig:geteilte-ansicht}). Privat bleiben Notizen, Beschenkungen, Aufgaben, Anlässe sowie Geburtstag und Beziehung der Personen.
+
+\screenshot{14-geteilte-ansicht-ohne-anmeldung.png}{Geteilte Ansicht, geöffnet ohne Anmeldung}{fig:geteilte-ansicht}
+
+Die Ansicht ist immer aktuell: Neue Ideen erscheinen darin, gelöschte verschwinden.
+
+\subsection{Links verwalten}
+
+Auf der Personenseite listet der Abschnitt \ui{Geteilte Links} alle Links, die diese Person enthalten, mit Status (\ui{Aktiv}, \ui{Deaktiviert} oder \ui{Abgelaufen}) und Gültigkeit. Pro Link gibt es:
+
+\begin{itemize}
+  \item \ui{Bearbeiten}: Personen und Gültigkeit ändern. Der Link selbst bleibt gleich.
+  \item \ui{Deaktivieren} und \ui{Aktivieren}: Den Link sofort sperren und später wieder freigeben.
+  \item \ui{Löschen}: Den Link endgültig entfernen.
+\end{itemize}
+
+Ein deaktivierter, abgelaufener oder gelöschter Link zeigt nur noch „Dieser Link ist nicht gültig oder nicht mehr aktiv.“ (Abbildung~\ref{fig:link-ungueltig}). Aus Datenschutzgründen nennt die Seite den Grund nicht.
+
+\screenshot{19-teilen-link-nach-kontoloeschung-404.png}{Aufruf eines nicht mehr gültigen Links}{fig:link-ungueltig}
+
+% =====================================================================
+\section{Das Konto löschen}\label{sec:loeschen}
+% =====================================================================
+
+Das Konto lässt sich jederzeit selbst löschen. Dabei werden alle Personen, Anlässe, Geschenkideen, Beschenkungen und Aufgaben endgültig entfernt. Auch alle Teilen-Links funktionieren danach nicht mehr.
+
+\begin{enumerate}
+  \item In der Navigation \ui{Konto} öffnen.
+  \item Im Abschnitt \ui{Konto löschen} das Kästchen „Ich möchte mein Konto und alle Daten endgültig löschen.“ ankreuzen (Abbildung~\ref{fig:konto-loeschen}).
+  \item \ui{Konto endgültig löschen} anklicken.
+\end{enumerate}
+
+\screenshot{16-konto-loeschen-bestaetigung.png}{Seite „Konto“ mit bestätigter Kontolöschung}{fig:konto-loeschen}
+
+Danach erscheint die Anmeldeseite (Abbildung~\ref{fig:anmelden}). Eine Anmeldung mit den alten Zugangsdaten ist nicht mehr möglich (Abbildung~\ref{fig:anmeldefehler}).
+
+\hinweis{Das Löschen lässt sich nicht rückgängig machen. Wer die Daten behalten möchte, speichert vorher die vollständige Liste (Kapitel~\ref{sec:weitere}).}
+
+% =====================================================================
+\section{Weitere Funktionen}\label{sec:weitere}
+% =====================================================================
+
+Diese Funktionen gehören zu keinem eigenen Kernablauf. Sie sind deshalb ohne Abbildungen beschrieben.
+
+\begin{itemize}
+  \item \textbf{Ideen aus verschenkten Geschenken:} Die Seite \ui{Ideen} zeigt Titel von Geschenken, die in einem Konto der Anwendung schon verschenkt wurden, alphabetisch und ohne Doppelungen. Zu sehen ist nur der Titel, nicht an wen, von wem oder wann. Titel, die den Namen einer beschenkten Person enthalten, erscheinen nicht, damit keine Namen aus anderen Konten sichtbar werden. \ui{Übernehmen} legt den Titel als eigene Geschenkidee mit der Kategorie „Sonstiges“ an, die sich danach wie jede andere Idee bearbeiten lässt (Kapitel~\ref{sec:idee}).
+  \item \textbf{Anlässe:} Unter \ui{Anlässe} stehen Geburtstage, Weihnachten, Ostern und eigene Anlässe wie ein Hochzeitstag, einmalig oder jährlich, jeweils mit den betroffenen Personen.
+  \item \textbf{Notizen, Links und Bilder:} Auf der Detailseite einer Idee mit \ui{+ Notiz}, \ui{+ Link} und \ui{+ Bild}. Pro Idee sind bis zu fünf Bilder möglich.
+  \item \textbf{Aufgaben:} Pro Beschenkung mit \ui{+ Aufgabe}, mit den Stufen Offen, In Bearbeitung, Erledigt und Verworfen sowie optional einem Fälligkeitsdatum.
+  \item \textbf{Vollständige Liste:} Auf der Seite \ui{Konto} öffnet \ui{Liste öffnen (neuer Tab)} alle Personen, Geschenkideen und vergangenen Geschenke als eine Seite. \ui{Als HTML herunterladen} speichert sie als Datei, die sich auch ohne Internet öffnen lässt.
+  \item \textbf{Benachrichtigungen:} Die Anwendung schreibt automatisch an die E-Mail-Adresse des Kontos:
+  \begin{itemize}
+    \item eine Übersicht der Geburtstage im folgenden Monat mit den bekannten Geschenkideen,
+    \item ab sechs Wochen vor Weihnachten und Ostern regelmäßig eine Statusübersicht, wer was bekommt und wie weit die Besorgung ist,
+    \item etwa zwei Wochen vor einem Anlass eine Erinnerung an Personen ohne Beschenkung und an Beschenkungen, die noch im Status Idee oder Geplant sind.
+  \end{itemize}
+\end{itemize}
+
+\end{document}
