@@ -3,7 +3,7 @@ gitleaks = "8.30.1"
 # Runs the W3C validator (vnu-jar) in the frontend tests (QZ-03).
 java = "temurin-25.0.5+8.0.LTS"
 lefthook = "2.1.14"
-node = "26.12.1"
+node = "26.13.1"
 pnpm = "12.15.0"
 python = "3.14"
 trivy = "0.75.0"
